@@ -1,0 +1,18 @@
+{
+    "sourceFile": "src/app/(parceiros)/perfil/page.jsx",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1740049344656,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1740049344656,
+            "name": "Commit-0",
+            "content": "import Profile from './components/Profile'; // Importe o novo componente\nimport PageTitle from '@/components/PageTitle';\n\nexport const metadata = {\n    title: 'Perfil' // Título da página\n};\n\nconst Perfil = () => {  // Ou o nome que você preferir (ex: Profile)\n    return (\n        <>\n            <PageTitle title=\"Perfil\" subName=\"Informações do Usuário\" /> {/* Título e subtítulo */}\n            <Profile /> {/* Renderiza o componente ProfilePage */}\n        </>\n    );\n};\n\nexport default Perfil; // Ou export default Profile;"
+        }
+    ]
+}

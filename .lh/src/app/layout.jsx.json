@@ -1,0 +1,22 @@
+{
+    "sourceFile": "src/app/layout.jsx",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 1,
+            "patches": [
+                {
+                    "date": 1739448440443,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1739464798761,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -11,12 +11,12 @@\n   display: 'swap'\n });\n export const metadata = {\n   title: {\n-    template: '%s | Protege Nextjs - Real Estate Management Admin Template',\n+    template: '%s | Protege - Clube de descontos',\n     default: DEFAULT_PAGE_TITLE\n   },\n-  description: 'A fully responsive premium admin dashboard template, Real Estate Management Admin Template'\n+  description: 'Descontos exclusivos para clientes'\n };\n const splashScreenStyles = `\n #splash-screen {\n   position: fixed;\n"
+                }
+            ],
+            "date": 1739448440443,
+            "name": "Commit-0",
+            "content": "import logoDark from '@/assets/images/logo-dark.png';\nimport AppProvidersWrapper from '@/components/wrappers/AppProvidersWrapper';\nimport { Figtree } from 'next/font/google';\nimport Image from 'next/image';\nimport NextTopLoader from 'nextjs-toploader';\nimport '@/assets/scss/app.scss';\nimport { DEFAULT_PAGE_TITLE } from '@/context/constants';\nconst figtree = Figtree({\n  subsets: ['latin'],\n  weight: ['300', '400', '500', '600', '700', '800', '900'],\n  display: 'swap'\n});\nexport const metadata = {\n  title: {\n    template: '%s | Protege Nextjs - Real Estate Management Admin Template',\n    default: DEFAULT_PAGE_TITLE\n  },\n  description: 'A fully responsive premium admin dashboard template, Real Estate Management Admin Template'\n};\nconst splashScreenStyles = `\n#splash-screen {\n  position: fixed;\n  top: 50%;\n  left: 50%;\n  background: white;\n  display: flex;\n  height: 100%;\n  width: 100%;\n  transform: translate(-50%, -50%);\n  align-items: center;\n  justify-content: center;\n  z-index: 9999;\n  opacity: 1;\n  transition: all 15s linear;\n  overflow: hidden;\n}\n\n#splash-screen.remove {\n  animation: fadeout 0.7s forwards;\n  z-index: 0;\n}\n\n@keyframes fadeout {\n  to {\n    opacity: 0;\n    visibility: hidden;\n  }\n}\n`;\nexport default function RootLayout({\n  children\n}) {\n  return <html lang=\"en\">\n      <head>\n        <style suppressHydrationWarning>{splashScreenStyles}</style>\n      </head>\n      <body className={figtree.className}>\n        <div id=\"splash-screen\">\n          <Image alt=\"Logo\" width={112} height={24} src={logoDark} style={{\n          height: '6%',\n          width: 'auto'\n        }} priority />\n        </div>\n        <NextTopLoader color=\"#8E96AC\" showSpinner={false} />\n        <div id=\"__next_splash\">\n          <AppProvidersWrapper>{children}</AppProvidersWrapper>\n        </div>\n      </body>\n    </html>;\n}"
+        }
+    ]
+}

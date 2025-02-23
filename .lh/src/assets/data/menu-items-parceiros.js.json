@@ -1,0 +1,58 @@
+{
+    "sourceFile": "src/assets/data/menu-items-parceiros.js",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 10,
+            "patches": [
+                {
+                    "date": 1739405004215,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1739998809134,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,43 +1,51 @@\n-export const MENU_ITEMS = [{\n-  key: 'menu',\n-  label: 'MENU',\n-  isTitle: true\n-},\n-{\n-  key: 'dashboards',\n-  label: 'Visão Geral',\n-  icon: 'ri:dashboard-2-line',\n-  url: '/visao-geral'\n-},\n-{\n-  key: 'vouchers',\n-  label: 'Vouchers',\n-  icon: 'ri:ticket-line',\n-  children: [\n-    {\n-      key: 'cadastrar',\n-      label: 'Cadastrar',\n-      url: '/parceiros/vouchers/cadastrar',\n-      parentKey: 'vouchers'\n-    },\n-    {\n-      key: 'gerenciar',\n-      label: 'Gerenciar',\n-      url: '/parceiros/vouchers/gerenciar',\n-      parentKey: 'vouchers'\n-    }\n-  ]\n-},\n-{\n-  key: 'como-usar',\n-  label: 'Como Usar',\n-  icon: 'ri:question-line',\n-  url: '/tutorial'\n-},\n-{\n-  key: 'sair',\n-  label: 'Sair',\n-  icon: 'ri:logout-box-r-line',\n-  url: '/clientes/sair'\n-},\n- ];\n\\ No newline at end of file\n+export const MENU_ITEMS = [\n+  {\n+    key: 'dashboard',\n+    label: 'Dashboard',\n+    icon: 'ri:dashboard-2-line',\n+    url: '/visao-geral'\n+  },\n+  {\n+    key: 'voucher',\n+    label: 'Voucher',\n+    icon: 'ri:ticket-line',\n+    url: '/validacao'\n+  },\n+  {\n+    key: 'validacao',\n+    label: 'Validação',\n+    icon: 'ri:qr-code-line',\n+    url: '/validacao'\n+  },\n+  {\n+    key: 'relatorios',\n+    label: 'Relatórios',\n+    icon: 'ri:bar-chart-line',\n+    children: [\n+      {\n+        key: 'resgates',\n+        label: 'Resgates',\n+        url: '/parceiros/relatorios/resgates',\n+        parentKey: 'relatorios'\n+      },\n+      {\n+        key: 'utilizacao',\n+        label: 'Utilização',\n+        url: '/parceiros/relatorios/utilizacao',\n+        parentKey: 'relatorios'\n+      }\n+    ]\n+  },\n+  {\n+    key: 'perfil',\n+    label: 'Perfil',\n+    icon: 'ri:user-line',\n+    url: '/parceiros/perfil'\n+  },\n+  {\n+    key: 'sair',\n+    label: 'Sair',\n+    icon: 'ri:logout-box-r-line',\n+    url: '/parceiros/sair'\n+  }\n+];\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1739998825276,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -8,9 +8,9 @@\n   {\n     key: 'voucher',\n     label: 'Voucher',\n     icon: 'ri:ticket-line',\n-    url: '/validacao'\n+    url: '/voucher'\n   },\n   {\n     key: 'validacao',\n     label: 'Validação',\n"
+                },
+                {
+                    "date": 1740002342478,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -20,22 +20,9 @@\n   {\n     key: 'relatorios',\n     label: 'Relatórios',\n     icon: 'ri:bar-chart-line',\n-    children: [\n-      {\n-        key: 'resgates',\n-        label: 'Resgates',\n-        url: '/parceiros/relatorios/resgates',\n-        parentKey: 'relatorios'\n-      },\n-      {\n-        key: 'utilizacao',\n-        label: 'Utilização',\n-        url: '/parceiros/relatorios/utilizacao',\n-        parentKey: 'relatorios'\n-      }\n-    ]\n+    url: '/relatorios'\n   },\n   {\n     key: 'perfil',\n     label: 'Perfil',\n"
+                },
+                {
+                    "date": 1740002351083,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -20,9 +20,9 @@\n   {\n     key: 'relatorios',\n     label: 'Relatórios',\n     icon: 'ri:bar-chart-line',\n-    url: '/relatorios'\n+    url: '/relatorio'\n   },\n   {\n     key: 'perfil',\n     label: 'Perfil',\n"
+                },
+                {
+                    "date": 1740051352610,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,10 +1,10 @@\n export const MENU_ITEMS = [\n   {\n-    key: 'dashboard',\n-    label: 'Dashboard',\n-    icon: 'ri:dashboard-2-line',\n-    url: '/visao-geral'\n+    key: 'relatorios',\n+    label: 'Relatórios',\n+    icon: 'ri:bar-chart-line',\n+    url: '/relatorio'\n   },\n   {\n     key: 'voucher',\n     label: 'Voucher',\n@@ -17,14 +17,8 @@\n     icon: 'ri:qr-code-line',\n     url: '/validacao'\n   },\n   {\n-    key: 'relatorios',\n-    label: 'Relatórios',\n-    icon: 'ri:bar-chart-line',\n-    url: '/relatorio'\n-  },\n-  {\n     key: 'perfil',\n     label: 'Perfil',\n     icon: 'ri:user-line',\n     url: '/parceiros/perfil'\n"
+                },
+                {
+                    "date": 1740051380114,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -20,13 +20,13 @@\n   {\n     key: 'perfil',\n     label: 'Perfil',\n     icon: 'ri:user-line',\n-    url: '/parceiros/perfil'\n+    url: '/perfil'\n   },\n   {\n     key: 'sair',\n     label: 'Sair',\n     icon: 'ri:logout-box-r-line',\n-    url: '/parceiros/sair'\n+    url: '/sair'\n   }\n ];\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1740052686356,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,32 +1,60 @@\n-export const MENU_ITEMS = [\n+\"use client\";\n+import { signOut } from \"next-auth/react\";\n+import Link from \"next/link\";\n+\n+const MENU_ITEMS = [\n   {\n-    key: 'relatorios',\n-    label: 'Relatórios',\n-    icon: 'ri:bar-chart-line',\n-    url: '/relatorio'\n+    key: \"relatorios\",\n+    label: \"Relatórios\",\n+    icon: \"ri:bar-chart-line\",\n+    url: \"/relatorio\",\n   },\n   {\n-    key: 'voucher',\n-    label: 'Voucher',\n-    icon: 'ri:ticket-line',\n-    url: '/voucher'\n+    key: \"voucher\",\n+    label: \"Voucher\",\n+    icon: \"ri:ticket-line\",\n+    url: \"/voucher\",\n   },\n   {\n-    key: 'validacao',\n-    label: 'Validação',\n-    icon: 'ri:qr-code-line',\n-    url: '/validacao'\n+    key: \"validacao\",\n\\ No newline at end of file\n+    label: \"Validação\",\n+    icon: \"ri:qr-code-line\",\n+    url: \"/validacao\",\n   },\n   {\n-    key: 'perfil',\n-    label: 'Perfil',\n-    icon: 'ri:user-line',\n-    url: '/perfil'\n+    key: \"perfil\",\n+    label: \"Perfil\",\n+    icon: \"ri:user-line\",\n+    url: \"/perfil\",\n   },\n   {\n-    key: 'sair',\n-    label: 'Sair',\n-    icon: 'ri:logout-box-r-line',\n-    url: '/sair'\n-  }\n-];\n+    key: \"sair\",\n+    label: \"Sair\",\n+    icon: \"ri:logout-box-r-line\",\n+    action: () => signOut({ callbackUrl: \"/auth/login-cliente\" }),\n+  },\n+];\n+\n+const Menu = () => {\n+  return (\n+    <nav>\n+      <ul>\n+        {MENU_ITEMS.map((item) => (\n+          <li key={item.key}>\n+            {item.action ? (\n+              <button onClick={item.action}>\n+                <i className={item.icon}></i> {item.label}\n+              </button>\n+            ) : (\n+              <Link href={item.url}>\n+                <i className={item.icon}></i> {item.label}\n+              </Link>\n+            )}\n+          </li>\n+        ))}\n+      </ul>\n+    </nav>\n+  );\n+};\n+\n+export default Menu;\n"
+                },
+                {
+                    "date": 1740052703965,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -34,27 +34,6 @@\n     action: () => signOut({ callbackUrl: \"/auth/login-cliente\" }),\n   },\n ];\n \n-const Menu = () => {\n-  return (\n-    <nav>\n-      <ul>\n-        {MENU_ITEMS.map((item) => (\n-          <li key={item.key}>\n-            {item.action ? (\n-              <button onClick={item.action}>\n-                <i className={item.icon}></i> {item.label}\n-              </button>\n-            ) : (\n-              <Link href={item.url}>\n-                <i className={item.icon}></i> {item.label}\n-              </Link>\n-            )}\n-          </li>\n-        ))}\n-      </ul>\n-    </nav>\n-  );\n-};\n \n-export default Menu;\n\\ No newline at end of file\n+export default Menu;\n"
+                },
+                {
+                    "date": 1740052713439,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,39 +1,32 @@\n-\"use client\";\n-import { signOut } from \"next-auth/react\";\n-import Link from \"next/link\";\n-\n-const MENU_ITEMS = [\n+export const MENU_ITEMS = [\n   {\n-    key: \"relatorios\",\n-    label: \"Relatórios\",\n-    icon: \"ri:bar-chart-line\",\n-    url: \"/relatorio\",\n+    key: 'relatorios',\n+    label: 'Relatórios',\n+    icon: 'ri:bar-chart-line',\n+    url: '/relatorio'\n   },\n   {\n-    key: \"voucher\",\n-    label: \"Voucher\",\n-    icon: \"ri:ticket-line\",\n-    url: \"/voucher\",\n+    key: 'voucher',\n+    label: 'Voucher',\n+    icon: 'ri:ticket-line',\n+    url: '/voucher'\n   },\n   {\n-    key: \"validacao\",\n-    label: \"Validação\",\n-    icon: \"ri:qr-code-line\",\n-    url: \"/validacao\",\n+    key: 'validacao',\n+    label: 'Validação',\n+    icon: 'ri:qr-code-line',\n+    url: '/validacao'\n   },\n   {\n-    key: \"perfil\",\n-    label: \"Perfil\",\n-    icon: \"ri:user-line\",\n-    url: \"/perfil\",\n+    key: 'perfil',\n+    label: 'Perfil',\n+    icon: 'ri:user-line',\n+    url: '/perfil'\n   },\n   {\n-    key: \"sair\",\n-    label: \"Sair\",\n-    icon: \"ri:logout-box-r-line\",\n-    action: () => signOut({ callbackUrl: \"/auth/login-cliente\" }),\n-  },\n-];\n-\n-\n-export default Menu;\n+    key: 'sair',\n+    label: 'Sair',\n+    icon: 'ri:logout-box-r-line',\n+    url: '/sair'\n+  }\n+];\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1740052771520,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -26,7 +26,7 @@\n   {\n     key: 'sair',\n     label: 'Sair',\n     icon: 'ri:logout-box-r-line',\n-    url: '/sair'\n+    url: '/auth/login-parceiro'\n   }\n ];\n\\ No newline at end of file\n"
+                }
+            ],
+            "date": 1739405004215,
+            "name": "Commit-0",
+            "content": "export const MENU_ITEMS = [{\n  key: 'menu',\n  label: 'MENU',\n  isTitle: true\n},\n{\n  key: 'dashboards',\n  label: 'Visão Geral',\n  icon: 'ri:dashboard-2-line',\n  url: '/visao-geral'\n},\n{\n  key: 'vouchers',\n  label: 'Vouchers',\n  icon: 'ri:ticket-line',\n  children: [\n    {\n      key: 'cadastrar',\n      label: 'Cadastrar',\n      url: '/parceiros/vouchers/cadastrar',\n      parentKey: 'vouchers'\n    },\n    {\n      key: 'gerenciar',\n      label: 'Gerenciar',\n      url: '/parceiros/vouchers/gerenciar',\n      parentKey: 'vouchers'\n    }\n  ]\n},\n{\n  key: 'como-usar',\n  label: 'Como Usar',\n  icon: 'ri:question-line',\n  url: '/tutorial'\n},\n{\n  key: 'sair',\n  label: 'Sair',\n  icon: 'ri:logout-box-r-line',\n  url: '/clientes/sair'\n},\n ];"
+        }
+    ]
+}

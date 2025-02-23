@@ -1,0 +1,18 @@
+{
+    "sourceFile": "src/app/(parceiros)/perfil/components/Finish.jsx",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1740003669395,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1740003669395,
+            "name": "Commit-0",
+            "content": "import IconifyIcon from '@/components/wrappers/IconifyIcon';\nimport { Col, Row } from 'react-bootstrap';\n\nconst Finish = () => {\n    return (\n        <Row>\n            <Col xs={12}>\n                <div className=\"text-center\">\n                    <IconifyIcon icon=\"iconamoon:like-duotone\" className=\"fs-36 text-primary mb-3\" /> {/* Ícone centralizado e colorido */}\n                    <h3 className=\"mt-0\">Concluído!</h3>\n                    <p className=\"w-75 mb-2 mx-auto\">Informações atualizadas com sucesso.</p>\n                </div>\n            </Col>\n        </Row>\n    );\n};\n\nexport default Finish;"
+        }
+    ]
+}

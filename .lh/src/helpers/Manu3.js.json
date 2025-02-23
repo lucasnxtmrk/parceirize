@@ -1,0 +1,18 @@
+{
+    "sourceFile": "src/helpers/Manu3.js",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1739404961149,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1739404961149,
+            "name": "Commit-0",
+            "content": "import { MENU_ITEMS } from '@/assets/data/menu-items-parceiros';\nexport const getMenuItems = () => {\n  return MENU_ITEMS;\n};\nexport const findAllParent = (menuItems, menuItem) => {\n  let parents = [];\n  const parent = findMenuItem(menuItems, menuItem.parentKey);\n  if (parent) {\n    parents.push(parent.key);\n    if (parent.parentKey) {\n      parents = [...parents, ...findAllParent(menuItems, parent)];\n    }\n  }\n  return parents;\n};\nexport const getMenuItemFromURL = (items, url) => {\n  if (items instanceof Array) {\n    for (const item of items) {\n      const foundItem = getMenuItemFromURL(item, url);\n      if (foundItem) {\n        return foundItem;\n      }\n    }\n  } else {\n    if (items.url == url) return items;\n    if (items.children != null) {\n      for (const item of items.children) {\n        if (item.url == url) return item;\n      }\n    }\n  }\n};\nexport const findMenuItem = (menuItems, menuItemKey) => {\n  if (menuItems && menuItemKey) {\n    for (const item of menuItems) {\n      if (item.key === menuItemKey) {\n        return item;\n      }\n      const found = findMenuItem(item.children, menuItemKey);\n      if (found) return found;\n    }\n  }\n  return null;\n};"
+        }
+    ]
+}

@@ -1,0 +1,18 @@
+{
+    "sourceFile": "src/components/layout/VerticalNavigationBarParceiro/page.jsx",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1739469487968,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1739469487968,
+            "name": "Commit-0",
+            "content": "import LogoBox from '@/components/LogoBox';\nimport React from 'react';\nimport HoverMenuToggle from './components/HoverMenuToggle';\nimport SimplebarReactClient from '@/components/wrappers/SimplebarReactClient';\nimport AppMenu from './components/AppMenu';\nimport { getMenuItems } from '@/helpers/Manu3';\nconst page = () => {\n  const menuItems = getMenuItems();\n  return <div className=\"main-nav\" id='leftside-menu-container'>\n      <LogoBox />\n      <HoverMenuToggle />\n      <SimplebarReactClient className=\"scrollbar\" data-simplebar>\n        <AppMenu menuItems={menuItems} />\n      </SimplebarReactClient>\n    </div>;\n};\nexport default page;"
+        }
+    ]
+}

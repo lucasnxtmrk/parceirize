@@ -1,0 +1,26 @@
+{
+    "sourceFile": "src/app/(parceiros)/validacao/components/ValidacaoQrCode.jsx",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 2,
+            "patches": [
+                {
+                    "date": 1739997223104,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1739998090937,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,21 +1,55 @@\n 'use client';\r\n \r\n+import { useState } from 'react';\r\n import dynamic from 'next/dynamic';\r\n \r\n-const QrReader = dynamic(() => import('react-qr-reader').then(mod => mod.QrReader), { ssr: false });\r\n+const QrReader = dynamic(() => import('react-qr-reader'), { ssr: false });\r\n \r\n-const ValidacaoQrCode = ({ qrData, onScan, onError }) => { // Recebe onScan e onError como props\r\n+const ValidacaoQrCode = () => {\r\n+    const [qrData, setQrData] = useState(null);\r\n+    const [error, setError] = useState(null);\r\n+    const [validacao, setValidacao] = useState(null);\r\n+\r\n+    const handleScan = async (data) => {\r\n+        if (data) {\r\n+            setQrData(data);\r\n+            await validarVoucher(data);\r\n+        }\r\n+    };\r\n+\r\n\\ No newline at end of file\n+    const handleError = (err) => {\r\n+        console.error('Erro ao ler QR Code:', err);\r\n+        setError('Erro ao acessar a câmera. Verifique as permissões.');\r\n+    };\r\n+\r\n+    const validarVoucher = async (codigo) => {\r\n+        try {\r\n+            const response = await fetch('/api/validar-voucher', {\r\n+                method: 'POST',\r\n+                headers: { 'Content-Type': 'application/json' },\r\n+                body: JSON.stringify({ codigo }),\r\n+            });\r\n+\r\n+            const data = await response.json();\r\n+            setValidacao(data.mensagem);\r\n+        } catch (error) {\r\n+            setValidacao('Erro ao validar o voucher.');\r\n+        }\r\n+    };\r\n+\r\n     return (\r\n         <div className=\"qr-code-reader\">\r\n             <QrReader\r\n                 delay={300}\r\n-                onError={onError} // Passa a função onError para o QrReader\r\n-                onScan={onScan} // Passa a função onScan para o QrReader\r\n+                onError={handleError}\r\n+                onScan={handleScan}\r\n                 style={{ width: '100%' }}\r\n             />\r\n+            {error && <p style={{ color: 'red' }}>{error}</p>}\r\n             {qrData && <p>ID do Cliente: {qrData}</p>}\r\n+            {validacao && <p style={{ color: validacao.includes('válido') ? 'green' : 'red' }}>{validacao}</p>}\r\n         </div>\r\n     );\r\n };\r\n \r\n-export default ValidacaoQrCode;\n+export default ValidacaoQrCode;\r\n"
+                },
+                {
+                    "date": 1739998133784,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -2,9 +2,10 @@\n \r\n import { useState } from 'react';\r\n import dynamic from 'next/dynamic';\r\n \r\n-const QrReader = dynamic(() => import('react-qr-reader'), { ssr: false });\r\n+// Corrigindo o dynamic import para carregar corretamente o componente\r\n+const QrReader = dynamic(() => import('react-qr-reader').then(mod => mod.default), { ssr: false });\r\n \r\n const ValidacaoQrCode = () => {\r\n     const [qrData, setQrData] = useState(null);\r\n     const [error, setError] = useState(null);\r\n@@ -51,5 +52,5 @@\n         </div>\r\n     );\r\n };\r\n \r\n-export default ValidacaoQrCode;\n\\ No newline at end of file\n+export default ValidacaoQrCode;\r\n"
+                }
+            ],
+            "date": 1739997223104,
+            "name": "Commit-0",
+            "content": "'use client';\r\n\r\nimport dynamic from 'next/dynamic';\r\n\r\nconst QrReader = dynamic(() => import('react-qr-reader').then(mod => mod.QrReader), { ssr: false });\r\n\r\nconst ValidacaoQrCode = ({ qrData, onScan, onError }) => { // Recebe onScan e onError como props\r\n    return (\r\n        <div className=\"qr-code-reader\">\r\n            <QrReader\r\n                delay={300}\r\n                onError={onError} // Passa a função onError para o QrReader\r\n                onScan={onScan} // Passa a função onScan para o QrReader\r\n                style={{ width: '100%' }}\r\n            />\r\n            {qrData && <p>ID do Cliente: {qrData}</p>}\r\n        </div>\r\n    );\r\n};\r\n\r\nexport default ValidacaoQrCode;"
+        }
+    ]
+}

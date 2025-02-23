@@ -1,0 +1,18 @@
+{
+    "sourceFile": "src/app/(admin)/dashboards/agent/components/TopAgents.jsx",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1739464726154,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1739464726154,
+            "name": "Commit-0",
+            "content": "import agent1Img from '@/assets/images/agent-1.png';\nimport IconifyIcon from '@/components/wrappers/IconifyIcon';\nimport Image from 'next/image';\nimport Link from 'next/link';\nimport { Card, CardBody, CardHeader, CardTitle } from 'react-bootstrap';\nconst TopAgents = () => {\n  return <Card>\n      <CardHeader>\n        <CardTitle as={'h4'}>Top Agents</CardTitle>\n      </CardHeader>\n      <CardBody>\n        <div className=\"bg-primary position-relative rounded p-2 overflow-hidden z-1 text-center\">\n          <Image src={agent1Img} alt=\"agent-1\" className=\"img-fluid rounded\" />\n          <div className=\"d-flex align-items-center justify-content-between bg-light bg-opacity-25 p-2 mt-2 rounded text-start\">\n            <div>\n              <Link href=\"\" className=\"text-white fw-medium fs-16\">\n                Protege Group , Pvt Ltd\n              </Link>\n              <p className=\"mb-0 text-white-50\">Markova , USA</p>\n              <div className=\"d-flex flex-wrap gap-2 align-items-center mt-1\">\n                <ul className=\"d-flex text-warning m-0 fs-18  list-unstyled\">\n                  <li>\n                    <IconifyIcon icon=\"ri:star-fill\" />\n                  </li>\n                  <li>\n                    <IconifyIcon icon=\"ri:star-fill\" />\n                  </li>\n                  <li>\n                    <IconifyIcon icon=\"ri:star-fill\" />\n                  </li>\n                  <li>\n                    <IconifyIcon icon=\"ri:star-fill\" />\n                  </li>\n                  <li>\n                    <IconifyIcon icon=\"ri:star-half-line\" />\n                  </li>\n                </ul>\n                <p className=\"mb-0 text-white\">4.5 / 5 Rating</p>\n              </div>\n            </div>\n            <div>\n              <Link href=\"\">\n                <div className=\"avatar-sm flex-shrink-0\">\n                  <span className=\"avatar-title bg-primary text-white fs-4 rounded-circle\">\n                    <IconifyIcon icon=\"ri:arrow-right-line\" />\n                  </span>\n                </div>\n              </Link>\n            </div>\n          </div>\n        </div>\n      </CardBody>\n    </Card>;\n};\nexport default TopAgents;"
+        }
+    ]
+}

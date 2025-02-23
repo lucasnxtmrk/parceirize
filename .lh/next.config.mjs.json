@@ -1,0 +1,18 @@
+{
+    "sourceFile": "next.config.mjs",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1740054544792,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1740054544792,
+            "name": "Commit-0",
+            "content": "require('dotenv').config({ path: '.env.local' }); // Carrega as variáveis de ambiente do .env.local\n\n/** @type {import('next').NextConfig} */\nconst nextConfig = {\n  reactStrictMode: true,\n  env: { // Esta seção é fundamental\n    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET, // Define a variável aqui\n  },\n};\n\nmodule.exports = nextConfig;"
+        }
+    ]
+}

@@ -1,0 +1,18 @@
+{
+    "sourceFile": "src/app/(admin)/property/add/components/PropertyAddCard.jsx",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1739439997222,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1739439997222,
+            "name": "Commit-0",
+            "content": "import properties1 from '@/assets/images/properties/p-1.jpg';\nimport IconifyIcon from '@/components/wrappers/IconifyIcon';\nimport { currency } from '@/context/constants';\nimport Image from 'next/image';\nimport { Button, Card, CardBody, CardFooter, Col, Row } from 'react-bootstrap';\nconst PropertyAddCard = () => {\n  return <Col xl={3} lg={4}>\n      <Card>\n        <CardBody>\n          <div className=\"position-relative\">\n            <Image src={properties1} alt=\"properties\" className=\"img-fluid rounded bg-light\" />\n            <span className=\"position-absolute top-0 end-0 p-1\">\n              <span className=\"badge bg-success text-light fs-13\">For Rent</span>\n            </span>\n          </div>\n          <div className=\"mt-3\">\n            <h4 className=\"mb-1\">\n              Dvilla Residences Bat<span className=\"fs-14 text-muted ms-1\">(Residences)</span>\n            </h4>\n            <p className=\"mb-1\">4604 , Philli Lane Kiowa U.S.A</p>\n            <h5 className=\"text-dark fw-medium mt-3\">Price :</h5>\n            <h4 className=\"fw-semibold mt-2 text-muted\">{currency}8,930.00</h4>\n          </div>\n          <Row className=\"mt-2 g-2\">\n            <Col lg={3} xs={3}>\n              <span className=\"badge bg-light-subtle text-muted border fs-12\">\n                <span className=\"fs-16\">\n                  <IconifyIcon icon=\"solar:bed-broken\" className=\"align-middle\" />\n                </span>\n                &nbsp;5 Beds\n              </span>\n            </Col>\n            <Col lg={3} xs={3}>\n              <span className=\"badge bg-light-subtle text-muted border fs-12\">\n                <span className=\"fs-16\">\n                  <IconifyIcon icon=\"solar:bath-broken\" className=\"align-middle\" />\n                </span>\n                &nbsp;4 Bath\n              </span>\n            </Col>\n            <Col lg={3} xs={3}>\n              <span className=\"badge bg-light-subtle text-muted border fs-12\">\n                <span className=\"fs-16\">\n                  <IconifyIcon icon=\"solar:scale-broken\" className=\"align-middle\" />\n                </span>\n                &nbsp;1400ft\n              </span>\n            </Col>\n            <Col lg={3} xs={3}>\n              <span className=\"badge bg-light-subtle text-muted border fs-12\">\n                <span className=\"fs-16\">\n                  <IconifyIcon icon=\"solar:double-alt-arrow-up-broken\" className=\"align-middle\" />\n                </span>\n                &nbsp;3 Floor\n              </span>\n            </Col>\n          </Row>\n        </CardBody>\n        <CardFooter className=\"bg-light-subtle\">\n          <Row className=\"g-2\">\n            <Col lg={6}>\n              <Button variant=\"outline-primary\" className=\"w-100\">\n                Add Property\n              </Button>\n            </Col>\n            <Col lg={6}>\n              <Button variant=\"danger\" className=\"w-100\">\n                Cancel\n              </Button>\n            </Col>\n          </Row>\n        </CardFooter>\n      </Card>\n    </Col>;\n};\nexport default PropertyAddCard;"
+        }
+    ]
+}

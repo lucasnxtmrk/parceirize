@@ -1,0 +1,38 @@
+{
+    "sourceFile": "src/components/layout/TopNavigationBar/page.jsx",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 5,
+            "patches": [
+                {
+                    "date": 1739447447680,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1739447486173,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -10,19 +10,8 @@\n   return <header>\n       <div className=\"topbar\">\n         <Container fluid>\n           <div className=\"navbar-header\">\n-            <div className=\"d-flex align-items-center gap-2\">\n-              <LeftSideBarToggle />\n-              <form className=\"app-search d-none d-md-block me-auto\">\n-                <div className=\"position-relative\">\n-                  <input type=\"search\" className=\"form-control border-0\" placeholder=\"Search...\" autoComplete=\"off\" />\n-                  <IconifyIcon icon=\"ri:search-line\" className=\" search-widget-icon\" />\n-                </div>\n-              </form>\n-            </div>\n-            <div className=\"d-flex align-items-center gap-1\">\n-            </div>\n           </div>\n         </Container>\n       </div>\n     </header>;\n"
+                },
+                {
+                    "date": 1739448733648,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -10,8 +10,19 @@\n   return <header>\n       <div className=\"topbar\">\n         <Container fluid>\n           <div className=\"navbar-header\">\n+            <div className=\"d-flex align-items-center gap-1\">\n+              <ThemeModeToggle />\n+\n+              <MaximizeScreen />\n+\n+              <Notifications />\n+\n+              <ThemeCustomizerToggle />\n+\n+              <ProfileDropdown />\n+            </div>\n           </div>\n         </Container>\n       </div>\n     </header>;\n"
+                },
+                {
+                    "date": 1739448740192,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -13,12 +13,8 @@\n           <div className=\"navbar-header\">\n             <div className=\"d-flex align-items-center gap-1\">\n               <ThemeModeToggle />\n \n-              <MaximizeScreen />\n-\n-              <Notifications />\n-\n               <ThemeCustomizerToggle />\n \n               <ProfileDropdown />\n             </div>\n"
+                },
+                {
+                    "date": 1739448946334,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -14,10 +14,8 @@\n             <div className=\"d-flex align-items-center gap-1\">\n               <ThemeModeToggle />\n \n               <ThemeCustomizerToggle />\n-\n-              <ProfileDropdown />\n             </div>\n           </div>\n         </Container>\n       </div>\n"
+                },
+                {
+                    "date": 1740052902034,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -4,8 +4,9 @@\n import ThemeCustomizerToggle from './components/ThemeCustomizerToggle';\n import Notifications from './components/Notifications';\n import ThemeModeToggle from './components/ThemeModeToggle';\n import MaximizeScreen from './components/MaximizeScreen';\n+import LogoutButton from './components/LogoutButton';\n import { Container } from 'react-bootstrap';\n const page = () => {\n   return <header>\n       <div className=\"topbar\">\n@@ -14,8 +15,9 @@\n             <div className=\"d-flex align-items-center gap-1\">\n               <ThemeModeToggle />\n \n               <ThemeCustomizerToggle />\n+              <LogoutButton />\n             </div>\n           </div>\n         </Container>\n       </div>\n"
+                }
+            ],
+            "date": 1739447447680,
+            "name": "Commit-0",
+            "content": "import IconifyIcon from '@/components/wrappers/IconifyIcon';\nimport LeftSideBarToggle from './components/LeftSideBarToggle';\nimport ProfileDropdown from './components/ProfileDropdown';\nimport ThemeCustomizerToggle from './components/ThemeCustomizerToggle';\nimport Notifications from './components/Notifications';\nimport ThemeModeToggle from './components/ThemeModeToggle';\nimport MaximizeScreen from './components/MaximizeScreen';\nimport { Container } from 'react-bootstrap';\nconst page = () => {\n  return <header>\n      <div className=\"topbar\">\n        <Container fluid>\n          <div className=\"navbar-header\">\n            <div className=\"d-flex align-items-center gap-2\">\n              <LeftSideBarToggle />\n              <form className=\"app-search d-none d-md-block me-auto\">\n                <div className=\"position-relative\">\n                  <input type=\"search\" className=\"form-control border-0\" placeholder=\"Search...\" autoComplete=\"off\" />\n                  <IconifyIcon icon=\"ri:search-line\" className=\" search-widget-icon\" />\n                </div>\n              </form>\n            </div>\n            <div className=\"d-flex align-items-center gap-1\">\n            </div>\n          </div>\n        </Container>\n      </div>\n    </header>;\n};\nexport default page;"
+        }
+    ]
+}

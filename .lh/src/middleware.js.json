@@ -1,0 +1,26 @@
+{
+    "sourceFile": "src/middleware.js",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 2,
+            "patches": [
+                {
+                    "date": 1740052157768,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1740052385519,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,30 +1,19 @@\n import { NextResponse } from 'next/server';\n \n export function middleware(request) {\n-  const token = request.cookies.get('token'); // Ou localStorage, sessionStorage, etc.\n+  const { pathname } = request.nextUrl;\n \n-  // Se não houver token, redireciona para a página de login\n-  if (!token) {\n-    return NextResponse.redirect(new URL('/auth/login-cliente', request.url)); // Ou /auth/login-parceiro, se preferir\n+  if (pathname === '/auth/login-cliente') {\n+    return NextResponse.redirect(new URL('/carteirinha', request.url));\n   }\n \n-  const decodedToken = decodeToken(token);\n-\n-  // Se o token for inválido ou não tiver o campo userType, redireciona para a página de login\n-  if (!decodedToken || !decodedToken.userType) {\n-    return NextResponse.redirect(new URL('/auth/login-cliente', request.url)); // Ou /auth/login-parceiro\n-  }\n-\n-  // Redireciona para a página correta com base no tipo de usuário\n-  if (decodedToken.userType === 'cliente') {\n-    return NextResponse.redirect(new URL('/carteirinha', request.url));\n-  } else if (decodedToken.userType === 'parceiro') {\n+  if (pathname === '/auth/login-parceiro') {\n     return NextResponse.redirect(new URL('/relatorio', request.url));\n   }\n \n-  return NextResponse.next(); // Se o tipo de usuário não for reconhecido, continua para a página solicitada\n+  return NextResponse.next();\n\\ No newline at end of file\n }\n \n export const config = {\n-  matcher: ['/((?!api|static|.*\\\\..*|_next).*)'], // Protege todas as rotas\n-};\n+  matcher: ['/auth/login-cliente', '/auth/login-parceiro'],\n+};\n"
+                },
+                {
+                    "date": 1740053872002,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,19 +1,28 @@\n+import { getToken } from 'next-auth/jwt';\n import { NextResponse } from 'next/server';\n \n-export function middleware(request) {\n-  const { pathname } = request.nextUrl;\n+export async function middleware(req) {\n+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });\n+    const pathname = req.nextUrl.pathname;\n \n-  if (pathname === '/auth/login-cliente') {\n-    return NextResponse.redirect(new URL('/carteirinha', request.url));\n-  }\n+    const isAuth = !!token;\n+    const isLoginPage = pathname === '/auth/login';\n \n-  if (pathname === '/auth/login-parceiro') {\n-    return NextResponse.redirect(new URL('/relatorio', request.url));\n-  }\n+    const allowedRoutes = ['/carteirinha', '/relatorio', '/admin']; // Rotas que exigem autenticação\n \n-  return NextResponse.next();\n+    const isProtectedRoute = allowedRoutes.includes(pathname);\n+\n+    if (!isAuth && isProtectedRoute && !isLoginPage) {\n+        return NextResponse.redirect(new URL('/auth/login', req.url));\n+    }\n+\n+    if (isAuth && isLoginPage) {\n+        return NextResponse.redirect(new URL('/', req.url));\n+    }\n+\n+    return NextResponse.next();\n }\n \n export const config = {\n-  matcher: ['/auth/login-cliente', '/auth/login-parceiro'],\n+    matcher: ['/((?!api|_next/static|_next/image|favicon.ico|auth).*)']\n };\n\\ No newline at end of file\n"
+                }
+            ],
+            "date": 1740052157768,
+            "name": "Commit-0",
+            "content": "import { NextResponse } from 'next/server';\n\nexport function middleware(request) {\n  const token = request.cookies.get('token'); // Ou localStorage, sessionStorage, etc.\n\n  // Se não houver token, redireciona para a página de login\n  if (!token) {\n    return NextResponse.redirect(new URL('/auth/login-cliente', request.url)); // Ou /auth/login-parceiro, se preferir\n  }\n\n  const decodedToken = decodeToken(token);\n\n  // Se o token for inválido ou não tiver o campo userType, redireciona para a página de login\n  if (!decodedToken || !decodedToken.userType) {\n    return NextResponse.redirect(new URL('/auth/login-cliente', request.url)); // Ou /auth/login-parceiro\n  }\n\n  // Redireciona para a página correta com base no tipo de usuário\n  if (decodedToken.userType === 'cliente') {\n    return NextResponse.redirect(new URL('/carteirinha', request.url));\n  } else if (decodedToken.userType === 'parceiro') {\n    return NextResponse.redirect(new URL('/relatorio', request.url));\n  }\n\n  return NextResponse.next(); // Se o tipo de usuário não for reconhecido, continua para a página solicitada\n}\n\nexport const config = {\n  matcher: ['/((?!api|static|.*\\\\..*|_next).*)'], // Protege todas as rotas\n};"
+        }
+    ]
+}

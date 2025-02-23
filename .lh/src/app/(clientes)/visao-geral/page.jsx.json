@@ -1,0 +1,50 @@
+{
+    "sourceFile": "src/app/(clientes)/visao-geral/page.jsx",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 8,
+            "patches": [
+                {
+                    "date": 1739446334648,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1739446351883,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -11,9 +11,8 @@\n const AnalyticsPage = () => {\n   return <>\n       <PageTitle title=\"Analytics\" subName=\"Dashboard\" />\n       <Row>\n-        <SalesChart />\n         <BalanceCard />\n       </Row>\n       <SocialSource />\n       <Transaction />\n"
+                },
+                {
+                    "date": 1739446364787,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -13,9 +13,7 @@\n       <PageTitle title=\"Analytics\" subName=\"Dashboard\" />\n       <Row>\n         <BalanceCard />\n       </Row>\n-      <SocialSource />\n-      <Transaction />\n     </>;\n };\n export default AnalyticsPage;\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1739446426869,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -5,9 +5,9 @@\n import SocialSource from './components/SocialSource';\n import Statistics from './components/Statistics';\n import Transaction from './components/Transaction';\n export const metadata = {\n-  title: 'Analytics'\n+  title: 'Carteirinha digital'\n };\n const AnalyticsPage = () => {\n   return <>\n       <PageTitle title=\"Analytics\" subName=\"Dashboard\" />\n"
+                },
+                {
+                    "date": 1739446439687,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -9,9 +9,9 @@\n   title: 'Carteirinha digital'\n };\n const AnalyticsPage = () => {\n   return <>\n-      <PageTitle title=\"Analytics\" subName=\"Dashboard\" />\n+      <PageTitle title=\"Carteirinha\" subName=\"Dashboard\" />\n       <Row>\n         <BalanceCard />\n       </Row>\n     </>;\n"
+                },
+                {
+                    "date": 1739446444815,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -9,9 +9,9 @@\n   title: 'Carteirinha digital'\n };\n const AnalyticsPage = () => {\n   return <>\n-      <PageTitle title=\"Carteirinha\" subName=\"Dashboard\" />\n+      <PageTitle title=\"Carteirinha\" subName=\"Home\" />\n       <Row>\n         <BalanceCard />\n       </Row>\n     </>;\n"
+                },
+                {
+                    "date": 1739447714849,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -9,11 +9,12 @@\n   title: 'Carteirinha digital'\n };\n const AnalyticsPage = () => {\n   return <>\n-      <PageTitle title=\"Carteirinha\" subName=\"Home\" />\n+      <PageTitle title=\"Carteirinha\" subName=\"Digital\" />\n       <Row>\n         <BalanceCard />\n+        <DigitalWalletCard/>\n       </Row>\n     </>;\n };\n export default AnalyticsPage;\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1739447773294,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,7 +1,8 @@\n import PageTitle from '@/components/PageTitle';\n import { Row } from 'react-bootstrap';\n import BalanceCard from './components/BalanceCard';\n+import DigitalWalletCard from './components/DigitalWalletCard';\n import SalesChart from './components/SalesChart';\n import SocialSource from './components/SocialSource';\n import Statistics from './components/Statistics';\n import Transaction from './components/Transaction';\n"
+                },
+                {
+                    "date": 1739447956147,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -12,9 +12,8 @@\n const AnalyticsPage = () => {\n   return <>\n       <PageTitle title=\"Carteirinha\" subName=\"Digital\" />\n       <Row>\n-        <BalanceCard />\n         <DigitalWalletCard/>\n       </Row>\n     </>;\n };\n"
+                }
+            ],
+            "date": 1739446334648,
+            "name": "Commit-0",
+            "content": "import PageTitle from '@/components/PageTitle';\nimport { Row } from 'react-bootstrap';\nimport BalanceCard from './components/BalanceCard';\nimport SalesChart from './components/SalesChart';\nimport SocialSource from './components/SocialSource';\nimport Statistics from './components/Statistics';\nimport Transaction from './components/Transaction';\nexport const metadata = {\n  title: 'Analytics'\n};\nconst AnalyticsPage = () => {\n  return <>\n      <PageTitle title=\"Analytics\" subName=\"Dashboard\" />\n      <Row>\n        <SalesChart />\n        <BalanceCard />\n      </Row>\n      <SocialSource />\n      <Transaction />\n    </>;\n};\nexport default AnalyticsPage;"
+        }
+    ]
+}

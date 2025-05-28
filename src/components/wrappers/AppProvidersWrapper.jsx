@@ -13,7 +13,7 @@ const AppProvidersWrapper = ({
   children
 }) => {
   const handleChangeTitle = () => {
-    if (document.visibilityState == 'hidden') document.title = 'Protege';else document.title = DEFAULT_PAGE_TITLE;
+    if (document.visibilityState == 'hidden') document.title = 'Parceirize';else document.title = DEFAULT_PAGE_TITLE;
   };
   useEffect(() => {
     if (document) {

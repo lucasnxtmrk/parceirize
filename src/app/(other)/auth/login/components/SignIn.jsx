@@ -28,22 +28,21 @@ const SignIn = () => {
       <Container>
         <Row className="justify-content-center">
           <Col xl={5}>
-            <Card className="auth-card">
+            <Card className="auth-card bg-primary">
               <CardBody className="px-3 py-5">
                 <div className="mx-auto mb-4 text-center auth-logo">
-                  <Link href="/carteirinha" className="logo-dark">
-                    <Image src={logoDark} height={32} alt="logo dark" />
+                  <Link href="/" className="logo-dark">
+                    <Image src={LogoLight} height={28} alt="logo light" />
                   </Link>
-                  <Link href="/carteirinha" className="logo-light">
+                  <Link href="/" className="logo-light">
                     <Image src={LogoLight} height={28} alt="logo light" />
                   </Link>
                 </div>
-                <h2 className="fw-bold text-uppercase text-center fs-18">Parceiros Protege</h2>
                 <p className="text-muted text-center mt-1 mb-4">Entre com o seu e-mail e senha.</p>
                 <div className="px-4">
                   <form className="authentication-form" onSubmit={login}>
                     <div className="mb-3">
-                      <TextFormInput control={control} name="email" placeholder="Digite seu e-mail" className="bg-light bg-opacity-50 border-light py-2" label="E-mail" />
+                      <TextFormInput control={control} name="email" placeholder="Digite seu e-mail" className="bg-dark bg-opacity-50 text-gray-100 border-dark py-2" label="E-mail" />
                     </div>
                     <div className="mb-3">
                       <Link href="/auth/reset-password" className="float-end text-muted text-unline-dashed ms-1">
@@ -54,24 +53,24 @@ const SignIn = () => {
                         <FormControl
                           type={showPassword ? "text" : "password"}
                           placeholder="Digite sua senha"
-                          className="bg-light bg-opacity-50 border-light py-2"
+                          className="bg-dark bg-opacity-50 border-dark py-2"
                           {...control.register("password")}
                         />
-                        <Button variant="outline-primary" onClick={() => setShowPassword(!showPassword)}>
+                        <Button variant="outline-dark" onClick={() => setShowPassword(!showPassword)}>
                           <IconifyIcon icon={showPassword ? "mdi:eye-off" : "mdi:eye"} width={20} />
                         </Button>
                       </InputGroup>
                     </div>
                     <div className="mb-3">
                       <div className="form-check">
-                        <input type="checkbox" className="form-check-input" id="checkbox-signin" />
+                        <input type="checkbox" className="form-check-input bg-dark" id="checkbox-signin" />
                         <label className="form-check-label" htmlFor="checkbox-signin">
                           Lembrar-me
                         </label>
                       </div>
                     </div>
                     <div className="mb-1 text-center d-grid">
-                      <button disabled={loading} className="btn btn-success py-2 fw-medium" type="submit">
+                      <button disabled={loading} className="btn btn-secondary py-2 fw-medium" type="submit">
                         Entrar
                       </button>
                     </div>

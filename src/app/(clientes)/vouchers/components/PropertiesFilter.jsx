@@ -55,7 +55,7 @@ const PropertiesFilter = ({ onFilterChange }) => {
           />
 
           {/* Lista de Nichos Dinâmicos */}
-          <h5 className="text-dark fw-medium my-3"> Nichos Parceiros:</h5>
+          <h5 className="fw-medium my-3"> Nichos Parceiros:</h5>
           <Row className="g-1">
             {nichos.map((nicho, idx) => (
               <Col lg={6} key={idx}>
@@ -77,7 +77,7 @@ const PropertiesFilter = ({ onFilterChange }) => {
           </Row>
         </CardBody>
         <CardFooter>
-          <Button variant="primary" className="w-100" onClick={handleApplyFilter}>
+          <Button variant="secondary" className="w-100" onClick={handleApplyFilter}>
             Aplicar Filtro
           </Button>
         </CardFooter>

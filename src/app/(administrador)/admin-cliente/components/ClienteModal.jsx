@@ -137,8 +137,8 @@ const ClienteModal = ({ show, handleClose, onClientCreated, cliente }) => {
                     </FormGroup>
 
                     <div className="d-flex justify-content-end mt-4">
-                        <Button variant="primary" onClick={handleClose} disabled={loading}>Cancelar</Button>
-                        <Button variant="success" type="submit" className="ms-2" disabled={loading}>
+                        <Button variant="secondary" onClick={handleClose} disabled={loading}>Cancelar</Button>
+                        <Button variant="primary" type="submit" className="ms-2" disabled={loading}>
                             {loading ? "Salvando..." : isEditMode ? "Salvar Alterações" : "Criar Cliente"}
                         </Button>
                     </div>

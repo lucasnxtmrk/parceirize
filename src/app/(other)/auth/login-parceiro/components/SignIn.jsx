@@ -45,7 +45,7 @@ const SignIn = () => {
                     <Image src={LogoLight} height={28} alt="logo light" />
                   </Link>
                 </div>
-                <h2 className="fw-bold text-uppercase text-center fs-18">Parceiros Protege</h2>
+                <h2 className="fw-bold text-uppercase text-center fs-18">Parceiros Parceirize</h2>
                 <p className="text-muted text-center mt-1 mb-4">Entre com o seu e-mail e senha.</p>
                 <div className="px-4">
                   <form className="authentication-form" onSubmit={login}>

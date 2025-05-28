@@ -11,12 +11,14 @@ const ComponentContainerCard = ({
 }) => {
   return <Card>
       <CardBody>
-        <CardTitle as={'h5'} className={clsx('anchor mb-1', titleClass)} id={id}>
-          {title}
-          <Link className="anchor-link" href={`#${id}`}>
-            #
-          </Link>
-        </CardTitle>
+        {title && (
+  <CardTitle as={'h5'} className={clsx('anchor mb-1', titleClass)} id={id}>
+    {title}
+    <Link className="anchor-link" href={`#${id}`}>
+      #
+    </Link>
+  </CardTitle>
+)}
         {!!description && <p className={clsx('text-muted', descriptionClass)}>{description}</p>}
         <>{children}</>
       </CardBody>

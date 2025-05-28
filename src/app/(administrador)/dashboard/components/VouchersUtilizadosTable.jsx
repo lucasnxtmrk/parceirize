@@ -21,7 +21,7 @@ const VouchersUtilizadosTable = ({ vouchersUtilizados }) => {
                                     <td>{voucher.codigo}</td>
                                     <td>{voucher.cliente}</td>
                                     <td>{voucher.dataUtilizacao}</td>
-                                    <td>{voucher.valorDesconto}%</td>
+                                    <td>{voucher.valorDesconto}</td>
                                 </tr>
                             ))
                         ) : (

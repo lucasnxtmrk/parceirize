@@ -6,7 +6,7 @@ import { Card, CardBody, Col, Row } from 'react-bootstrap';
 const VoucherCard = ({ voucher }) => {
     return (
         <Col xl={4} className="ps-0">
-            <Card className="bg-dark bg-gradient">
+            <Card className="bg-primary">
                 <CardBody className="p-4">
                     <Row className="g-3 align-items-center">
                         <Col xs={12} className="d-flex align-items-center">
@@ -15,8 +15,8 @@ const VoucherCard = ({ voucher }) => {
                                     <Image
                                         src={voucher.logo}
                                         alt="Logo da Empresa"
-                                        width={70}
-                                        height={70}
+                                        width={90}
+                                        height={90}
                                         className="img-fluid"
                                     />
                                 ) : (

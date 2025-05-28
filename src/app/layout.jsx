@@ -12,17 +12,17 @@ const figtree = Figtree({
 });
 export const metadata = {
   title: {
-    template: '%s | Protege - Clube de descontos',
+    template: '%s | Parceirize - Clube de descontos',
     default: DEFAULT_PAGE_TITLE
   },
-  description: 'Descontos exclusivos para clientes Protege',
+  description: 'Descontos exclusivos para clientes Parceirize',
 };
 const splashScreenStyles = `
 #splash-screen {
   position: fixed;
   top: 50%;
   left: 50%;
-  background: white;
+  background: #1B1236;
   display: flex;
   height: 100%;
   width: 100%;
@@ -56,7 +56,7 @@ export default function RootLayout({
       </head>
       <body className={figtree.className}>
         <div id="splash-screen">
-          <Image alt="Logo" width={112} height={24} src={logoDark} style={{
+          <Image alt="Logo" width={312} height={312} src={logoDark} style={{
           height: '6%',
           width: 'auto'
         }} priority />

@@ -34,7 +34,7 @@ const DigitalWalletCard = () => {
 
     return (
         <Col xl={4}>
-            <Card className="bg-dark bg-gradient">
+            <Card className="bg-primary">
                 <CardBody>
                     <Row className="align-items-center justify-content-between">
                         <Col xl={7} lg={6} md={6}>
@@ -47,7 +47,7 @@ const DigitalWalletCard = () => {
 
                             <Row className="mt-4">
                                 <Col lg={12} className="mb-2">
-                                    <Button variant="primary" size="sm" className="w-100" onClick={toggleID}>
+                                    <Button variant="secondary" size="sm" className="w-100" onClick={toggleID}>
                                         {showID ? "Ocultar ID" : "Mostrar ID"}
                                     </Button>
                                 </Col>

@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Button, Table, Row, Col, Image } from "react-bootstrap";
+import { Button, Table, Image, CardTitle } from "react-bootstrap";
 import ComponentContainerCard from "@/components/ComponentContainerCard";
-import ParceiroModal from "./components/ParceiroModal"; // Importando o modal
+import ParceiroModal from "./components/ParceiroModal";
 
 const ParceirosPage = () => {
     const [parceiros, setParceiros] = useState([]);
@@ -16,7 +16,6 @@ const ParceirosPage = () => {
         fetchParceiros();
     }, []);
 
-    // ✅ Função para buscar parceiros
     const fetchParceiros = async () => {
         try {
             const response = await fetch("/api/admin/parceiros");
@@ -31,42 +30,35 @@ const ParceirosPage = () => {
         }
     };
 
-    // ✅ Abrir modal (criação ou edição)
     const handleOpenModal = (parceiro = null) => {
         setParceiroSelecionado(parceiro);
         setShowModal(true);
     };
 
-    // ✅ Fechar modal
     const handleCloseModal = () => {
         setParceiroSelecionado(null);
         setShowModal(false);
     };
 
-    // ✅ Atualiza a lista após criar ou editar um parceiro
     const handleParceiroCreated = () => {
         fetchParceiros();
         handleCloseModal();
     };
 
-    if (loading) {
-        return <div className="text-center">Carregando parceiros...</div>;
-    }
-
-    if (error) {
-        return <div className="text-center text-danger">Erro ao carregar parceiros: {error}</div>;
-    }
+    if (loading) return <div className="text-center">Carregando parceiros...</div>;
+    if (error) return <div className="text-center text-danger">Erro ao carregar parceiros: {error}</div>;
 
     return (
-        <ComponentContainerCard id="gestao-parceiros" title="Gestão de Parceiros" description="Gerencie seus parceiros.">
-            {/* Botão para criar novo parceiro */}
-            <Row className="mb-3">
-                <Col>
-                    <Button variant="success" onClick={() => handleOpenModal()}>+ Criar Novo Parceiro</Button>
-                </Col>
-            </Row>
+        <ComponentContainerCard id="gestao-parceiros">
+            {/* Cabeçalho: Título + Botão */}
+            <div className="d-flex justify-content-between align-items-center mb-3">
+                <CardTitle as="h4" className="mb-0">Gestão de Parceiros</CardTitle>
+                <Button variant="primary" onClick={() => handleOpenModal()}>
+                    + Criar Novo Parceiro
+                </Button>
+            </div>
 
-            {/* Tabela de parceiros */}
+            {/* Tabela */}
             <div className="table-responsive">
                 <Table hover align="center">
                     <thead className="table-light">
@@ -83,13 +75,12 @@ const ParceirosPage = () => {
                                     <div className="d-flex align-items-center gap-2">
                                         {parceiro.foto && (
                                             <Image
-                                            src={parceiro.foto ? parceiro.foto : "/assets/images/users/dummy-avatar.jpg"}
-                                            alt="Avatar do Parceiro"
-                                            className="avatar-sm rounded-circle"
-                                            width={40}
-                                            height={40}
-                                        />
-                                        
+                                                src={parceiro.foto || "/assets/images/users/dummy-avatar.jpg"}
+                                                alt="Avatar do Parceiro"
+                                                className="avatar-sm rounded-circle"
+                                                width={40}
+                                                height={40}
+                                            />
                                         )}
                                         <div className="d-block">
                                             <h6 className="mb-0">{parceiro.nome_empresa}</h6>
@@ -98,7 +89,9 @@ const ParceirosPage = () => {
                                 </td>
                                 <td>{parceiro.email}</td>
                                 <td>
-                                    <Button variant="primary" size="sm" onClick={() => handleOpenModal(parceiro)}>Editar</Button>
+                                    <Button variant="secondary" size="sm" onClick={() => handleOpenModal(parceiro)}>
+                                        Editar
+                                    </Button>
                                 </td>
                             </tr>
                         ))}
@@ -106,8 +99,13 @@ const ParceirosPage = () => {
                 </Table>
             </div>
 
-            {/* Modal para criar/editar parceiro */}
-            <ParceiroModal show={showModal} handleClose={handleCloseModal} onParceiroCreated={handleParceiroCreated} parceiro={parceiroSelecionado} />
+            {/* Modal */}
+            <ParceiroModal
+                show={showModal}
+                handleClose={handleCloseModal}
+                onParceiroCreated={handleParceiroCreated}
+                parceiro={parceiroSelecionado}
+            />
         </ComponentContainerCard>
     );
 };

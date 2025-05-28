@@ -7,11 +7,11 @@ export const metadata = {
 };
 const GeneralFaq = () => {
   return <>
-      <h4 className="mb-3 fw-semibold fs-16">Geral</h4>
+      <h4 className="mb-0 mt-4 fw-semibold fs-20">Geral</h4>
       <Accordion alwaysOpen defaultActiveKey={'0'}>
         {faqData.Geral.map((faq, idx) => <AccordionItem eventKey={`${idx}`} key={idx}>
             <AccordionHeader>
-              <div className="fw-medium">{faq.question}</div>
+              <h5 className="fw-medium">{faq.question}</h5>
             </AccordionHeader>
             <AccordionBody>{faq.answer}</AccordionBody>
           </AccordionItem>)}
@@ -20,11 +20,11 @@ const GeneralFaq = () => {
 };
 const RefundFaqs = () => {
   return <>
-      <h4 className="mb-3 mt-4 fw-semibold fs-16">Carteirinha</h4>
+      <h4 className="mb-0 mt-4 fw-semibold fs-20">Carteirinha</h4>
       <Accordion alwaysOpen defaultActiveKey={'0'}>
         {faqData.Carteirinha.map((faq, idx) => <AccordionItem eventKey={`${idx}`} key={idx}>
             <AccordionHeader>
-              <div className="fw-medium">{faq.question}</div>
+              <h5 className="fw-medium">{faq.question}</h5>
             </AccordionHeader>
             <AccordionBody>{faq.answer}</AccordionBody>
           </AccordionItem>)}
@@ -33,11 +33,11 @@ const RefundFaqs = () => {
 };
 const PaymentsFaqs = () => {
   return <>
-      <h4 className="mb-3 fw-semibold fs-16">Vouchers</h4>
+      <h4 className="mb-0 mt-4 fw-semibold fs-20">Vouchers</h4>
       <Accordion alwaysOpen defaultActiveKey={'0'}>
         {faqData.Vouchers.map((faq, idx) => <AccordionItem eventKey={`${idx}`} key={idx}>
             <AccordionHeader>
-              <div className="fw-medium">{faq.question}</div>
+              <h5 className="fw-medium">{faq.question}</h5>
             </AccordionHeader>
             <AccordionBody>{faq.answer}</AccordionBody>
           </AccordionItem>)}
@@ -46,13 +46,13 @@ const PaymentsFaqs = () => {
 };
 const SupportFaqs = () => {
   return <>
-      <h4 className="mb-3 mt-4 fw-semibold fs-16">Parceiros</h4>
+      <h4 className="mb-0 mt-4 fw-semibold fs-20">Parceiros</h4>
       <Accordion alwaysOpen defaultActiveKey={'0'}>
         {faqData.Parceiros.map((faq, idx) => <AccordionItem eventKey={`${idx}`} key={idx}>
             <AccordionHeader>
-              <div className="fw-medium">{faq.question}</div>
+              <h5 className="fw-medium">{faq.question}</h5>
             </AccordionHeader>
-            <AccordionBody>{faq.answer}</AccordionBody>
+            <AccordionBody >{faq.answer}</AccordionBody>
           </AccordionItem>)}
       </Accordion>
     </>;
@@ -63,14 +63,12 @@ const FAQs = () => {
       <Row>
         <Col>
           <Row className="g-xl-4">
-            <Col xl={6}>
-              <GeneralFaq />
+
+                          <GeneralFaq />
               <RefundFaqs />
-            </Col>
-            <Col xl={6}>
-              <PaymentsFaqs />
+                            <PaymentsFaqs />
               <SupportFaqs />
-            </Col>
+
           </Row>
         </Col>
       </Row>

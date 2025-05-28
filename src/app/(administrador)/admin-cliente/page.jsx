@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Button, Table, FormCheck, Row, Col } from "react-bootstrap";
+import { Button, Table, FormCheck, Row, Col, CardTitle } from "react-bootstrap";
 import ComponentContainerCard from "@/components/ComponentContainerCard";
 import ClienteModal from "./components/ClienteModal";
+
 
 const ClientesPage = () => {
     const [clientes, setClientes] = useState([]);
@@ -91,22 +92,29 @@ const ClientesPage = () => {
     }
 
     return (
-        <ComponentContainerCard id="gestao-clientes" title="Gestão de Clientes" description="Gerencie seus clientes.">
-            {/* Botões de ação */}
-            <Row className="mb-3">
-                <Col>
-                    <Button variant="success" onClick={() => handleOpenModal()}>+ Criar Novo Cliente</Button>
-                </Col>
-                <Col className="text-end">
-                    {selectedClientes.length > 0 && (
-                        <Button variant="danger" onClick={handleDeleteClientes}>Excluir Selecionados</Button>
-                    )}
-                </Col>
-            </Row>
+<ComponentContainerCard id="gestao-clientes" title="" description="">            {/* Botões de ação */}
+            <div className="d-flex justify-content-between align-items-center mb-3">
+  <CardTitle as="h4" className="mb-0">
+    Gestão de Clientes
+  </CardTitle>
+
+  <div className="d-flex gap-2">
+    <Button variant="primary" onClick={() => handleOpenModal()}>
+      + Criar Novo Cliente
+    </Button>
+
+    {selectedClientes.length > 0 && (
+      <Button variant="danger" onClick={handleDeleteClientes}>
+        Excluir Selecionados
+      </Button>
+    )}
+  </div>
+</div>
+
 
             {/* Tabela de clientes */}
             <div className="table-responsive">
-                <Table striped borderless hover>
+                <Table hover align="center">
                     <thead className="table-light">
                         <tr>
                             <th scope="col">
@@ -134,7 +142,7 @@ const ClientesPage = () => {
                                 <td>{cliente.sobrenome}</td>
                                 <td>{cliente.email}</td>
                                 <td>
-                                    <Button variant="green" size="sm" onClick={() => handleOpenModal(cliente)}>Editar</Button>
+                                    <Button variant="secondary" size="sm" onClick={() => handleOpenModal(cliente)}>Editar</Button>
                                 </td>
                             </tr>
                         ))}

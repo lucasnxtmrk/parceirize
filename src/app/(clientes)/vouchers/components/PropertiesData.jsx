@@ -30,7 +30,7 @@ const PropertiesCard = ({ voucher_codigo, voucher_desconto, parceiro_nome, parce
       <CardBody>
         <div className="d-flex align-items-center gap-2">
           <div>
-            <h5 className="text-dark fw-medium">{parceiro_nome}</h5>
+            <h5 className="fw-medium">{parceiro_nome}</h5>
             <p className="text-muted mb-0">{parceiro_nicho}</p>
             <p className="fw-bold mb-0">Desconto: {voucher_desconto}%</p>
           </div>
@@ -38,7 +38,7 @@ const PropertiesCard = ({ voucher_codigo, voucher_desconto, parceiro_nome, parce
       </CardBody>
       <CardFooter className="bg-light-subtle d-flex justify-content-between align-items-center border-top">
         <p className="text-muted mb-0">{voucher_codigo}</p>
-        <Link href="#" className="link-primary fw-medium" onClick={handleCopy}>
+        <Link href="#" className="fw-medium" onClick={handleCopy}>
           {copied ? (
             <>
               Copiado <IconifyIcon icon="ri-check-line" className="align-middle" />

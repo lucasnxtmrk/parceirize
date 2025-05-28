@@ -16,17 +16,39 @@ const getPreferredTheme = () => window.matchMedia('(prefers-color-scheme: dark)'
 const LayoutProvider = ({
   children
 }) => {
+
+  
   const queryParams = useQueryParams();
   const override = !!(queryParams.layout_theme || queryParams.topbar_theme || queryParams.menu_theme || queryParams.menu_size);
   const INIT_STATE = {
-    theme: queryParams['layout_theme'] ? queryParams['layout_theme'] : getPreferredTheme(),
-    topbarTheme: queryParams['topbar_theme'] ? queryParams['topbar_theme'] : 'light',
-    menu: {
-      theme: queryParams['menu_theme'] ? queryParams['menu_theme'] : 'light',
-      size: queryParams['menu_size'] ? queryParams['menu_size'] : 'default'
+  theme: queryParams['layout_theme'] || 'light',
+  topbarTheme: queryParams['topbar_theme'] || 'light',
+  menu: {
+    theme: queryParams['menu_theme'] || 'dark',
+    size: queryParams['menu_size'] || 'default'
+  }
+};
+
+const [settings, setSettings] = useLocalStorage('__REBACK_NEXT_CONFIG__', INIT_STATE, override);
+
+// Corrigir menu colapsado após resize
+useEffect(() => {
+  const handleResize = () => {
+    if (window.innerWidth > 992 && settings.menu.size !== 'default') {
+      updateSettings({
+        ...settings,
+        menu: {
+          ...settings.menu,
+          size: 'default'
+        }
+      });
     }
   };
-  const [settings, setSettings] = useLocalStorage('__REBACK_NEXT_CONFIG__', INIT_STATE, override);
+
+  window.addEventListener('resize', handleResize);
+  return () => window.removeEventListener('resize', handleResize);
+}, [settings]);
+  
   const [offcanvasStates, setOffcanvasStates] = useState({
     showThemeCustomizer: false,
     showActivityStream: false,

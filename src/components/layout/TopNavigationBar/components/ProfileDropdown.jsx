@@ -31,7 +31,7 @@ const ProfileDropdown = () => {
           <span className="align-middle">Lock screen</span>
         </DropdownItem>
         <div className="dropdown-divider my-1" />
-        <DropdownItem as={Link} className=" text-danger" href="/auth/sign-in">
+        <DropdownItem as={Link} className=" text-danger" href="/auth/login">
           <IconifyIcon icon="solar:logout-3-broken" className="align-middle me-2 fs-18" />
           <span className="align-middle">Logout</span>
         </DropdownItem>

@@ -1,0 +1,18 @@
+{
+    "sourceFile": "src/app/(administrador)/dashboard/components/VouchersUtilizadosTable.jsx",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1740407754525,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1740407754525,
+            "name": "Commit-0",
+            "content": "import { Table } from \"react-bootstrap\";\r\nimport ComponentContainerCard from \"@/components/ComponentContainerCard\";\r\n\r\nconst VouchersUtilizadosTable = ({ vouchersUtilizados }) => {\r\n    return (\r\n        <ComponentContainerCard id=\"relatorio-vouchers\" title=\"Vouchers Utilizados\" description=\"Lista de vouchers utilizados pelos clientes\">\r\n            <div className=\"table-responsive\">\r\n                <Table striped bordered hover>\r\n                    <thead>\r\n                        <tr>\r\n                            <th>Código do Voucher</th>\r\n                            <th>Cliente</th>\r\n                            <th>Data de Utilização</th>\r\n                            <th>Desconto</th>\r\n                        </tr>\r\n                    </thead>\r\n                    <tbody>\r\n                        {vouchersUtilizados.length > 0 ? (\r\n                            vouchersUtilizados.map((voucher, index) => (\r\n                                <tr key={index}>\r\n                                    <td>{voucher.codigo}</td>\r\n                                    <td>{voucher.cliente}</td>\r\n                                    <td>{voucher.dataUtilizacao}</td>\r\n                                    <td>{voucher.valorDesconto}%</td>\r\n                                </tr>\r\n                            ))\r\n                        ) : (\r\n                            <tr>\r\n                                <td colSpan=\"4\" className=\"text-center\">Nenhum voucher utilizado ainda.</td>\r\n                            </tr>\r\n                        )}\r\n                    </tbody>\r\n                </Table>\r\n            </div>\r\n        </ComponentContainerCard>\r\n    );\r\n};\r\n\r\nexport default VouchersUtilizadosTable;\r\n"
+        }
+    ]
+}

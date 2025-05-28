@@ -1,114 +1,89 @@
-'use client';
+"use client";
 
-import ChoicesFormInput from '@/components/from/ChoicesFormInput';
-import Nouislider from 'nouislider-react';
-import { useState } from 'react';
-import { Button, Card, CardBody, CardFooter, CardHeader, CardTitle, Col, Row } from 'react-bootstrap';
-const PropertiesFilter = () => {
-  const [selectedValue, setSelectedValue] = useState([6000, 100000]);
-  const handleSliderChange = values => {
-    setSelectedValue(values);
+import { useState, useEffect } from "react";
+import { Button, Card, CardBody, CardFooter, CardHeader, CardTitle, Col, Row } from "react-bootstrap";
+
+const PropertiesFilter = ({ onFilterChange }) => {
+  const [nichos, setNichos] = useState([]);
+  const [selectedNichos, setSelectedNichos] = useState([]);
+  const [search, setSearch] = useState("");
+
+  // Buscar nichos da API
+  useEffect(() => {
+    const fetchNichos = async () => {
+      try {
+        const response = await fetch("/api/nichos");
+        const data = await response.json();
+        setNichos(data.map(n => n.nicho)); // Transformamos o resultado em um array de strings
+      } catch (error) {
+        console.error("Erro ao buscar nichos:", error);
+      }
+    };
+
+    fetchNichos();
+  }, []);
+
+  // Atualizar seleção de nichos
+  const handleNichoChange = (nicho) => {
+    setSelectedNichos(prevSelected =>
+      prevSelected.includes(nicho)
+        ? prevSelected.filter(item => item !== nicho)
+        : [...prevSelected, nicho]
+    );
   };
-  const handleInputChange = event => {
-    if (selectedValue[0] <= Math.round(event.target.value)) {
-      setSelectedValue([selectedValue[0], Math.round(event.target.value)]);
-    }
+
+  // Aplicar filtro
+  const handleApplyFilter = () => {
+    onFilterChange({ nichos: selectedNichos, search });
   };
-  return <Col xl={3} lg={12}>
+
+  return (
+    <Col xl={3} lg={12}>
       <Card>
         <CardHeader className="border-bottom">
-          <div>
-            <CardTitle as={'h4'}>Parceiros</CardTitle>
-            <p className="mb-0">Mais de 1.000 parceiros conectados</p>
-          </div>
+          <CardTitle as={"h4"}>Filtrar Parceiros</CardTitle>
+          <p className="mb-0">Encontre parceiros por nicho ou nome</p>
         </CardHeader>
-        <CardBody className="border-light">
-          <form>
-            <label htmlFor="choices-single-groups" className="form-label">
-              Estado
-            </label>
-            <ChoicesFormInput className="form-control" id="choices-single-groups" data-placeholder="Select City">
-            <option>Escolha a cidade</option>
-              <optgroup label="Pernambuco">
-                <option value="Recife">Recife</option>
-                <option value="Olinda">Olinda</option>
-                <option value="Jaboatão dos Guararapes">Jaboatão dos Guararapes</option>
-                <option value="Paulista">Paulista</option>
-                <option value="Caruaru">Caruaru</option>
-                <option value="Petrolina">Petrolina</option>
-                <option value="Cabo de Santo Agostinho">Cabo de Santo Agostinho</option> {/* Incluído */}
-                <option value="Ipojuca">Ipojuca</option> {/* Próximo a Cabo */}
-                <option value="Moreno">Moreno</option> {/* Próximo a Cabo */}
-                <option value="São Lourenço da Mata">São Lourenço da Mata</option> {/* Próximo a Cabo */}
-        {/* Adicione outras cidades de Pernambuco próximas a Cabo se desejar */}
-    </optgroup>
-    {/* Você pode adicionar outros estados/regiões aqui, se necessário */}
-</ChoicesFormInput>
-          </form>
+        <CardBody>
+          {/* Campo de pesquisa */}
+          <input
+            type="text"
+            className="form-control mb-3"
+            placeholder="Pesquisar parceiro..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+
+          {/* Lista de Nichos Dinâmicos */}
           <h5 className="text-dark fw-medium my-3"> Nichos Parceiros:</h5>
           <Row className="g-1">
-            <Col lg={6}>
-              <div className="mb-2">
-                <input className="form-check-input" type="checkbox" id="defaultCheck5" />
-                &nbsp;
-                <label className="form-check-label ms-1" htmlFor="defaultCheck1">
-                  Barbearia
-                </label>
-              </div>
-            </Col>
-            <Col lg={6}>
-              <div className="mb-2">
-                <input className="form-check-input" type="checkbox" id="defaultCheck6" />
-                &nbsp;
-                <label className="form-check-label ms-1" htmlFor="defaultCheck1">
-                  Petshop
-                </label>
-              </div>
-            </Col>
-            <Col lg={6}>
-              <div className="mb-2">
-                <input className="form-check-input" type="checkbox" id="defaultCheck7" />
-                &nbsp;
-                <label className="form-check-label ms-1" htmlFor="defaultCheck1">
-                  Academia
-                </label>
-              </div>
-            </Col>
-            <Col lg={6}>
-              <div className="mb-2">
-                <input className="form-check-input" type="checkbox" id="defaultCheck8" />
-                &nbsp;
-                <label className="form-check-label ms-1" htmlFor="defaultCheck1">
-                  Restaurante
-                </label>
-              </div>
-            </Col>
-            <Col lg={6}>
-              <div className="mb-2">
-                <input className="form-check-input" type="checkbox" id="defaultCheck9" />
-                &nbsp;
-                <label className="form-check-label ms-1" htmlFor="defaultCheck1">
-                  Restaurante
-                </label>
-              </div>
-            </Col>
-            <Col lg={6}>
-              <div className="mb-2">
-                <input className="form-check-input" type="checkbox" id="defaultCheck10" />
-                &nbsp;
-                <label className="form-check-label ms-1" htmlFor="defaultCheck1">
-                  Salão de beleza
-                </label>
-              </div>
-            </Col>
+            {nichos.map((nicho, idx) => (
+              <Col lg={6} key={idx}>
+                <div className="mb-2">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id={`nicho-${idx}`}
+                    checked={selectedNichos.includes(nicho)}
+                    onChange={() => handleNichoChange(nicho)}
+                  />
+                  &nbsp;
+                  <label className="form-check-label ms-1" htmlFor={`nicho-${idx}`}>
+                    {nicho}
+                  </label>
+                </div>
+              </Col>
+            ))}
           </Row>
         </CardBody>
         <CardFooter>
-          <Button variant="primary" className="w-100">
+          <Button variant="primary" className="w-100" onClick={handleApplyFilter}>
             Aplicar Filtro
           </Button>
         </CardFooter>
       </Card>
-    </Col>;
+    </Col>
+  );
 };
+
 export default PropertiesFilter;

@@ -40,28 +40,26 @@ const ResetPassword = () => {
                     <Image src={LogoLight} height={28} alt="logo light" />
                   </Link>
                 </div>
-                <h2 className="fw-bold text-uppercase text-center fs-18">Reset Password</h2>
+                <h2 className="fw-bold text-uppercase text-center fs-18">Resetar senha</h2>
                 <p className="text-muted text-center mt-1 mb-4">
-                  Enter your email address and we&apos;ll send you an email with instructions <br /> to reset your password.
-                </p>
+                Digite seu endereço de e-mail e enviaremos um e-mail com instruções <br /> para redefinir sua senha.                </p>
                 <div className="px-4">
                   <form onSubmit={handleSubmit(() => {})} className="authentication-form">
                     <div className="mb-3">
-                      <TextFormInput control={control} name="email" placeholder="Enter your email" className="bg-light bg-opacity-50 border-light py-2" label="Email" />
+                      <TextFormInput control={control} name="email" placeholder="Digite seu e-mail" className="bg-light bg-opacity-50 border-light py-2" label="Email" />
                     </div>
                     <div className="mb-1 text-center d-grid">
                       <button className="btn btn-danger py-2 fw-medium" type="submit">
-                        Reset Password
-                      </button>
+                        Resetar Senha                      </button>
                     </div>
                   </form>
                 </div>
               </CardBody>
             </Card>
             <p className="mb-0 text-center text-white">
-              Back to{' '}
-              <Link href="/auth/sign-in" className="text-reset text-unline-dashed fw-bold ms-1">
-                Sign In
+            Voltar para{' '}
+              <Link href="/auth/login" className="text-reset text-unline-dashed fw-bold ms-1">
+                Login
               </Link>
             </p>
           </Col>

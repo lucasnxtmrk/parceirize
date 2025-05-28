@@ -3,7 +3,7 @@
     "activeCommit": 0,
     "commits": [
         {
-            "activePatchIndex": 3,
+            "activePatchIndex": 4,
             "patches": [
                 {
                     "date": 1739464925033,
@@ -20,6 +20,10 @@
                 {
                     "date": 1739465029911,
                     "content": "Index: \n===================================================================\n--- \n+++ \n@@ -12,9 +12,9 @@\n const AppProvidersWrapper = ({\n   children\n }) => {\n   const handleChangeTitle = () => {\n-    if (document.visibilityState == 'hidden') document.title = 'Por favor Volte 🥺';else document.title = DEFAULT_PAGE_TITLE;\n+    if (document.visibilityState == 'hidden') document.title = 'Por favor, volte. 🥺';else document.title = DEFAULT_PAGE_TITLE;\n   };\n   useEffect(() => {\n     if (document) {\n       const e = document.querySelector('#__next_splash');\n"
+                },
+                {
+                    "date": 1740408865454,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -12,9 +12,9 @@\n const AppProvidersWrapper = ({\n   children\n }) => {\n   const handleChangeTitle = () => {\n-    if (document.visibilityState == 'hidden') document.title = 'Por favor, volte. 🥺';else document.title = DEFAULT_PAGE_TITLE;\n+    if (document.visibilityState == 'hidden') document.title = 'Protege';else document.title = DEFAULT_PAGE_TITLE;\n   };\n   useEffect(() => {\n     if (document) {\n       const e = document.querySelector('#__next_splash');\n"
                 }
             ],
             "date": 1739464925033,

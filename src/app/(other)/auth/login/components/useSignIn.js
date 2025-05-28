@@ -23,28 +23,39 @@ const useSignIn = () => {
     const { control, handleSubmit } = useForm({
         resolver: yupResolver(loginFormSchema),
         defaultValues: {
-            email: 'user@demo.com',
-            password: '123456'
+            email: 'cliente@protegenet.com.br',
+            password: '12345678'
         }
     });
 
-    const login = handleSubmit(async (values) => { // Agora handleSubmit está definido
+    const login = handleSubmit(async (values) => {
         setLoading(true);
-
-        const callbackUrl = searchParams.get('redirectTo') ?? window.location.origin + '/carteirinha';
-
-        signIn('credentials', {
+    
+        const res = await signIn('credentials', {
             email: values?.email,
             password: values?.password,
-            redirect: false,
-        }).then(res => {
-            if (res?.ok) {
-                push(callbackUrl);
-            } else {
-                // Lidar com erro
-            }
-        }).finally(() => setLoading(false));
+            redirect: false, // Mantemos falso para redirecionar manualmente
+        });
+    
+        if (res?.ok) {
+            // 🔥 Buscar sessão para pegar o role do usuário
+            const response = await fetch('/api/auth/session');
+            const session = await response.json();
+            const role = session?.user?.role;
+    
+            let redirectUrl = '/';
+            if (role === 'cliente') redirectUrl = '/carteirinha';
+            if (role === 'parceiro') redirectUrl = '/relatorio';
+            if (role === 'admin') redirectUrl = '/dashboard';
+    
+            push(redirectUrl); // Agora redireciona corretamente!
+        } else {
+            showNotification('Erro no login', 'error');
+        }
+    
+        setLoading(false);
     });
+    
 
     return { loading, login, control };
 };

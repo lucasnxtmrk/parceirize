@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import { Suspense } from 'react';
 import { Container } from 'react-bootstrap';
 const TopNavigationBar = dynamic(() => import('@/components/layout/TopNavigationBar/page'));
-const VerticalNavigationBar = dynamic(() => import('@/components/layout/VerticalNavigationBarParceiro/page'));
+const VerticalNavigationBar = dynamic(() => import('@/components/layout/VerticalNavigationBarAdmin/page'));
 const AdminLayout = ({
   children
 }) => {

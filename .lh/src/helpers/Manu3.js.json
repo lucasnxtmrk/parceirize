@@ -3,11 +3,19 @@
     "activeCommit": 0,
     "commits": [
         {
-            "activePatchIndex": 0,
+            "activePatchIndex": 2,
             "patches": [
                 {
                     "date": 1739404961149,
                     "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1740405606570,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,5 +1,5 @@\n-import { MENU_ITEMS } from '@/assets/data/menu-items-parceiros';\n+import { MENU_ITEMS } from '@/assets/data/menu-items-admin';\n export const getMenuItems = () => {\n   return MENU_ITEMS;\n };\n export const findAllParent = (menuItems, menuItem) => {\n"
+                },
+                {
+                    "date": 1740494926530,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,5 +1,5 @@\n-import { MENU_ITEMS } from '@/assets/data/menu-items-admin';\n+import { MENU_ITEMS } from '@/assets/data/menu-items-parceiros';\n export const getMenuItems = () => {\n   return MENU_ITEMS;\n };\n export const findAllParent = (menuItems, menuItem) => {\n"
                 }
             ],
             "date": 1739404961149,

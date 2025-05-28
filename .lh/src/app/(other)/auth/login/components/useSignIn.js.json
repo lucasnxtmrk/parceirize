@@ -3,7 +3,7 @@
     "activeCommit": 0,
     "commits": [
         {
-            "activePatchIndex": 8,
+            "activePatchIndex": 13,
             "patches": [
                 {
                     "date": 1740055910363,
@@ -40,6 +40,26 @@
                 {
                     "date": 1740252618824,
                     "content": "Index: \n===================================================================\n--- \n+++ \n@@ -30,9 +30,9 @@\n \n     const login = handleSubmit(async (values) => { // Agora handleSubmit está definido\n         setLoading(true);\n \n-        const callbackUrl = searchParams.get('redirectTo') ?? window.location.origin + '/';\n+        const callbackUrl = searchParams.get('redirectTo') ?? window.location.origin + '/carteirinha';\n \n         signIn('credentials', {\n             email: values?.email,\n             password: values?.password,\n"
+                },
+                {
+                    "date": 1740320462765,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -35,16 +35,17 @@\n \n         signIn('credentials', {\n             email: values?.email,\n             password: values?.password,\n-            redirect: false,\n+            redirect: false, // Deixe false para controle manual do redirecionamento\n+            callbackUrl // Passe callbackUrl explicitamente\n         }).then(res => {\n             if (res?.ok) {\n-                push(callbackUrl);\n+                push(res.url || callbackUrl); // Se NextAuth retornar URL, usa ela\n             } else {\n-                // Lidar com erro\n+                showNotification('Erro no login', 'error');\n             }\n-        }).finally(() => setLoading(false));\n+        });\n     });\n \n     return { loading, login, control };\n };\n"
+                },
+                {
+                    "date": 1740320655436,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -27,26 +27,36 @@\n             password: '123456'\n         }\n     });\n \n-    const login = handleSubmit(async (values) => { // Agora handleSubmit está definido\n+    const login = handleSubmit(async (values) => {\n         setLoading(true);\n-\n-        const callbackUrl = searchParams.get('redirectTo') ?? window.location.origin + '/carteirinha';\n-\n-        signIn('credentials', {\n+    \n+        const res = await signIn('credentials', {\n             email: values?.email,\n             password: values?.password,\n-            redirect: false, // Deixe false para controle manual do redirecionamento\n-            callbackUrl // Passe callbackUrl explicitamente\n-        }).then(res => {\n-            if (res?.ok) {\n-                push(res.url || callbackUrl); // Se NextAuth retornar URL, usa ela\n-            } else {\n-                showNotification('Erro no login', 'error');\n-            }\n+            redirect: false, // Mantemos falso para redirecionar manualmente\n         });\n+    \n+        if (res?.ok) {\n+            // 🔥 Buscar sessão para pegar o role do usuário\n+            const response = await fetch('/api/auth/session');\n+            const session = await response.json();\n+            const role = session?.user?.role;\n+    \n+            let redirectUrl = '/';\n+            if (role === 'cliente') redirectUrl = '/carteirinha';\n+            if (role === 'parceiro') redirectUrl = '/relatorio';\n+            if (role === 'admin') redirectUrl = '/admin';\n+    \n+            push(redirectUrl); // Agora redireciona corretamente!\n+        } else {\n+            showNotification('Erro no login', 'error');\n+        }\n+    \n+        setLoading(false);\n     });\n+    \n \n     return { loading, login, control };\n };\n \n"
+                },
+                {
+                    "date": 1740327190246,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -22,10 +22,10 @@\n     // *** Correção: Mova useForm para DENTRO da função useSignIn ***\n     const { control, handleSubmit } = useForm({\n         resolver: yupResolver(loginFormSchema),\n         defaultValues: {\n-            email: 'user@demo.com',\n-            password: '123456'\n+            email: 'cliente@protege.com.br',\n+            password: '12345678'\n         }\n     });\n \n     const login = handleSubmit(async (values) => {\n"
+                },
+                {
+                    "date": 1740330361244,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -22,9 +22,9 @@\n     // *** Correção: Mova useForm para DENTRO da função useSignIn ***\n     const { control, handleSubmit } = useForm({\n         resolver: yupResolver(loginFormSchema),\n         defaultValues: {\n-            email: 'cliente@protege.com.br',\n+            email: 'cliente@protegenet.com.br',\n             password: '12345678'\n         }\n     });\n \n"
+                },
+                {
+                    "date": 1740484974208,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -45,9 +45,9 @@\n     \n             let redirectUrl = '/';\n             if (role === 'cliente') redirectUrl = '/carteirinha';\n             if (role === 'parceiro') redirectUrl = '/relatorio';\n-            if (role === 'admin') redirectUrl = '/admin';\n+            if (role === 'admin') redirectUrl = '/dashboard';\n     \n             push(redirectUrl); // Agora redireciona corretamente!\n         } else {\n             showNotification('Erro no login', 'error');\n"
                 }
             ],
             "date": 1740055910363,

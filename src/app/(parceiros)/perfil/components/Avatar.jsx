@@ -1,10 +1,15 @@
-import { useState } from 'react';
-import { Image } from 'react-bootstrap';
-import IconifyIcon from '@/components/wrappers/IconifyIcon';
+"use client"; 
+import { useState, useEffect } from "react"; // Importação correta
+import { Image } from "react-bootstrap";
+import IconifyIcon from "@/components/wrappers/IconifyIcon";
 
 const Avatar = ({ src, alt }) => {
-    const [image, setImage] = useState(src);
+    const [image, setImage] = useState(src || "/assets/images/users/dummy-avatar.jpg");
     const [isEditing, setIsEditing] = useState(false);
+
+    useEffect(() => {
+        setImage(src || "/assets/images/users/dummy-avatar.jpg");
+    }, [src]);
 
     const handleEdit = () => {
         setIsEditing(true);
@@ -27,13 +32,13 @@ const Avatar = ({ src, alt }) => {
     return (
         <div
             style={{
-                width: '120px',
-                height: '120px',
-                borderRadius: '50%',
-                overflow: 'hidden',
-                position: 'relative',
-                cursor: 'pointer',
-                transition: 'opacity 0.3s ease', // Adiciona transição para suavizar o hover
+                width: "120px",
+                height: "120px",
+                borderRadius: "50%",
+                overflow: "hidden",
+                position: "relative",
+                cursor: "pointer",
+                transition: "opacity 0.3s ease",
             }}
             onMouseEnter={handleEdit}
             onMouseLeave={() => setIsEditing(false)}
@@ -42,47 +47,47 @@ const Avatar = ({ src, alt }) => {
                 src={image}
                 alt={alt}
                 style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    transition: 'transform 0.3s ease', // Transição na imagem ao editar
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    transition: "transform 0.3s ease",
                 }}
             />
             {isEditing && (
                 <div
                     style={{
-                        position: 'absolute',
+                        position: "absolute",
                         top: 0,
                         left: 0,
-                        width: '100%',
-                        height: '100%',
-                        backgroundColor: 'rgba(0, 0, 0, 0)', // Começa transparente
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        transition: 'background-color 0.3s ease', // Transição suave do background
+                        width: "100%",
+                        height: "100%",
+                        backgroundColor: "rgba(0, 0, 0, 0.5)", // Deixa o fundo mais escuro ao editar
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        transition: "background-color 0.3s ease",
                     }}
                 >
-                    <div // Div extra para o conteúdo do overlay
+                    <div
                         style={{
-                            opacity: 0, // Começa invisível
-                            transition: 'opacity 0.3s ease', // Transição suave da opacidade
-                            display: 'flex',
-                            flexDirection: 'column', // Alinha verticalmente
-                            alignItems: 'center',
+                            opacity: 1, // Agora visível
+                            transition: "opacity 0.3s ease",
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
                         }}
                     >
-                        <label htmlFor="imageInput" style={{ cursor: 'pointer' }}>
-                            <IconifyIcon icon="bx:camera" color="white" size="2em" /> {/* Ícone maior */}
+                        <label htmlFor="imageInput" style={{ cursor: "pointer" }}>
+                            <IconifyIcon icon="bx:camera" color="white" size="2em" />
                         </label>
                         <input
                             type="file"
                             id="imageInput"
                             accept="image/*"
-                            style={{ display: 'none' }}
+                            style={{ display: "none" }}
                             onChange={handleImageChange}
                         />
-                         <span style={{color: 'white', marginTop: '0.5em'}}>Editar</span> {/* Texto "Editar" */}
+                        <span style={{ color: "white", marginTop: "0.5em" }}>Editar</span>
                     </div>
                 </div>
             )}

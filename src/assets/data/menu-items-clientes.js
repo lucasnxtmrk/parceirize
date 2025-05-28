@@ -21,10 +21,4 @@ export const MENU_ITEMS = [{
   icon: 'ri:question-line',
   url: '/tutorial'
 },
-{
-  key: 'sair',
-  label: 'Sair',
-  icon: 'ri:logout-box-r-line',
-  url: '/auth/login-cliente'
-},
  ];

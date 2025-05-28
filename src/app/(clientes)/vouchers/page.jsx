@@ -9,7 +9,6 @@ const PropertyGridPage = () => {
   return <>
       <PageTitle title="Vouchers" subName="Parceiros" />
       <Row>
-        <PropertiesFilter />
         <PropertiesData />
       </Row>
     </>;

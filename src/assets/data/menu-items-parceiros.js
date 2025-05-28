@@ -23,10 +23,4 @@ export const MENU_ITEMS = [
     icon: 'ri:user-line',
     url: '/perfil'
   },
-  {
-    key: 'sair',
-    label: 'Sair',
-    icon: 'ri:logout-box-r-line',
-    url: '/auth/login-parceiro'
-  }
 ];

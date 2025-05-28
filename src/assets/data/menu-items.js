@@ -208,7 +208,7 @@ export const MENU_ITEMS = [{
   children: [{
     key: 'sign-in',
     label: 'Sign In',
-    url: '/auth/sign-in',
+    url: '/auth/login',
     parentKey: 'auth'
   }, {
     key: 'sign-up',

@@ -1,0 +1,22 @@
+{
+    "sourceFile": "src/app/api/vouchers.js",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 1,
+            "patches": [
+                {
+                    "date": 1740330899690,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1740331687780,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -5,8 +5,10 @@\n });\r\n \r\n export default async function handler(req, res) {\r\n   try {\r\n+    console.log(\"📡 Buscando vouchers no banco de dados...\");\r\n+\r\n     const query = `\r\n       SELECT \r\n         v.id AS voucher_id,\r\n         v.codigo AS voucher_codigo,\r\n@@ -18,10 +20,13 @@\n       INNER JOIN parceiros p ON v.parceiro_id = p.id\r\n     `;\r\n \r\n     const result = await pool.query(query);\r\n+    \r\n+    console.log(\"🔍 Vouchers encontrados:\", result.rows);\r\n+\r\n     res.status(200).json(result.rows);\r\n   } catch (error) {\r\n-    console.error(\"Erro ao buscar vouchers:\", error);\r\n+    console.error(\"❌ Erro ao buscar vouchers:\", error);\r\n     res.status(500).json({ error: \"Erro interno ao buscar vouchers\" });\r\n   }\r\n }\r\n"
+                }
+            ],
+            "date": 1740330899690,
+            "name": "Commit-0",
+            "content": "import { Pool } from \"pg\";\r\n\r\nconst pool = new Pool({\r\n  connectionString: process.env.DATABASE_URL,\r\n});\r\n\r\nexport default async function handler(req, res) {\r\n  try {\r\n    const query = `\r\n      SELECT \r\n        v.id AS voucher_id,\r\n        v.codigo AS voucher_codigo,\r\n        v.desconto AS voucher_desconto,\r\n        p.nome_empresa AS parceiro_nome,\r\n        p.nicho AS parceiro_nicho,\r\n        p.foto AS parceiro_foto\r\n      FROM vouchers v\r\n      INNER JOIN parceiros p ON v.parceiro_id = p.id\r\n    `;\r\n\r\n    const result = await pool.query(query);\r\n    res.status(200).json(result.rows);\r\n  } catch (error) {\r\n    console.error(\"Erro ao buscar vouchers:\", error);\r\n    res.status(500).json({ error: \"Erro interno ao buscar vouchers\" });\r\n  }\r\n}\r\n"
+        }
+    ]
+}

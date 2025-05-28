@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
 import { useState, useEffect } from 'react';
-import { Container, Row } from 'react-bootstrap';
-import NestingTable2 from './components/NestingTable2'; // Importe o componente
+import { Row } from 'react-bootstrap';
+import NestingTable2 from './components/NestingTable2';
 
 const VoucherReportPage = () => {
     const [vouchersUtilizados, setVouchersUtilizados] = useState([]);
@@ -10,27 +10,25 @@ const VoucherReportPage = () => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        // Simulação de dados da API (substitua pelos dados reais quando a API estiver pronta)
-        const mockVouchersUtilizados = [
-            { codigo: 'NXT20', cliente: 'João Silva', dataUtilizacao: '10/05/2024 10:00', valorDesconto: '20%' },
-            { codigo: 'NXT20', cliente: 'Maria Souza', dataUtilizacao: '12/05/2024 15:30', valorDesconto: '20%' },
-            // ... mais dados
-        ];
+        const fetchVouchersUtilizados = async () => {
+            try {
+                const response = await fetch('/api/parceiro/vouchers-utilizados');
 
-        // Simula uma chamada de API (substitua pela chamada real quando a API estiver pronta)
-        const simulateApiCall = new Promise((resolve) => {
-            setTimeout(() => {
-                resolve({ vouchers: mockVouchersUtilizados });
-            }, 500);
-        });
+                if (!response.ok) {
+                    throw new Error(`Erro ao buscar vouchers utilizados: ${response.status}`);
+                }
 
-        simulateApiCall.then(data => {
-            setVouchersUtilizados(data.vouchers);
-            setLoading(false);
-        }).catch(err => {
-            setError(err);
-            setLoading(false);
-        });
+                const data = await response.json();
+                setVouchersUtilizados(data);
+                setLoading(false);
+            } catch (err) {
+                console.error("❌ Erro na requisição:", err);
+                setError(err);
+                setLoading(false);
+            }
+        };
+
+        fetchVouchersUtilizados();
     }, []);
 
     if (loading) {
@@ -42,11 +40,9 @@ const VoucherReportPage = () => {
     }
 
     return (
-        
-            <Row>
-                <NestingTable2 vouchersUtilizados={vouchersUtilizados} /> {/* Passe os dados para o componente */}
-            </Row>
-        
+        <Row>
+            <NestingTable2 vouchersUtilizados={vouchersUtilizados} />
+        </Row>
     );
 };
 

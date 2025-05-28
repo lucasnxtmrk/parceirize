@@ -3,7 +3,7 @@
     "activeCommit": 0,
     "commits": [
         {
-            "activePatchIndex": 2,
+            "activePatchIndex": 3,
             "patches": [
                 {
                     "date": 1739445530595,
@@ -16,6 +16,10 @@
                 {
                     "date": 1739446555922,
                     "content": "Index: \n===================================================================\n--- \n+++ \n@@ -6,9 +6,9 @@\n   title: 'Vouchers'\n };\n const PropertyGridPage = () => {\n   return <>\n-      <PageTitle title=\"Vouchers Parceiros\" subName=\"Real Estate\" />\n+      <PageTitle title=\"Vouchers\" subName=\"Parceiros\" />\n       <Row>\n         <PropertiesFilter />\n         <PropertiesData />\n       </Row>\n"
+                },
+                {
+                    "date": 1740333206201,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -8,9 +8,8 @@\n const PropertyGridPage = () => {\n   return <>\n       <PageTitle title=\"Vouchers\" subName=\"Parceiros\" />\n       <Row>\n-        <PropertiesFilter />\n         <PropertiesData />\n       </Row>\n     </>;\n };\n"
                 }
             ],
             "date": 1739445530595,

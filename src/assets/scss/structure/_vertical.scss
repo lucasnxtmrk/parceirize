@@ -619,3 +619,28 @@ html[data-menu-color="brand"] {
           }
      }
 }
+// Corrigir para mobile quando menu estiver aberto com sm-hover-active
+@include media-breakpoint-down(md) {
+  html[data-menu-size="sm-hover-active"] {
+    .main-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 250px;
+      height: 100vh;
+      z-index: 1055;
+      margin-left: 0 !important;
+      box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .page-content {
+      margin-left: 0 !important;
+      filter: blur(2px);
+      pointer-events: none;
+    }
+
+    .topbar {
+      margin-left: 0 !important;
+    }
+  }
+}

@@ -20,7 +20,7 @@ const generateUniqueVoucher = async (nomeEmpresa, desconto) => {
     while (exists) {
         voucherCode = generateVoucherCode(nomeEmpresa, desconto);
         try {
-            const response = await fetch(`/api/admin/verify-voucher?voucher=${voucherCode}`);
+            const response = await fetch(`/api/admin/validarVoucher?voucher=${voucherCode}`);
             const data = await response.json();
             exists = data.exists;
         } catch (error) {

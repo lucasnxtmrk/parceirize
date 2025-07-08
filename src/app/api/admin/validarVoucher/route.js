@@ -93,3 +93,44 @@ export async function POST(req) {
     return new Response(JSON.stringify({ error: "Erro interno ao validar voucher." }), { status: 500 });
   }
 }
+
+export async function GET(req) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const codigoVoucher = searchParams.get("voucher");
+
+    if (!codigoVoucher) {
+      return new Response(JSON.stringify({ error: "Código do voucher não fornecido" }), { status: 400 });
+    }
+
+    console.log(`🔍 Verificando existência do voucher: ${codigoVoucher}`);
+
+    const result = await pool.query(
+      `SELECT v.codigo, v.desconto, v.limite_uso, p.nome_empresa AS parceiro
+       FROM vouchers v
+       INNER JOIN parceiros p ON v.parceiro_id = p.id
+       WHERE v.codigo = $1`,
+      [codigoVoucher]
+    );
+
+    if (result.rows.length === 0) {
+      console.log("❌ Voucher não encontrado");
+      return new Response(JSON.stringify({ exists: false }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const voucher = result.rows[0];
+    console.log("✅ Voucher encontrado:", voucher);
+
+    return new Response(JSON.stringify({ exists: true, voucher }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+
+  } catch (error) {
+    console.error("❌ Erro ao verificar voucher:", error);
+    return new Response(JSON.stringify({ error: "Erro ao verificar voucher" }), { status: 500 });
+  }
+}

@@ -189,3 +189,56 @@ export async function PUT(req) {
     return new Response(JSON.stringify({ error: "Erro ao atualizar parceiro", detail: error.message }), { status: 500 });
   }
 }
+
+// ✅ DELETE - REMOVER PARCEIRO
+export async function DELETE(req) {
+  try {
+    const session = await getServerSession(options);
+    if (!session || session.user.role !== "admin") {
+      return new Response(JSON.stringify({ error: "Acesso negado" }), { status: 403 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const parceiroId = searchParams.get("id");
+
+    if (!parceiroId) {
+      return new Response(JSON.stringify({ error: "ID do parceiro não fornecido" }), { status: 400 });
+    }
+
+    // 1️⃣ Buscar todos os vouchers do parceiro
+    const vouchers = await pool.query(
+      "SELECT id FROM vouchers WHERE parceiro_id = $1",
+      [parceiroId]
+    );
+
+    // 2️⃣ Remover todos os registros em voucher_utilizados relacionados
+    for (const voucher of vouchers.rows) {
+      await pool.query(
+        "DELETE FROM voucher_utilizados WHERE voucher_id = $1",
+        [voucher.id]
+      );
+    }
+
+    // 3️⃣ Remover os vouchers do parceiro
+    await pool.query("DELETE FROM vouchers WHERE parceiro_id = $1", [parceiroId]);
+
+    // 4️⃣ Remover o parceiro
+    const result = await pool.query("DELETE FROM parceiros WHERE id = $1 RETURNING id", [parceiroId]);
+
+    if (result.rows.length === 0) {
+      return new Response(JSON.stringify({ error: "Parceiro não encontrado" }), { status: 404 });
+    }
+
+    console.log("🗑️ Parceiro e dados associados excluídos:", parceiroId);
+
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+
+  } catch (error) {
+    console.error("❌ Erro ao excluir parceiro e dados associados:", error);
+    return new Response(JSON.stringify({ error: "Erro ao excluir parceiro", detail: error.message }), { status: 500 });
+  }
+}
+

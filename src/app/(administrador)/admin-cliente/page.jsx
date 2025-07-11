@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Button, Table, FormCheck, Row, Col, CardTitle } from "react-bootstrap";
+import { Button, Table, FormCheck, CardTitle, Modal } from "react-bootstrap";
 import ComponentContainerCard from "@/components/ComponentContainerCard";
 import ClienteModal from "./components/ClienteModal";
-
 
 const ClientesPage = () => {
     const [clientes, setClientes] = useState([]);
@@ -13,12 +12,12 @@ const ClientesPage = () => {
     const [error, setError] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [clienteSelecionado, setClienteSelecionado] = useState(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     useEffect(() => {
         fetchClientes();
     }, []);
 
-    // Função para buscar clientes
     const fetchClientes = async () => {
         try {
             const response = await fetch("/api/admin/clientes");
@@ -33,40 +32,32 @@ const ClientesPage = () => {
         }
     };
 
-    // Função para abrir o modal (novo ou edição)
     const handleOpenModal = (cliente = null) => {
         setClienteSelecionado(cliente);
         setShowModal(true);
     };
 
-    // Função para fechar o modal
     const handleCloseModal = () => {
         setClienteSelecionado(null);
         setShowModal(false);
     };
 
-    // ✅ Correção: Atualiza a lista de clientes após criar ou editar um cliente
     const handleClientCreated = () => {
-        fetchClientes(); // Atualiza a tabela
-        handleCloseModal(); // Fecha o modal
+        fetchClientes();
+        handleCloseModal();
     };
 
-    // Seleção de múltiplos clientes
     const handleCheckboxChange = (id) => {
         setSelectedClientes((prevSelected) =>
             prevSelected.includes(id) ? prevSelected.filter((cid) => cid !== id) : [...prevSelected, id]
         );
     };
 
-    // Seleção de todos os clientes
     const handleSelectAll = () => {
         setSelectedClientes(selectedClientes.length === clientes.length ? [] : clientes.map((c) => c.id));
     };
 
-    // Função para excluir clientes selecionados
     const handleDeleteClientes = async () => {
-        if (!window.confirm("Tem certeza que deseja excluir os clientes selecionados?")) return;
-
         try {
             const response = await fetch("/api/admin/clientes", {
                 method: "DELETE",
@@ -76,49 +67,40 @@ const ClientesPage = () => {
 
             if (!response.ok) throw new Error("Erro ao excluir clientes");
 
-            fetchClientes(); // Atualiza a lista após exclusão
+            setShowDeleteModal(false);
+            fetchClientes();
             setSelectedClientes([]);
         } catch (err) {
             console.error("❌ Erro ao excluir clientes:", err);
         }
     };
 
-    if (loading) {
-        return <div className="text-center">Carregando clientes...</div>;
-    }
-
-    if (error) {
-        return <div className="text-center text-danger">Erro ao carregar clientes: {error}</div>;
-    }
+    if (loading) return <div className="text-center">Carregando clientes...</div>;
+    if (error) return <div className="text-center text-danger">Erro ao carregar clientes: {error}</div>;
 
     return (
-<ComponentContainerCard id="gestao-clientes" title="" description="">            {/* Botões de ação */}
+        <ComponentContainerCard id="gestao-clientes">
             <div className="d-flex justify-content-between align-items-center mb-3">
-  <CardTitle as="h4" className="mb-0">
-    Gestão de Clientes
-  </CardTitle>
+                <CardTitle as="h4" className="mb-0">Gestão de Clientes</CardTitle>
 
-  <div className="d-flex gap-2">
-    <Button variant="primary" onClick={() => handleOpenModal()}>
-      + Criar Novo Cliente
-    </Button>
+                <div className="d-flex gap-2">
+                    <Button variant="primary" onClick={() => handleOpenModal()}>
+                        + Criar Novo Cliente
+                    </Button>
+                    {selectedClientes.length > 0 && (
+                        <Button variant="secondary" onClick={() => setShowDeleteModal(true)}>
+                            Excluir Selecionados
+                        </Button>
+                    )}
+                </div>
+            </div>
 
-    {selectedClientes.length > 0 && (
-      <Button variant="danger" onClick={handleDeleteClientes}>
-        Excluir Selecionados
-      </Button>
-    )}
-  </div>
-</div>
-
-
-            {/* Tabela de clientes */}
             <div className="table-responsive">
                 <Table hover align="center">
                     <thead className="table-light">
                         <tr>
                             <th scope="col">
-                                <FormCheck 
+                                <FormCheck
                                     checked={selectedClientes.length === clientes.length}
                                     onChange={handleSelectAll}
                                 />
@@ -133,7 +115,7 @@ const ClientesPage = () => {
                         {clientes.map((cliente) => (
                             <tr key={cliente.id}>
                                 <td>
-                                    <FormCheck 
+                                    <FormCheck
                                         checked={selectedClientes.includes(cliente.id)}
                                         onChange={() => handleCheckboxChange(cliente.id)}
                                     />
@@ -150,8 +132,35 @@ const ClientesPage = () => {
                 </Table>
             </div>
 
-            {/* ✅ Correção: Passando corretamente a função handleClientCreated */}
-            <ClienteModal show={showModal} handleClose={handleCloseModal} onClientCreated={handleClientCreated} cliente={clienteSelecionado} />
+            <ClienteModal
+                show={showModal}
+                handleClose={handleCloseModal}
+                onClientCreated={handleClientCreated}
+                cliente={clienteSelecionado}
+            />
+
+            {/* 🔴 Modal de confirmação para exclusão */}
+            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Confirmar Exclusão</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <p>
+                        Tem certeza que deseja excluir os <strong>{selectedClientes.length}</strong> cliente(s) selecionado(s)?
+                    </p>
+                    <p className="text-danger">
+                        Esta ação é irreversível e também pode apagar dados relacionados como <strong>relatórios, históricos ou acessos</strong>, se existirem.
+                    </p>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="primary" onClick={() => setShowDeleteModal(false)}>
+                        Cancelar
+                    </Button>
+                    <Button variant="secondary" onClick={handleDeleteClientes}>
+                        Confirmar Exclusão
+                    </Button>
+                </Modal.Footer>
+            </Modal>
         </ComponentContainerCard>
     );
 };

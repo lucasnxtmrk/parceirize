@@ -142,13 +142,19 @@ export async function DELETE(req) {
       return new Response(JSON.stringify({ error: "Acesso negado" }), { status: 403 });
     }
 
-    const { ids } = await req.json();
+    const bodyText = await req.text();
+    const { ids } = JSON.parse(bodyText);
+
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return new Response(JSON.stringify({ error: "IDs inválidos." }), { status: 400 });
     }
 
     console.log("🗑️ Excluindo clientes:", ids);
 
+    // 1️⃣ Excluir todos os registros da tabela voucher_utilizados relacionados aos clientes
+    await pool.query("DELETE FROM voucher_utilizados WHERE cliente_id = ANY($1)", [ids]);
+
+    // 2️⃣ Agora pode excluir os clientes
     const result = await pool.query("DELETE FROM clientes WHERE id = ANY($1)", [ids]);
 
     if (result.rowCount === 0) {
@@ -162,6 +168,7 @@ export async function DELETE(req) {
 
   } catch (error) {
     console.error("❌ Erro ao excluir clientes:", error);
-    return new Response(JSON.stringify({ error: "Erro interno ao excluir clientes." }), { status: 500 });
+    return new Response(JSON.stringify({ error: "Erro interno ao excluir clientes.", detail: error.message }), { status: 500 });
   }
 }
+

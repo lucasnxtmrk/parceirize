@@ -2,6 +2,7 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { Pool } from 'pg';
+import bcrypt from "bcryptjs";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -51,9 +52,10 @@ export const options = {
           const userRecord = result.rows[0];
 
           // Comparação simples de senha (substitua por hash em produção)
-          if (userRecord.password !== password) {
-            console.log("❌ Senha incorreta!");
-            throw new Error("Senha incorreta.");
+          const senhaCorreta = await bcrypt.compare(password, userRecord.password);
+          if (!senhaCorreta) {
+          console.log("❌ Senha incorreta (bcrypt)");
+          throw new Error("Senha incorreta.");
           }
 
           console.log("✅ Login bem-sucedido:", userRecord);

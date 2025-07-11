@@ -7,7 +7,7 @@ export const metadata = {
 };
 const AnalyticsPage = () => {
   return <>
-      <PageTitle title="Carteirinha" subName="Digital" />
+      {/* <PageTitle title="Carteirinha" subName="Digital" /> */}
       <Row>
         <DigitalWalletCard/>
       </Row>

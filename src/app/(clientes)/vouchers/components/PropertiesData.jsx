@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Card, CardBody, CardFooter, Col, Row } from "react-bootstrap";
 import PropertiesFilter from "./PropertiesFilter";
 import IconifyIcon from "@/components/wrappers/IconifyIcon";
+import { Nichos } from "@/data/nichos";
+
 
 const PropertiesCard = ({ voucher_codigo, voucher_desconto, parceiro_nome, parceiro_foto, parceiro_nicho }) => {
   const [copied, setCopied] = useState(false);
@@ -74,22 +76,28 @@ const PropertiesData = () => {
     fetchVouchers();
   }, []);
 
-  // Função para aplicar filtro
-  const handleFilterChange = ({ nichos, search }) => {
-    let filtered = [...vouchers]; // ✅ Criamos uma cópia para evitar mutação do estado original
+ // Função para aplicar filtro
+const handleFilterChange = ({ nichos, search }) => {
+  let filtered = [...vouchers];
 
-    if (nichos.length > 0) {
-      filtered = filtered.filter(voucher => nichos.includes(voucher.parceiro_nicho));
-    }
+  console.log("🎯 Nichos selecionados:", nichos);
+  console.log("🎯 Vouchers recebidos:", vouchers.map(v => ({ nome: v.parceiro_nome, nicho: v.parceiro_nicho })));
 
-    if (search.trim() !== "") {
-      filtered = filtered.filter(voucher => 
-        voucher.parceiro_nome.toLowerCase().includes(search.toLowerCase())
-      );
-    }
+  if (nichos.length > 0) {
+    filtered = filtered.filter(voucher =>
+      nichos.includes(Number(voucher.parceiro_nicho)) // Certifique-se de comparar número com número
+    );
+  }
 
-    setFilteredVouchers(filtered);
-  };
+  if (search.trim() !== "") {
+    filtered = filtered.filter(voucher =>
+      voucher.parceiro_nome.toLowerCase().includes(search.toLowerCase())
+    );
+  }
+
+  setFilteredVouchers(filtered);
+};
+
 
   return (
     <Row>
@@ -99,8 +107,12 @@ const PropertiesData = () => {
           {filteredVouchers.length > 0 ? (
             filteredVouchers.map((voucher, idx) => (
               <Col lg={4} md={6} key={idx}>
-                <PropertiesCard {...voucher} />
-              </Col>
+<PropertiesCard
+  {...voucher}
+  parceiro_nicho={
+    Nichos.find(n => n.id === voucher.parceiro_nicho)?.nome || "Nicho desconhecido"
+  }
+/>              </Col>
             ))
           ) : (
             <p className="text-center mt-4">Nenhum voucher encontrado</p>

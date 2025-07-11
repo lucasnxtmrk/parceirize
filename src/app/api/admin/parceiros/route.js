@@ -48,11 +48,12 @@ export async function GET(req) {
 
     const result = await pool.query(`
       SELECT 
-        p.id, p.nome_empresa, p.email, p.foto, 
-        v.codigo AS voucher_codigo, v.desconto, 
-        COALESCE(v.limite_uso, 0) AS limite_uso
-      FROM parceiros p
-      LEFT JOIN vouchers v ON p.id = v.parceiro_id
+  p.id, p.nome_empresa, p.email, p.foto, 
+  v.codigo AS voucher_codigo, v.desconto, 
+  COALESCE(v.limite_uso, 0) AS limite_uso,
+  p.nicho
+FROM parceiros p
+LEFT JOIN vouchers v ON p.id = v.parceiro_id
     `);
 
     console.log("✅ Parceiros encontrados:", result.rowCount);
@@ -80,7 +81,16 @@ export async function POST(req) {
     const body = await req.json();
     console.log("📥 Dados recebidos:", body);
 
-    const { nome_empresa, email, senha, foto, desconto, limitar_voucher, limite_voucher } = body;
+    const {
+      nome_empresa,
+      email,
+      senha,
+      foto,
+      desconto,
+      limitar_voucher,
+      limite_uso, 
+      nicho // CORRIGIDO
+    } = body;
 
     if (!nome_empresa || !email || !senha || !desconto) {
       console.log("⚠️ Campos obrigatórios ausentes");
@@ -104,15 +114,16 @@ export async function POST(req) {
 
     console.log("📥 Inserindo parceiro...");
     const parceiroResult = await pool.query(
-      "INSERT INTO parceiros (nome_empresa, email, senha, foto, data_criacao) VALUES ($1, $2, $3, $4, NOW()) RETURNING id, nome_empresa, email, foto",
-      [nome_empresa, email, senhaHash, fotoParceiro]
-    );
+  "INSERT INTO parceiros (nome_empresa, email, senha, foto, nicho, data_criacao) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id",
+  [nome_empresa, email, senhaHash, fotoParceiro, nicho]
+);
+
 
     const parceiroId = parceiroResult.rows[0].id;
     console.log("✅ Parceiro criado com ID:", parceiroId);
 
     const voucherCode = await generateUniqueVoucher(nome_empresa, desconto);
-    const limiteUsoFinal = limitar_voucher ? limite_voucher : null;
+    const limiteUsoFinal = limitar_voucher ? limite_uso : null;
 
     console.log("🎟️ Criando voucher...");
     await pool.query(
@@ -133,23 +144,35 @@ export async function POST(req) {
   }
 }
 
-// ✅ PUT - ATUALIZAR PARCEIRO
+
+// ✅ PUT - ATUALIZAR PARCEIRO (inclui nova senha se fornecida)
 export async function PUT(req) {
   try {
     const session = await getServerSession(options);
     if (!session || session.user.role !== "admin") {
-      console.log("🚫 Acesso negado na atualização");
       return new Response(JSON.stringify({ error: "Acesso negado" }), { status: 403 });
     }
 
     const body = await req.json();
-    const { id, nome_empresa, email, foto, desconto, limitar_voucher, limite_voucher } = body;
-
-    console.log("📥 Atualizando parceiro com ID:", id);
+    const {
+      id,
+      nome_empresa,
+      email,
+      foto,
+      desconto,
+      limitar_voucher,
+      limite_uso, // CORRIGIDO
+      novaSenha, 
+      nicho
+    } = body;
 
     if (!id || !nome_empresa || !email || !desconto) {
-      console.log("⚠️ Dados incompletos para atualização");
       return new Response(JSON.stringify({ error: "ID, Nome, Email e Desconto são obrigatórios" }), { status: 400 });
+    }
+
+    let senhaHash = null;
+    if (novaSenha && novaSenha.trim() !== "") {
+      senhaHash = await bcrypt.hash(novaSenha, 10);
     }
 
     const parceiroData = await pool.query("SELECT foto FROM parceiros WHERE id = $1", [id]);
@@ -160,24 +183,37 @@ export async function PUT(req) {
       fotoParceiro = saveImage(foto, filename);
     }
 
-    const parceiroUpdate = await pool.query(
-      "UPDATE parceiros SET nome_empresa = $1, email = $2, foto = $3 WHERE id = $4 RETURNING id, nome_empresa, email, foto",
-      [nome_empresa, email, fotoParceiro, id]
-    );
+    // Monta dinamicamente a query de atualização
+    const fields = ["nome_empresa = $1", "email = $2", "foto = $3", "nicho = $4"];
+const values = [nome_empresa, email, fotoParceiro, nicho];
+
+if (senhaHash) {
+  fields.push(`senha = $${fields.length + 1}`);
+  values.push(senhaHash);
+}
+
+
+    values.push(id); // ID será o último valor
+
+    const updateQuery = `
+      UPDATE parceiros
+      SET ${fields.join(", ")}
+      WHERE id = $${values.length}
+      RETURNING id, nome_empresa, email, foto
+    `;
+
+    const parceiroUpdate = await pool.query(updateQuery, values);
 
     if (parceiroUpdate.rows.length === 0) {
-      console.log("⚠️ Parceiro não encontrado:", id);
       return new Response(JSON.stringify({ error: "Parceiro não encontrado" }), { status: 404 });
     }
 
-    const limiteUsoFinal = limitar_voucher ? limite_voucher : null;
+    const limiteUsoFinal = limitar_voucher ? limite_uso : null;
 
     await pool.query(
       "UPDATE vouchers SET desconto = $1, limite_uso = $2 WHERE parceiro_id = $3",
       [desconto, limiteUsoFinal, id]
     );
-
-    console.log("✅ Parceiro atualizado com sucesso:", id);
 
     return new Response(JSON.stringify({ success: true, parceiro: parceiroUpdate.rows[0] }), {
       status: 200,
@@ -185,10 +221,10 @@ export async function PUT(req) {
     });
 
   } catch (error) {
-    console.error("❌ Erro ao atualizar parceiro:", error);
     return new Response(JSON.stringify({ error: "Erro ao atualizar parceiro", detail: error.message }), { status: 500 });
   }
 }
+
 
 // ✅ DELETE - REMOVER PARCEIRO
 export async function DELETE(req) {

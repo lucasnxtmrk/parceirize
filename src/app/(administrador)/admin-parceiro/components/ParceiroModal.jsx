@@ -4,15 +4,14 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Button, Modal, Form, FormControl, FormGroup, FormLabel } from "react-bootstrap";
 import { useForm, Controller } from "react-hook-form";
 import { useDropzone } from "react-dropzone";
+import { Nichos } from "@/data/nichos"; // novo import
 
-// 🔹 Função para gerar um voucher baseado no nome da empresa e desconto
 const generateVoucherCode = (nomeEmpresa, desconto) => {
     const formattedName = nomeEmpresa.replace(/\s+/g, "").toUpperCase().substring(0, 3);
     const randomNumber = Math.floor(100 + Math.random() * 900);
     return `${formattedName}${desconto}${randomNumber}`;
 };
 
-// 🔹 Função para gerar um voucher único verificando no banco
 const generateUniqueVoucher = async (nomeEmpresa, desconto) => {
     let voucherCode;
     let exists = true;
@@ -43,6 +42,7 @@ const ParceiroModal = ({ show, handleClose, parceiro, onParceiroCreated }) => {
             foto: "",
             limitar_voucher: false,
             limite_uso: "",
+            nicho: ""
         },
     });
 
@@ -50,33 +50,40 @@ const ParceiroModal = ({ show, handleClose, parceiro, onParceiroCreated }) => {
     const [error, setError] = useState(null);
     const fotoPreview = watch("foto") || "/assets/images/parceiros/dummy-avatar.jpg";
     const limitarVoucher = watch("limitar_voucher");
+    const [novaSenha, setNovaSenha] = useState("");
 
-    // Atualiza o estado do checkbox quando o parceiro for editado
     useEffect(() => {
         if (show) {
+            console.log("🟡 Abrindo modal de parceiro:", parceiro);
             reset();
+            setNovaSenha("");
+
             if (parceiro) {
                 setValue("nome_empresa", parceiro.nome_empresa);
                 setValue("email", parceiro.email);
                 setValue("desconto", parceiro.desconto || "");
                 setValue("voucher_codigo", parceiro.voucher_codigo || "");
                 setValue("foto", parceiro.foto || "/assets/images/parceiros/dummy-avatar.jpg");
+                setValue("nicho", parceiro.nicho || "");
 
-                // 🔹 Se o parceiro tiver limite de voucher, marcamos o checkbox e preenchemos o campo
-                if (parceiro.limite_uso !== null && parceiro.limite_uso !== undefined && parceiro.limite_uso !== "") {
-                    setValue("limitar_voucher", true);
-                    setValue("limite_uso", parceiro.limite_uso);
-                } else {
-                    setValue("limitar_voucher", false);
-                    setValue("limite_uso", "");
-                }
+                const limiteNumero = Number(parceiro.limite_uso);
+                const temLimite = !isNaN(limiteNumero) && limiteNumero > 0;
+
+                console.log("🔍 limite_uso bruto:", parceiro.limite_uso);
+                console.log("🔍 limite_uso convertido:", limiteNumero);
+                console.log("✅ limitar_voucher será:", temLimite);
+
+                setValue("limitar_voucher", temLimite);
+                setValue("limite_uso", temLimite ? String(limiteNumero) : "");
             } else {
+                console.log("🆕 Criando novo parceiro (form resetado)");
                 setValue("voucher_codigo", "Gerando...");
+                setValue("limitar_voucher", false);
+                setValue("limite_uso", "");
             }
         }
     }, [show, parceiro, setValue, reset]);
 
-    // Atualiza o voucher automaticamente ao digitar o desconto
     useEffect(() => {
         const nomeEmpresa = watch("nome_empresa");
         const desconto = watch("desconto");
@@ -88,7 +95,6 @@ const ParceiroModal = ({ show, handleClose, parceiro, onParceiroCreated }) => {
         }
     }, [watch("nome_empresa"), watch("desconto"), parceiro, setValue]);
 
-    // Upload de imagem
     const onDrop = useCallback((acceptedFiles) => {
         const file = acceptedFiles[0];
         if (file) {
@@ -106,26 +112,31 @@ const ParceiroModal = ({ show, handleClose, parceiro, onParceiroCreated }) => {
         multiple: false,
     });
 
-    // Enviar dados para API
     const onSubmit = async (formData) => {
         setLoading(true);
         setError(null);
 
         try {
+            console.log("📦 Enviando dados do formulário:", formData);
+
+            const dados = {
+                ...formData,
+                id: parceiro?.id,
+                novaSenha: parceiro ? novaSenha : undefined,
+                limite_uso: formData.limitar_voucher ? Number(formData.limite_uso) : null,
+            };
+
+            console.log("📤 Dados enviados para API:", dados);
+
             const response = await fetch("/api/admin/parceiros", {
                 method: parceiro ? "PUT" : "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    ...formData,
-                    id: parceiro?.id,
-                }),
+                body: JSON.stringify(dados),
             });
 
             const data = await response.json();
 
-            if (!response.ok) {
-                throw new Error(data.error || "Erro ao salvar parceiro");
-            }
+            if (!response.ok) throw new Error(data.error || "Erro ao salvar parceiro");
 
             onParceiroCreated();
             reset();
@@ -156,6 +167,18 @@ const ParceiroModal = ({ show, handleClose, parceiro, onParceiroCreated }) => {
                         <Controller name="email" control={control} render={({ field }) => <FormControl type="email" {...field} required />} />
                     </FormGroup>
 
+                    {parceiro && (
+                        <FormGroup className="mt-3">
+                            <FormLabel>Nova Senha (opcional)</FormLabel>
+                            <FormControl
+                                type="password"
+                                placeholder="Deixe em branco para manter a senha atual"
+                                value={novaSenha}
+                                onChange={(e) => setNovaSenha(e.target.value)}
+                            />
+                        </FormGroup>
+                    )}
+
                     {!parceiro && (
                         <FormGroup className="mt-3">
                             <FormLabel>Senha</FormLabel>
@@ -173,16 +196,37 @@ const ParceiroModal = ({ show, handleClose, parceiro, onParceiroCreated }) => {
                         <Controller name="voucher_codigo" control={control} render={({ field }) => <FormControl type="text" {...field} required />} />
                     </FormGroup>
 
-                    {/* Checkbox para limitar voucher */}
                     <FormGroup className="mt-3">
-                        <Form.Check
-                            type="checkbox"
-                            label="Limitar uso do voucher"
-                            {...control.register("limitar_voucher")}
+                        <FormLabel>Nicho</FormLabel>
+                        <Controller
+                            name="nicho"
+                            control={control}
+                            render={({ field }) => (
+                                <Form.Select {...field} required>
+                                    <option value="">Selecione um nicho</option>
+                                    {Nichos.map((n) => (
+                                        <option key={n.id} value={n.id}>{n.nome}</option>
+                                    ))}
+                                </Form.Select>
+                            )}
                         />
                     </FormGroup>
 
-                    {/* Campo de limite, visível apenas se o checkbox estiver marcado */}
+                    <FormGroup className="mt-3">
+                        <Controller
+                            name="limitar_voucher"
+                            control={control}
+                            render={({ field }) => (
+                                <Form.Check
+                                    type="checkbox"
+                                    label="Limitar uso do voucher"
+                                    checked={field.value}
+                                    onChange={(e) => field.onChange(e.target.checked)}
+                                />
+                            )}
+                        />
+                    </FormGroup>
+
                     {limitarVoucher && (
                         <FormGroup className="mt-3">
                             <FormLabel>Quantas vezes o cliente pode utilizar o voucher dentro de 30 dias?</FormLabel>

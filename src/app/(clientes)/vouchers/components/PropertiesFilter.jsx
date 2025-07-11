@@ -1,86 +1,71 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button, Card, CardBody, CardFooter, CardHeader, CardTitle, Col, Row } from "react-bootstrap";
+import { Card, CardBody, CardHeader, CardTitle, Col, Row, Form } from "react-bootstrap";
+import { Nichos } from "@/data/nichos";
+import Image from "next/image";
 
 const PropertiesFilter = ({ onFilterChange }) => {
-  const [nichos, setNichos] = useState([]);
   const [selectedNichos, setSelectedNichos] = useState([]);
   const [search, setSearch] = useState("");
 
-  // Buscar nichos da API
   useEffect(() => {
-    const fetchNichos = async () => {
-      try {
-        const response = await fetch("/api/nichos");
-        const data = await response.json();
-        setNichos(data.map(n => n.nicho)); // Transformamos o resultado em um array de strings
-      } catch (error) {
-        console.error("Erro ao buscar nichos:", error);
-      }
-    };
+    onFilterChange({ nichos: selectedNichos, search });
+  }, [selectedNichos, search]);
 
-    fetchNichos();
-  }, []);
-
-  // Atualizar seleção de nichos
-  const handleNichoChange = (nicho) => {
-    setSelectedNichos(prevSelected =>
-      prevSelected.includes(nicho)
-        ? prevSelected.filter(item => item !== nicho)
-        : [...prevSelected, nicho]
+  const handleNichoToggle = (id) => {
+    setSelectedNichos((prev) =>
+      prev.includes(id) ? prev.filter((n) => n !== id) : [...prev, id]
     );
   };
 
-  // Aplicar filtro
-  const handleApplyFilter = () => {
-    onFilterChange({ nichos: selectedNichos, search });
-  };
-
   return (
-    <Col xl={3} lg={12}>
+    <Col xl={12} className="mb-4">
       <Card>
         <CardHeader className="border-bottom">
-          <CardTitle as={"h4"}>Filtrar Parceiros</CardTitle>
-          <p className="mb-0">Encontre parceiros por nicho ou nome</p>
+          <CardTitle as="h4">Filtrar Parceiros</CardTitle>
+          <p className="mb-0">Busque por nome ou nicho</p>
         </CardHeader>
         <CardBody>
-          {/* Campo de pesquisa */}
-          <input
+          {/* 🔍 Campo de busca */}
+          <Form.Control
             type="text"
-            className="form-control mb-3"
-            placeholder="Pesquisar parceiro..."
+            placeholder="Buscar parceiro..."
+            className="mb-4"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
 
-          {/* Lista de Nichos Dinâmicos */}
-          <h5 className="fw-medium my-3"> Nichos Parceiros:</h5>
-          <Row className="g-1">
-            {nichos.map((nicho, idx) => (
-              <Col lg={6} key={idx}>
-                <div className="mb-2">
-                  <input
-                    className="form-check-input"
-                    type="checkbox"
-                    id={`nicho-${idx}`}
-                    checked={selectedNichos.includes(nicho)}
-                    onChange={() => handleNichoChange(nicho)}
-                  />
-                  &nbsp;
-                  <label className="form-check-label ms-1" htmlFor={`nicho-${idx}`}>
-                    {nicho}
-                  </label>
+          {/* 🧩 Lista de Nichos com estilo tipo iFood */}
+          <Row className="g-3">
+            {Nichos.map((nicho) => (
+              <Col xs={4} sm={3} md={2} key={nicho.id}>
+                <div
+                  onClick={() => handleNichoToggle(nicho.id)}
+                  className={`text-center p-2 rounded border shadow-sm h-100 d-flex flex-column justify-content-center align-items-center cursor-pointer ${
+    selectedNichos.includes(nicho.id)
+      ? "bg-secondary text-white border-secondary"
+      : "bg-light"
+  } hover-effect`}
+                  style={{ cursor: "pointer" }}
+                >
+                  <Image
+  src={nicho.imagem}
+  alt={nicho.nome}
+  width={nicho.largura || 50} // se souber o tamanho real
+  height={nicho.altura || 50}
+  style={{ objectFit: "contain" }}
+  quality={100}
+  sizes="100px"
+  unoptimized={false} // use true se quiser desativar otimização do Next
+/>
+
+                  <small className="mt-2 fw-medium">{nicho.nome}</small>
                 </div>
               </Col>
             ))}
           </Row>
         </CardBody>
-        <CardFooter>
-          <Button variant="secondary" className="w-100" onClick={handleApplyFilter}>
-            Aplicar Filtro
-          </Button>
-        </CardFooter>
       </Card>
     </Col>
   );

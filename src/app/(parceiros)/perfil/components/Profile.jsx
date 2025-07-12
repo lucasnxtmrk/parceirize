@@ -22,7 +22,7 @@ const BrowserDefault = () => {
     const [error, setError] = useState(null);
     const [message, setMessage] = useState(null);
 
-    const fotoUrl = watch("foto") || "/assets/images/users/dummy-avatar.jpg";
+    const fotoUrl = watch("foto") || "/assets/images/avatar.jpg";
 
     useEffect(() => {
         // Buscar dados do perfil do parceiro

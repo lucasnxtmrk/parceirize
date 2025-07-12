@@ -106,7 +106,7 @@ export async function POST(req) {
     console.log("🔒 Criptografando senha...");
     const senhaHash = await bcrypt.hash(senha, 10);
 
-    let fotoParceiro = "/assets/images/users/dummy-avatar.jpg";
+    let fotoParceiro = "/assets/images/avatar.jpg";
     if (foto && foto.startsWith("data:image")) {
       const filename = `parceiro_${Date.now()}.png`;
       fotoParceiro = saveImage(foto, filename);

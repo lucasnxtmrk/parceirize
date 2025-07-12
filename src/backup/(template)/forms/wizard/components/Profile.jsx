@@ -1,4 +1,4 @@
-import avatar1 from '@/assets/images/users/dummy-avatar.jpg';
+import avatar1 from '@/assets/images/avatar.jpg';
 import IconifyIcon from '@/components/wrappers/IconifyIcon';
 import { useForm } from 'react-hook-form';
 import { Col, Row } from 'react-bootstrap';

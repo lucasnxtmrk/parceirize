@@ -89,15 +89,14 @@ const ParceirosPage = () => {
                             <tr key={parceiro.id}>
                                 <td>
                                     <div className="d-flex align-items-center gap-2">
-                                        {parceiro.foto && (
-                                            <Image
-                                                src={parceiro.foto || "/assets/images/users/dummy-avatar.jpg"}
-                                                alt="Avatar do Parceiro"
-                                                className="avatar-sm rounded-circle"
-                                                width={40}
-                                                height={40}
-                                            />
-                                        )}
+                                        <Image
+                                        src={parceiro.foto && parceiro.foto.trim() !== "" ? parceiro.foto : "/assets/images/avatar.jpg"}
+                                        alt="Avatar do Parceiro"
+                                        className="avatar-sm rounded-circle"
+                                        width={40}
+                                        height={40}
+                                        />
+
                                         <div className="d-block">
                                             <h6 className="mb-0">{parceiro.nome_empresa}</h6>
                                         </div>

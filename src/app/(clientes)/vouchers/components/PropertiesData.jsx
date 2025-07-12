@@ -7,8 +7,14 @@ import PropertiesFilter from "./PropertiesFilter";
 import IconifyIcon from "@/components/wrappers/IconifyIcon";
 import { Nichos } from "@/data/nichos";
 
-
-const PropertiesCard = ({ voucher_codigo, voucher_desconto, parceiro_nome, parceiro_foto, parceiro_nicho }) => {
+// 🧱 Card de Parceiro
+const PropertiesCard = ({
+  voucher_codigo,
+  voucher_desconto,
+  parceiro_nome,
+  parceiro_foto,
+  parceiro_nicho
+}) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -16,12 +22,12 @@ const PropertiesCard = ({ voucher_codigo, voucher_desconto, parceiro_nome, parce
     setCopied(true);
     setTimeout(() => setCopied(false), 3000);
   };
-  
+
   return (
     <Card className="overflow-hidden">
       <div className="position-relative" style={{ height: "150px", overflow: "hidden" }}>
         <Image
-          src={parceiro_foto}
+          src={parceiro_foto && parceiro_foto.trim() !== "" ? parceiro_foto : "/assets/images/avatar.jpg"}
           alt={parceiro_nome}
           className="img-fluid rounded-top"
           width={300}
@@ -56,6 +62,7 @@ const PropertiesCard = ({ voucher_codigo, voucher_desconto, parceiro_nome, parce
   );
 };
 
+// 📋 Listagem de Parceiros com Filtro
 const PropertiesData = () => {
   const [vouchers, setVouchers] = useState([]);
   const [filteredVouchers, setFilteredVouchers] = useState([]);
@@ -67,7 +74,7 @@ const PropertiesData = () => {
         const response = await fetch("/api/vouchers");
         const data = await response.json();
         setVouchers(data);
-        setFilteredVouchers(data); // Inicialmente todos os vouchers
+        setFilteredVouchers(data);
       } catch (error) {
         console.error("Erro ao buscar vouchers:", error);
       }
@@ -76,43 +83,40 @@ const PropertiesData = () => {
     fetchVouchers();
   }, []);
 
- // Função para aplicar filtro
-const handleFilterChange = ({ nichos, search }) => {
-  let filtered = [...vouchers];
+  // Aplicar filtro de nicho e busca
+  const handleFilterChange = ({ nichos, search }) => {
+    let filtered = [...vouchers];
 
-  console.log("🎯 Nichos selecionados:", nichos);
-  console.log("🎯 Vouchers recebidos:", vouchers.map(v => ({ nome: v.parceiro_nome, nicho: v.parceiro_nicho })));
+    if (nichos.length > 0) {
+      filtered = filtered.filter(voucher =>
+        nichos.includes(Number(voucher.parceiro_nicho))
+      );
+    }
 
-  if (nichos.length > 0) {
-    filtered = filtered.filter(voucher =>
-      nichos.includes(Number(voucher.parceiro_nicho)) // Certifique-se de comparar número com número
-    );
-  }
+    if (search.trim() !== "") {
+      filtered = filtered.filter(voucher =>
+        voucher.parceiro_nome.toLowerCase().includes(search.toLowerCase())
+      );
+    }
 
-  if (search.trim() !== "") {
-    filtered = filtered.filter(voucher =>
-      voucher.parceiro_nome.toLowerCase().includes(search.toLowerCase())
-    );
-  }
-
-  setFilteredVouchers(filtered);
-};
-
+    setFilteredVouchers(filtered);
+  };
 
   return (
     <Row>
-        <PropertiesFilter onFilterChange={handleFilterChange} />
+      <PropertiesFilter onFilterChange={handleFilterChange} />
       <Col xl={9} lg={12}>
         <Row>
           {filteredVouchers.length > 0 ? (
             filteredVouchers.map((voucher, idx) => (
               <Col lg={4} md={6} key={idx}>
-<PropertiesCard
-  {...voucher}
-  parceiro_nicho={
-    Nichos.find(n => n.id === voucher.parceiro_nicho)?.nome || "Nicho desconhecido"
-  }
-/>              </Col>
+                <PropertiesCard
+                  {...voucher}
+                  parceiro_nicho={
+                    Nichos.find(n => n.id === Number(voucher.parceiro_nicho))?.nome || "Nicho desconhecido"
+                  }
+                />
+              </Col>
             ))
           ) : (
             <p className="text-center mt-4">Nenhum voucher encontrado</p>

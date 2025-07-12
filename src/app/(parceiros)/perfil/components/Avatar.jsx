@@ -4,11 +4,11 @@ import { Image } from "react-bootstrap";
 import IconifyIcon from "@/components/wrappers/IconifyIcon";
 
 const Avatar = ({ src, alt }) => {
-    const [image, setImage] = useState(src || "/assets/images/users/dummy-avatar.jpg");
+    const [image, setImage] = useState(src || "/assets/images/avatar.jpg");
     const [isEditing, setIsEditing] = useState(false);
 
     useEffect(() => {
-        setImage(src || "/assets/images/users/dummy-avatar.jpg");
+        setImage(src || "/assets/images/avatar.jpg");
     }, [src]);
 
     const handleEdit = () => {

@@ -48,7 +48,7 @@ const ParceiroModal = ({ show, handleClose, parceiro, onParceiroCreated }) => {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const fotoPreview = watch("foto") || "/assets/images/parceiros/dummy-avatar.jpg";
+    const fotoPreview = watch("foto") || "/assets/images/avatar.jpg";
     const limitarVoucher = watch("limitar_voucher");
     const [novaSenha, setNovaSenha] = useState("");
 
@@ -63,7 +63,7 @@ const ParceiroModal = ({ show, handleClose, parceiro, onParceiroCreated }) => {
                 setValue("email", parceiro.email);
                 setValue("desconto", parceiro.desconto || "");
                 setValue("voucher_codigo", parceiro.voucher_codigo || "");
-                setValue("foto", parceiro.foto || "/assets/images/parceiros/dummy-avatar.jpg");
+                setValue("foto", parceiro.foto || "/assets/images/avatar.jpg");
                 setValue("nicho", parceiro.nicho || "");
 
                 const limiteNumero = Number(parceiro.limite_uso);

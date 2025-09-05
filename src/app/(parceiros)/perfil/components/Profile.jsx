@@ -21,6 +21,8 @@ const BrowserDefault = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [message, setMessage] = useState(null);
+    const [modoAtivacao, setModoAtivacao] = useState('manual');
+    const [hasIntegracao, setHasIntegracao] = useState(false);
 
     const fotoUrl = watch("foto") || "/assets/images/avatar.jpg";
 
@@ -60,6 +62,25 @@ const BrowserDefault = () => {
         fetchProfile();
         fetchDiscount();
     }, [setValue]);
+
+    useEffect(() => {
+        // Buscar integração SGP para popular modo de ativação
+        const fetchIntegracao = async () => {
+            try {
+                const r = await fetch('/api/parceiro/integracoes/sgp');
+                const data = await r.json();
+                if (r.ok && data?.config) {
+                    setModoAtivacao(data.config.modo_ativacao || 'manual');
+                    setHasIntegracao(true);
+                } else {
+                    setHasIntegracao(false);
+                }
+            } catch (_) {
+                setHasIntegracao(false);
+            }
+        };
+        fetchIntegracao();
+    }, []);
 
     const onDrop = useCallback((acceptedFiles) => {
         const file = acceptedFiles[0];
@@ -142,6 +163,19 @@ const BrowserDefault = () => {
                 </Col>
 
                 <Col md={6}>
+                    <FormGroup>
+                        <FormLabel>Modo de ativação de clientes</FormLabel>
+                        <select className="form-select" value={modoAtivacao} onChange={(e) => setModoAtivacao(e.target.value)} disabled={!hasIntegracao}>
+                            <option value="manual">manual</option>
+                            <option value="integracao">integracao</option>
+                        </select>
+                        {!hasIntegracao && (
+                            <small className="text-muted">Configure a integração SGP para habilitar este campo.</small>
+                        )}
+                    </FormGroup>
+                </Col>
+
+                <Col md={6}>
                 <FormGroup>
         <FormLabel>Desconto</FormLabel>
         <Controller
@@ -163,6 +197,26 @@ const BrowserDefault = () => {
 
                 <Col xs={12}>
                     <Button variant="primary" type="submit">Salvar Alterações</Button>
+                </Col>
+                <Col xs={12}>
+                    <Button className="mt-2" variant="outline-primary" type="button" disabled={!hasIntegracao}
+                        onClick={async () => {
+                            setError(null); setMessage(null);
+                            try {
+                                const r = await fetch('/api/parceiro/integracoes/sgp', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ modo_ativacao: modoAtivacao })
+                                });
+                                const data = await r.json();
+                                if (!r.ok) throw new Error(data.error || 'Erro ao salvar modo de ativação');
+                                setMessage('Modo de ativação atualizado.');
+                            } catch (e) {
+                                setError(e.message);
+                            }
+                        }}>
+                        Salvar modo de ativação
+                    </Button>
                 </Col>
             </form>
         </ComponentContainerCard>

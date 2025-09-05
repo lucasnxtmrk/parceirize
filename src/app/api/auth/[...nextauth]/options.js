@@ -23,19 +23,43 @@ export const options = {
           console.log("📡 Consultando banco de dados para:", email);
           
           const query = `
-            SELECT id, nome, sobrenome, email, id_carteirinha, data_ultimo_voucher, senha AS "password", 'cliente' AS role
+            SELECT id,
+                   nome,
+                   sobrenome,
+                   email,
+                   id_carteirinha,
+                   data_ultimo_voucher,
+                   ativo,
+                   senha AS "password",
+                   'cliente' AS role
             FROM clientes
             WHERE email = $1
-      
+
             UNION ALL
-      
-            SELECT id, nome_empresa AS nome, NULL AS sobrenome, email, NULL AS id_carteirinha, NULL AS data_ultimo_voucher, senha AS "password", 'parceiro' AS role
+
+            SELECT id,
+                   nome_empresa AS nome,
+                   NULL AS sobrenome,
+                   email,
+                   NULL AS id_carteirinha,
+                   NULL AS data_ultimo_voucher,
+                   NULL AS ativo,
+                   senha AS "password",
+                   'parceiro' AS role
             FROM parceiros
             WHERE email = $1
-      
+
             UNION ALL
-      
-            SELECT id, 'Admin' AS nome, NULL AS sobrenome, email, NULL AS id_carteirinha, NULL AS data_ultimo_voucher, senha AS "password", 'admin' AS role
+
+            SELECT id,
+                   'Admin' AS nome,
+                   NULL AS sobrenome,
+                   email,
+                   NULL AS id_carteirinha,
+                   NULL AS data_ultimo_voucher,
+                   NULL AS ativo,
+                   senha AS "password",
+                   'admin' AS role
             FROM admins
             WHERE email = $1
           `;
@@ -50,6 +74,11 @@ export const options = {
           }
 
           const userRecord = result.rows[0];
+
+          // Bloqueia login de cliente inativo
+          if (userRecord.role === 'cliente' && userRecord.ativo === false) {
+            throw new Error('Conta inativa. Entre em contato com o suporte.');
+          }
 
           // Comparação simples de senha (substitua por hash em produção)
           const senhaCorreta = await bcrypt.compare(password, userRecord.password);
@@ -67,7 +96,8 @@ export const options = {
             email: userRecord.email,
             id_carteirinha: userRecord.id_carteirinha,
             data_ultimo_voucher: userRecord.data_ultimo_voucher,
-            role: userRecord.role
+            role: userRecord.role,
+            ativo: userRecord.ativo
           };
         } catch (err) {
           console.error("⚠️ Erro na autenticação:", err.message);

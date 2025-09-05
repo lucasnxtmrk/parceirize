@@ -23,4 +23,16 @@ export const MENU_ITEMS = [
     icon: 'ri:user-line',
     url: '/perfil'
   },
+  {
+    key: 'clientes',
+    label: 'Clientes',
+    icon: 'ri:team-line',
+    url: '/clientes'
+  },
+  {
+    key: 'integracoes',
+    label: 'Integrações',
+    icon: 'ri:links-line',
+    url: '/integracoes'
+  },
 ];

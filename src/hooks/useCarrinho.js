@@ -1,10 +1,14 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useNotifications } from "./useNotifications";
+import QRCode from 'qrcode';
 
 export const useCarrinho = () => {
   const [carrinho, setCarrinho] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [qrCode, setQrCode] = useState(null);
+  const notifications = useNotifications();
 
   const fetchCarrinho = useCallback(async () => {
     try {
@@ -35,17 +39,25 @@ export const useCarrinho = () => {
 
       if (response.ok) {
         await fetchCarrinho();
+        
+        // Notificação com animação
+        notifications.notifyCartUpdate(produto, 'add');
+        
+        // Gerar QR Code atualizado
+        await generateQRCode();
+        
         return { success: true, message: `${produto.nome} adicionado ao carrinho!` };
       }
       
       const errorData = await response.json();
       throw new Error(errorData.error || "Erro ao adicionar ao carrinho");
     } catch (error) {
+      notifications.showError(error.message);
       return { success: false, message: error.message };
     } finally {
       setLoading(false);
     }
-  }, [fetchCarrinho]);
+  }, [fetchCarrinho, notifications]);
 
   const atualizarQuantidade = useCallback(async (produtoId, novaQuantidade) => {
     if (novaQuantidade < 1) {
@@ -125,6 +137,76 @@ export const useCarrinho = () => {
     return item ? item.quantidade : 0;
   }, [carrinho]);
 
+  // Gerar QR Code do carrinho
+  const generateQRCode = useCallback(async () => {
+    try {
+      if (carrinho.length === 0) {
+        setQrCode(null);
+        return;
+      }
+
+      const cartData = {
+        items: carrinho.map(item => ({
+          id: item.produto_id,
+          name: item.nome,
+          quantity: item.quantidade,
+          price: item.preco
+        })),
+        total: totalPreco,
+        timestamp: Date.now(),
+        hash: btoa(JSON.stringify(carrinho)).slice(0, 10)
+      };
+
+      const qrString = await QRCode.toDataURL(JSON.stringify(cartData), {
+        width: 256,
+        margin: 2,
+        color: {
+          dark: '#1B1236',
+          light: '#FFFFFF'
+        }
+      });
+      
+      setQrCode(qrString);
+      return qrString;
+    } catch (error) {
+      console.error('Erro ao gerar QR Code:', error);
+      return null;
+    }
+  }, [carrinho]);
+
+  // Regenerar QR Code quando carrinho muda
+  useEffect(() => {
+    if (carrinho.length > 0) {
+      generateQRCode();
+    } else {
+      setQrCode(null);
+    }
+  }, [carrinho, generateQRCode]);
+
+  const atualizarQuantidadeComNotificacao = useCallback(async (produtoId, novaQuantidade) => {
+    const produto = carrinho.find(item => item.produto_id === produtoId);
+    const result = await atualizarQuantidade(produtoId, novaQuantidade);
+    
+    if (result.success && produto) {
+      notifications.notifyCartUpdate(produto, 'update');
+      await generateQRCode();
+    }
+    
+    return result;
+  }, [atualizarQuantidade, carrinho, notifications, generateQRCode]);
+
+  const removerItemComNotificacao = useCallback(async (produtoId) => {
+    const produto = carrinho.find(item => item.produto_id === produtoId);
+    const result = await removerItem(produtoId);
+    
+    if (result.success && produto) {
+      notifications.notifyCartUpdate(produto, 'remove');
+      await generateQRCode();
+    }
+    
+    return result;
+  }, [removerItem, carrinho, notifications, generateQRCode]);
+
   const totalItens = carrinho.reduce((total, item) => total + item.quantidade, 0);
   const totalPreco = carrinho.reduce((total, item) => total + item.subtotal, 0);
 
@@ -133,11 +215,13 @@ export const useCarrinho = () => {
     loading,
     totalItens,
     totalPreco,
+    qrCode,
     fetchCarrinho,
     adicionarItem,
-    atualizarQuantidade,
-    removerItem,
+    atualizarQuantidade: atualizarQuantidadeComNotificacao,
+    removerItem: removerItemComNotificacao,
     finalizarPedido,
-    getQuantidadeItem
+    getQuantidadeItem,
+    generateQRCode
   };
 };

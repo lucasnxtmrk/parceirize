@@ -1,0 +1,315 @@
+// Design System Components
+// Enhanced UI components with animations and responsive design
+
+// Button enhancements - Clean version
+.btn {
+  transition: all 0.2s ease;
+  box-shadow: none;
+  font-weight: 500;
+  
+  &:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  
+  &:active {
+    transform: none;
+  }
+  
+  &.loading {
+    pointer-events: none;
+    opacity: 0.7;
+  }
+}
+
+// Card enhancements - Clean version
+.card {
+  border: 1px solid #e2e8f0;
+  box-shadow: none;
+  transition: border-color 0.2s ease;
+  
+  &.card-hover:hover {
+    border-color: #cbd5e1;
+    box-shadow: none;
+  }
+  
+  &.card-loading {
+    .card-body {
+      min-height: 120px;
+    }
+  }
+}
+
+// Badge system
+.badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  
+  &.badge-sm {
+    font-size: 0.65rem;
+    padding: 0.2em 0.4em;
+  }
+  
+  &.badge-lg {
+    font-size: 0.85rem;
+    padding: 0.4em 0.8em;
+  }
+  
+  &.badge-pulse {
+    animation: badge-pulse 2s infinite;
+  }
+  
+  &.badge-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    padding: 0;
+    min-width: auto;
+  }
+}
+
+@keyframes badge-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+// Notification badge
+.notification-badge {
+  font-size: 0.7rem;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  &.notification-badge-dot {
+    width: 8px;
+    height: 8px;
+    min-width: 8px;
+  }
+}
+
+// Loading skeletons
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+.skeleton-card {
+  padding: 1rem;
+  border: 1px solid #e9ecef;
+  border-radius: 0.375rem;
+  background: #fff;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+// Input enhancements
+.form-control {
+  transition: all 0.2s ease;
+  
+  &:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+  }
+}
+
+.input-group-focused {
+  .input-group-text {
+    border-color: var(--bs-primary);
+    background-color: var(--bs-primary-bg-subtle);
+  }
+}
+
+.form-label.required::after {
+  content: " *";
+  color: var(--bs-danger);
+}
+
+// Modal enhancements - Clean version  
+.modal-content {
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+}
+
+// Enhanced responsive design
+@media (max-width: 576px) {
+  .btn {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.85rem;
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  
+  .card {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+  }
+  
+  .modal-dialog {
+    margin: 0.5rem;
+  }
+  
+  .notification-badge {
+    font-size: 0.6rem;
+    min-width: 14px;
+    height: 14px;
+  }
+  
+  // Hide less important content on mobile
+  .d-mobile-none {
+    display: none !important;
+  }
+}
+
+@media (min-width: 576px) and (max-width: 768px) {
+  .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .card {
+    margin-bottom: 1rem;
+  }
+  
+  .notification-badge {
+    font-size: 0.65rem;
+    min-width: 16px;
+    height: 16px;
+  }
+}
+
+@media (min-width: 992px) {
+  .btn-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 1.1rem;
+  }
+  
+  .card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .card:hover {
+    transform: translateY(-2px);
+  }
+}
+
+// Dashboard specific responsive improvements
+.dashboard-stats {
+  @media (max-width: 768px) {
+    .col-lg-3 {
+      margin-bottom: 1rem;
+    }
+  }
+}
+
+.quick-actions {
+  @media (max-width: 576px) {
+    .col-lg-3 {
+      margin-bottom: 0.75rem;
+    }
+  }
+}
+
+// Cart floating button responsive
+.cart-floating {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1050;
+  
+  @media (max-width: 576px) {
+    bottom: 15px;
+    right: 15px;
+    
+    .btn {
+      width: 50px;
+      height: 50px;
+      
+      svg {
+        font-size: 16px;
+      }
+    }
+  }
+}
+
+// Improved table responsiveness
+.table-responsive {
+  @media (max-width: 768px) {
+    font-size: 0.875rem;
+    
+    th, td {
+      padding: 0.5rem 0.25rem;
+    }
+    
+    .btn-sm {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+    }
+  }
+}
+
+// Modal enhancements
+.modal {
+  @media (max-width: 576px) {
+    .modal-dialog {
+      max-width: 95vw;
+      margin: 0.5rem auto;
+    }
+    
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+      padding: 1rem 0.75rem;
+    }
+  }
+}
+
+// Dark mode support - removido temporariamente para evitar conflitos
+// Será implementado futuramente com toggle manual
+
+// Print styles
+@media print {
+  .btn,
+  .modal,
+  .offcanvas,
+  .sidebar,
+  .cart-floating {
+    display: none !important;
+  }
+  
+  .card {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+}
+
+// High contrast mode
+@media (prefers-contrast: high) {
+  .btn {
+    border: 2px solid currentColor;
+  }
+  
+  .card {
+    border: 2px solid var(--bs-border-color);
+  }
+  
+  .badge {
+    border: 1px solid currentColor;
+  }
+}

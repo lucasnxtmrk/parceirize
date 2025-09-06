@@ -1,0 +1,207 @@
+// Clean Design System - Inspirado no v0.app
+// Design limpo e moderno sem sombreados excessivos
+
+// Cards clean sem sombras pesadas
+.card {
+  background-color: #ffffff !important;
+  color: var(--bs-body-color) !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  transition: border-color 0.2s ease !important;
+  
+  &:hover {
+    border-color: #cbd5e1 !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+  
+  &.card-hover:hover {
+    box-shadow: none !important;
+    transform: none !important;
+  }
+}
+
+// Modais clean
+.modal-content {
+  background-color: #ffffff !important;
+  color: var(--bs-body-color) !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+}
+
+// Offcanvas clean
+.offcanvas {
+  background-color: #ffffff !important;
+  color: var(--bs-body-color) !important;
+  border: none !important;
+  box-shadow: -4px 0 6px -1px rgba(0, 0, 0, 0.1) !important;
+}
+
+// Botões clean
+.btn {
+  border-radius: 6px !important;
+  font-weight: 500 !important;
+  box-shadow: none !important;
+  transition: all 0.2s ease !important;
+  
+  &:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+  }
+}
+
+// Remove todas as sombras pesadas
+.shadow,
+.shadow-sm,
+.shadow-lg {
+  box-shadow: none !important;
+}
+
+// Skeleton clean
+.skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%) !important;
+  background-size: 200% 100% !important;
+  border-radius: 4px !important;
+}
+
+// Input clean
+.form-control {
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  transition: border-color 0.2s ease !important;
+  
+  &:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+  }
+}
+
+// Tables clean
+.table {
+  border-color: #e2e8f0 !important;
+  
+  th, td {
+    border-color: #e2e8f0 !important;
+    padding: 0.75rem !important;
+  }
+  
+  thead th {
+    background-color: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    font-weight: 600 !important;
+    font-size: 0.875rem !important;
+    color: #475569 !important;
+  }
+}
+
+// Alerts clean
+.alert {
+  border: 1px solid !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+}
+
+// Badges clean
+.badge {
+  font-weight: 500 !important;
+  border-radius: 4px !important;
+  font-size: 0.75rem !important;
+}
+
+// Navigation clean
+.nav-tabs {
+  border-bottom: 1px solid #e2e8f0 !important;
+  
+  .nav-link {
+    border: none !important;
+    color: #64748b !important;
+    font-weight: 500 !important;
+    
+    &.active {
+      color: #0f172a !important;
+      border-bottom: 2px solid #3b82f6 !important;
+      background: none !important;
+    }
+  }
+}
+
+// Pagination clean
+.pagination {
+  .page-link {
+    border: 1px solid #e2e8f0 !important;
+    color: #64748b !important;
+    
+    &:hover {
+      background-color: #f8fafc !important;
+      border-color: #cbd5e1 !important;
+    }
+  }
+  
+  .page-item.active .page-link {
+    background-color: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+  }
+}
+
+// Layout geral clean
+body {
+  background-color: #f8fafc !important;
+}
+
+.container,
+.container-fluid {
+  background: transparent !important;
+}
+
+// Remove rounded corners excessivos
+* {
+  border-radius: 6px !important;
+}
+
+.rounded-circle {
+  border-radius: 50% !important;
+}
+
+// Garante que não há sombras em nenhum lugar
+* {
+  box-shadow: none !important;
+}
+
+// Exceções para sombras sutis apenas onde necessário
+.modal-content,
+.offcanvas,
+.dropdown-menu,
+.popover,
+.tooltip {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+}
+
+// Typography clean
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600 !important;
+  color: #0f172a !important;
+}
+
+.text-muted {
+  color: #64748b !important;
+}
+
+// Spacing consistente
+.mb-3 {
+  margin-bottom: 1rem !important;
+}
+
+.mb-4 {
+  margin-bottom: 1.5rem !important;
+}
+
+.mb-5 {
+  margin-bottom: 2rem !important;
+}

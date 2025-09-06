@@ -1,16 +1,40 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Offcanvas, Button, ListGroup, Badge, Alert, Row, Col } from "react-bootstrap";
-import { FaShoppingCart, FaPlus, FaMinus, FaTrash, FaQrcode } from "react-icons/fa";
+import { Offcanvas, Button, ListGroup, Badge, Alert, Row, Col, Modal, Image } from "react-bootstrap";
+import { FaShoppingCart, FaPlus, FaMinus, FaTrash, FaQrcode, FaEye } from "react-icons/fa";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { useCarrinho } from "../hooks/useCarrinho";
+import { useNotifications } from "../hooks/useNotifications";
+import { NotificationBadge, LoadingSkeleton, Card } from "./ui";
 
 export default function CarrinhoFlutuante() {
   const [show, setShow] = useState(false);
-  const [carrinho, setCarrinho] = useState({ itens: [], total: 0, total_original: 0, economia_total: 0 });
-  const [loading, setLoading] = useState(false);
-  const [alert, setAlert] = useState({ show: false, message: "", variant: "" });
+  const [showQrModal, setShowQrModal] = useState(false);
   const router = useRouter();
+  
+  const { 
+    carrinho: carrinhoItems, 
+    loading, 
+    totalItens, 
+    totalPreco, 
+    qrCode,
+    fetchCarrinho,
+    atualizarQuantidade,
+    removerItem,
+    finalizarPedido
+  } = useCarrinho();
+  
+  const notifications = useNotifications();
+
+  // Adaptar estrutura do carrinho
+  const carrinho = {
+    itens: carrinhoItems,
+    total: totalPreco,
+    total_original: totalPreco, // TODO: calcular valor original com desconto
+    economia_total: 0 // TODO: calcular economia total
+  };
 
   useEffect(() => {
     fetchCarrinho();
@@ -24,93 +48,21 @@ export default function CarrinhoFlutuante() {
     return () => clearInterval(interval);
   }, [show]);
 
-  const fetchCarrinho = async () => {
-    try {
-      const response = await fetch("/api/carrinho");
-      if (response.ok) {
-        const data = await response.json();
-        setCarrinho(data);
-      }
-    } catch (error) {
-      console.error("Erro ao carregar carrinho:", error);
+  const handleFinalizarPedido = async () => {
+    const result = await finalizarPedido();
+    if (result.success) {
+      setTimeout(() => {
+        setShow(false);
+        if (result.pedido?.id) {
+          router.push(`/pedidos/${result.pedido.id}`);
+        }
+      }, 2000);
     }
   };
 
-  const showAlert = (message, variant) => {
-    setAlert({ show: true, message, variant });
-    setTimeout(() => setAlert({ show: false, message: "", variant: "" }), 3000);
-  };
-
-  const atualizarQuantidade = async (produtoId, novaQuantidade) => {
-    if (novaQuantidade < 1) {
-      removerItem(produtoId);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const response = await fetch("/api/carrinho", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ produto_id: produtoId, quantidade: novaQuantidade })
-      });
-
-      if (response.ok) {
-        fetchCarrinho();
-      } else {
-        showAlert("Erro ao atualizar quantidade", "danger");
-      }
-    } catch (error) {
-      showAlert("Erro ao atualizar quantidade", "danger");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const removerItem = async (produtoId) => {
-    try {
-      setLoading(true);
-      const response = await fetch(`/api/carrinho?produto_id=${produtoId}`, {
-        method: "DELETE"
-      });
-
-      if (response.ok) {
-        showAlert("Item removido do carrinho", "success");
-        fetchCarrinho();
-      } else {
-        showAlert("Erro ao remover item", "danger");
-      }
-    } catch (error) {
-      showAlert("Erro ao remover item", "danger");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const finalizarPedido = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch("/api/pedidos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        showAlert("Pedido finalizado! Redirecionando para o QR Code...", "success");
-        
-        setTimeout(() => {
-          setShow(false);
-          router.push(`/pedidos/${data.pedido.id}`);
-        }, 2000);
-      } else {
-        const errorData = await response.json();
-        showAlert(errorData.error || "Erro ao finalizar pedido", "danger");
-      }
-    } catch (error) {
-      showAlert("Erro ao finalizar pedido", "danger");
-    } finally {
-      setLoading(false);
+  const handleShowQrCode = () => {
+    if (qrCode) {
+      setShowQrModal(true);
     }
   };
 
@@ -120,8 +72,6 @@ export default function CarrinhoFlutuante() {
       currency: 'BRL'
     }).format(price);
   };
-
-  const totalItens = carrinho.itens?.reduce((total, item) => total + item.quantidade, 0) || 0;
 
   return (
     <>
@@ -134,23 +84,16 @@ export default function CarrinhoFlutuante() {
           zIndex: 1050
         }}
       >
-        <Button 
-          variant="primary" 
-          className="rounded-circle shadow-lg position-relative"
-          style={{ width: "60px", height: "60px" }}
-          onClick={() => setShow(true)}
-        >
-          <FaShoppingCart size={20} />
-          {totalItens > 0 && (
-            <Badge 
-              bg="danger" 
-              className="position-absolute top-0 start-100 translate-middle rounded-pill"
-              style={{ fontSize: "0.7em" }}
-            >
-              {totalItens}
-            </Badge>
-          )}
-        </Button>
+        <NotificationBadge count={totalItens} variant="danger" position="top-end">
+          <Button 
+            variant="primary" 
+            className="rounded-circle"
+            style={{ width: "60px", height: "60px" }}
+            onClick={() => setShow(true)}
+          >
+            <FaShoppingCart size={20} />
+          </Button>
+        </NotificationBadge>
       </div>
 
       {/* Offcanvas do Carrinho */}
@@ -283,10 +226,21 @@ export default function CarrinhoFlutuante() {
 
               {/* Ações */}
               <div className="d-grid gap-2">
+                {qrCode && (
+                  <Button 
+                    variant="outline-primary" 
+                    size="sm"
+                    onClick={handleShowQrCode}
+                    className="mb-2"
+                  >
+                    <FaEye className="me-2" />
+                    Ver QR Code do Carrinho
+                  </Button>
+                )}
                 <Button 
                   variant="success" 
                   size="lg"
-                  onClick={finalizarPedido}
+                  onClick={handleFinalizarPedido}
                   disabled={loading || totalItens === 0}
                 >
                   <FaQrcode className="me-2" />
@@ -303,6 +257,49 @@ export default function CarrinhoFlutuante() {
           )}
         </Offcanvas.Body>
       </Offcanvas>
+
+      {/* Modal do QR Code */}
+      <Modal 
+        show={showQrModal} 
+        onHide={() => setShowQrModal(false)}
+        centered
+        size="sm"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <FaQrcode className="me-2" />
+            QR Code do Carrinho
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="text-center">
+          {qrCode ? (
+            <>
+              <Image 
+                src={qrCode} 
+                alt="QR Code do Carrinho"
+                fluid 
+                className="mb-3"
+                style={{ maxWidth: "250px" }}
+              />
+              <p className="text-muted small">
+                Escaneie este QR Code para visualizar ou compartilhar seu carrinho
+              </p>
+              <div className="small text-primary">
+                <strong>Total: {formatPrice(totalPreco)}</strong>
+                <br />
+                {totalItens} {totalItens === 1 ? 'item' : 'itens'}
+              </div>
+            </>
+          ) : (
+            <LoadingSkeleton variant="card" height="250px" />
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowQrModal(false)}>
+            Fechar
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 }

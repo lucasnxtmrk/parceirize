@@ -1,315 +1,398 @@
-// Design System Components
-// Enhanced UI components with animations and responsive design
+// Sistema de cores personalizadas - Menu e Componentes UI
+// Cores principais: #1B1236 (principal) e #DE488C (destaque)
 
-// Button enhancements - Clean version
-.btn {
-  transition: all 0.2s ease;
-  box-shadow: none;
-  font-weight: 500;
-  
-  &:hover {
-    transform: none;
-    box-shadow: none;
-  }
-  
-  &:active {
-    transform: none;
-  }
-  
-  &.loading {
-    pointer-events: none;
-    opacity: 0.7;
-  }
+// Sobrescrever variáveis CSS do sistema
+:root {
+  // Cores principais
+  --primary-dark: #1B1236;
+  --primary-pink: #DE488C;
+  --primary-pink-light: rgba(222, 72, 140, 0.1);
+  --primary-dark-darker: #0f0a24;
+  --primary-pink-darker: #c73d7a;
+
+  // Variáveis do menu lateral - APLICAR CORES PERSONALIZADAS
+  --bs-main-nav-bg: var(--primary-dark) !important;
+  --bs-main-nav-item-color: rgba(255, 255, 255, 0.8) !important;
+  --bs-main-nav-item-hover-color: white !important;
+  --bs-main-nav-item-hover-bg: var(--primary-pink) !important;
+  --bs-main-nav-item-active-color: white !important;
+  --bs-main-nav-border-color: rgba(255, 255, 255, 0.1) !important;
+
+  // Topbar
+  --bs-topbar-bg: white !important;
+  --bs-topbar-item-color: var(--primary-dark) !important;
+
+  // Botões primários
+  --bs-btn-primary-bg: var(--primary-dark);
+  --bs-btn-primary-border-color: var(--primary-dark);
+  --bs-btn-primary-hover-bg: var(--primary-dark-darker);
+  --bs-btn-primary-hover-border-color: var(--primary-dark-darker);
+
+  // Links
+  --bs-link-color: var(--primary-pink);
+  --bs-link-hover-color: var(--primary-pink-darker);
 }
 
-// Card enhancements - Clean version
-.card {
-  border: 1px solid #e2e8f0;
-  box-shadow: none;
-  transition: border-color 0.2s ease;
-  
-  &.card-hover:hover {
-    border-color: #cbd5e1;
-    box-shadow: none;
-  }
-  
-  &.card-loading {
-    .card-body {
-      min-height: 120px;
+// MENU LATERAL / SIDEBAR - Customização específica
+.main-nav {
+  background: var(--primary-dark) !important;
+  background-color: var(--primary-dark) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+
+  // Logo
+  .logo-box {
+    background: var(--primary-dark) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+
+    .logo-lg,
+    .logo-sm {
+      filter: brightness(0) invert(1); // Tornar logo branco
     }
   }
-}
 
-// Badge system
-.badge {
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  
-  &.badge-sm {
-    font-size: 0.65rem;
-    padding: 0.2em 0.4em;
+  // Títulos de seção do menu
+  .menu-title {
+    color: rgba(255, 255, 255, 0.6) !important;
+    font-weight: 600 !important;
+    font-size: 11px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
   }
-  
-  &.badge-lg {
-    font-size: 0.85rem;
-    padding: 0.4em 0.8em;
-  }
-  
-  &.badge-pulse {
-    animation: badge-pulse 2s infinite;
-  }
-  
-  &.badge-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    padding: 0;
-    min-width: auto;
-  }
-}
 
-@keyframes badge-pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
+  // Itens do menu
+  .navbar-nav {
+    .nav-item {
+      .nav-link {
+        color: rgba(255, 255, 255, 0.8) !important;
+        font-weight: 500 !important;
+        border-radius: 8px !important;
+        margin: 2px 0 !important;
+        transition: all 0.2s ease !important;
+        
+        // Ícones
+        .nav-icon {
+          color: inherit !important;
+          font-size: 18px !important;
+        }
 
-// Notification badge
-.notification-badge {
-  font-size: 0.7rem;
-  min-width: 18px;
-  height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  
-  &.notification-badge-dot {
-    width: 8px;
-    height: 8px;
-    min-width: 8px;
-  }
-}
+        // Hover
+        &:hover,
+        &:focus {
+          color: white !important;
+          background-color: rgba(222, 72, 140, 0.15) !important;
+          transform: translateX(2px) !important;
+        }
 
-// Loading skeletons
-.skeleton {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: loading 1.5s infinite;
-}
+        // Item ativo - usar cor de destaque
+        &.active {
+          background-color: var(--primary-pink) !important;
+          color: white !important;
+          font-weight: 600 !important;
+          box-shadow: 0 2px 8px rgba(222, 72, 140, 0.3) !important;
 
-.skeleton-card {
-  padding: 1rem;
-  border: 1px solid #e9ecef;
-  border-radius: 0.375rem;
-  background: #fff;
-}
+          .nav-icon {
+            color: white !important;
+          }
+        }
 
-@keyframes loading {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
+        // Seta do submenu
+        .menu-arrow {
+          color: inherit !important;
+          opacity: 0.7 !important;
+        }
+      }
 
-// Input enhancements
-.form-control {
-  transition: all 0.2s ease;
-  
-  &:focus {
-    border-color: var(--bs-primary);
-    box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
-  }
-}
+      // Submenu
+      .sub-navbar-nav {
+        .sub-nav-item {
+          .nav-link {
+            color: rgba(255, 255, 255, 0.7) !important;
+            font-size: 13px !important;
+            padding-left: 3rem !important;
 
-.input-group-focused {
-  .input-group-text {
-    border-color: var(--bs-primary);
-    background-color: var(--bs-primary-bg-subtle);
-  }
-}
+            &:hover,
+            &:focus {
+              color: white !important;
+              background-color: rgba(222, 72, 140, 0.1) !important;
+            }
 
-.form-label.required::after {
-  content: " *";
-  color: var(--bs-danger);
-}
-
-// Modal enhancements - Clean version  
-.modal-content {
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
-}
-
-// Enhanced responsive design
-@media (max-width: 576px) {
-  .btn {
-    padding: 0.5rem 0.8rem;
-    font-size: 0.85rem;
-    width: 100%;
-    margin-bottom: 0.5rem;
-  }
-  
-  .card {
-    margin-bottom: 1rem;
-    padding: 0.75rem;
-  }
-  
-  .modal-dialog {
-    margin: 0.5rem;
-  }
-  
-  .notification-badge {
-    font-size: 0.6rem;
-    min-width: 14px;
-    height: 14px;
-  }
-  
-  // Hide less important content on mobile
-  .d-mobile-none {
-    display: none !important;
-  }
-}
-
-@media (min-width: 576px) and (max-width: 768px) {
-  .btn {
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
-  }
-  
-  .card {
-    margin-bottom: 1rem;
-  }
-  
-  .notification-badge {
-    font-size: 0.65rem;
-    min-width: 16px;
-    height: 16px;
-  }
-}
-
-@media (min-width: 992px) {
-  .btn-lg {
-    padding: 0.75rem 1.5rem;
-    font-size: 1.1rem;
-  }
-  
-  .card {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  
-  .card:hover {
-    transform: translateY(-2px);
-  }
-}
-
-// Dashboard specific responsive improvements
-.dashboard-stats {
-  @media (max-width: 768px) {
-    .col-lg-3 {
-      margin-bottom: 1rem;
-    }
-  }
-}
-
-.quick-actions {
-  @media (max-width: 576px) {
-    .col-lg-3 {
-      margin-bottom: 0.75rem;
-    }
-  }
-}
-
-// Cart floating button responsive
-.cart-floating {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 1050;
-  
-  @media (max-width: 576px) {
-    bottom: 15px;
-    right: 15px;
-    
-    .btn {
-      width: 50px;
-      height: 50px;
-      
-      svg {
-        font-size: 16px;
+            &.active {
+              color: var(--primary-pink) !important;
+              background-color: rgba(222, 72, 140, 0.1) !important;
+              font-weight: 600 !important;
+            }
+          }
+        }
       }
     }
   }
 }
 
-// Improved table responsiveness
-.table-responsive {
-  @media (max-width: 768px) {
-    font-size: 0.875rem;
-    
-    th, td {
-      padding: 0.5rem 0.25rem;
+// TOPBAR - Barra superior
+.topbar {
+  background: white !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+
+  // Brand/Logo
+  .navbar-brand {
+    color: var(--primary-dark) !important;
+    font-weight: 700 !important;
+    font-size: 1.5rem !important;
+  }
+
+  // Itens da topbar
+  .topbar-item {
+    color: var(--primary-dark) !important;
+
+    &:hover {
+      color: var(--primary-pink) !important;
     }
-    
-    .btn-sm {
-      padding: 0.25rem 0.5rem;
-      font-size: 0.75rem;
+  }
+
+  // Dropdown do usuário
+  .dropdown-menu {
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
+
+    .dropdown-item {
+      color: var(--primary-dark) !important;
+      
+      &:hover,
+      &:focus {
+        background-color: var(--primary-pink-light) !important;
+        color: var(--primary-pink) !important;
+      }
     }
   }
 }
 
-// Modal enhancements
+// BOTÕES - Aplicar esquema de cores
+.btn-primary {
+  background-color: var(--primary-dark) !important;
+  border-color: var(--primary-dark) !important;
+  color: white !important;
+  font-weight: 500 !important;
+
+  &:hover,
+  &:focus,
+  &:active,
+  &.active {
+    background-color: var(--primary-dark-darker) !important;
+    border-color: var(--primary-dark-darker) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(27, 18, 54, 0.3) !important;
+  }
+}
+
+.btn-secondary {
+  background-color: var(--primary-pink) !important;
+  border-color: var(--primary-pink) !important;
+  color: white !important;
+  font-weight: 500 !important;
+
+  &:hover,
+  &:focus,
+  &:active,
+  &.active {
+    background-color: var(--primary-pink-darker) !important;
+    border-color: var(--primary-pink-darker) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(222, 72, 140, 0.3) !important;
+  }
+}
+
+.btn-outline-primary {
+  border-color: var(--primary-dark) !important;
+  color: var(--primary-dark) !important;
+
+  &:hover,
+  &:focus,
+  &:active {
+    background-color: var(--primary-dark) !important;
+    border-color: var(--primary-dark) !important;
+    color: white !important;
+  }
+}
+
+.btn-outline-secondary {
+  border-color: var(--primary-pink) !important;
+  color: var(--primary-pink) !important;
+
+  &:hover,
+  &:focus,
+  &:active {
+    background-color: var(--primary-pink) !important;
+    border-color: var(--primary-pink) !important;
+    color: white !important;
+  }
+}
+
+// BADGES
+.badge {
+  &.bg-primary {
+    background-color: var(--primary-dark) !important;
+  }
+
+  &.bg-secondary {
+    background-color: var(--primary-pink) !important;
+  }
+
+  &.bg-info {
+    background-color: var(--primary-pink) !important;
+  }
+}
+
+// CARDS - Clean styling
+.card {
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+  transition: border-color 0.2s ease !important;
+
+  &:hover {
+    border-color: #cbd5e1 !important;
+  }
+
+  .card-header {
+    background-color: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    color: var(--primary-dark) !important;
+    font-weight: 600 !important;
+  }
+
+  .card-title {
+    color: var(--primary-dark) !important;
+    font-weight: 600 !important;
+  }
+}
+
+// FORMULÁRIOS
+.form-control,
+.form-select {
+  border: 1px solid #d1d5db !important;
+  border-radius: 8px !important;
+
+  &:focus {
+    border-color: var(--primary-pink) !important;
+    box-shadow: 0 0 0 3px rgba(222, 72, 140, 0.1) !important;
+  }
+}
+
+// TABELAS
+.table {
+  th {
+    color: var(--primary-dark) !important;
+    font-weight: 600 !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+  }
+}
+
+// NAVEGAÇÃO (TABS/PILLS)
+.nav-tabs {
+  .nav-link {
+    color: var(--primary-dark) !important;
+
+    &.active {
+      color: var(--primary-pink) !important;
+      border-bottom-color: var(--primary-pink) !important;
+    }
+  }
+}
+
+.nav-pills {
+  .nav-link {
+    color: var(--primary-dark) !important;
+
+    &.active {
+      background-color: var(--primary-pink) !important;
+      color: white !important;
+    }
+  }
+}
+
+// ALERTAS
+.alert {
+  border-radius: 8px !important;
+  border: none !important;
+
+  &.alert-primary {
+    background-color: rgba(27, 18, 54, 0.1) !important;
+    color: var(--primary-dark) !important;
+  }
+
+  &.alert-info {
+    background-color: var(--primary-pink-light) !important;
+    color: var(--primary-pink) !important;
+  }
+}
+
+// PAGINAÇÃO
+.pagination {
+  .page-link {
+    color: var(--primary-dark) !important;
+    border-color: #d1d5db !important;
+
+    &:hover {
+      background-color: var(--primary-pink-light) !important;
+      border-color: var(--primary-pink) !important;
+      color: var(--primary-pink) !important;
+    }
+  }
+
+  .page-item.active .page-link {
+    background-color: var(--primary-dark) !important;
+    border-color: var(--primary-dark) !important;
+  }
+}
+
+// PROGRESS BARS
+.progress-bar {
+  background-color: var(--primary-pink) !important;
+}
+
+// SPINNERS
+.spinner-border {
+  color: var(--primary-dark) !important;
+}
+
+// LINKS
+a {
+  color: var(--primary-pink) !important;
+  text-decoration: none !important;
+
+  &:hover,
+  &:focus {
+    color: var(--primary-pink-darker) !important;
+  }
+}
+
+// MODAIS
 .modal {
-  @media (max-width: 576px) {
-    .modal-dialog {
-      max-width: 95vw;
-      margin: 0.5rem auto;
+  .modal-header {
+    border-bottom: 1px solid #e2e8f0 !important;
+
+    .modal-title {
+      color: var(--primary-dark) !important;
+      font-weight: 600 !important;
     }
-    
-    .modal-header,
-    .modal-body,
-    .modal-footer {
-      padding: 1rem 0.75rem;
+
+    .btn-close {
+      color: var(--primary-dark) !important;
     }
   }
 }
 
-// Dark mode support - removido temporariamente para evitar conflitos
-// Será implementado futuramente com toggle manual
-
-// Print styles
-@media print {
-  .btn,
-  .modal,
-  .offcanvas,
-  .sidebar,
-  .cart-floating {
-    display: none !important;
-  }
-  
-  .card {
-    break-inside: avoid;
-    box-shadow: none;
-    border: 1px solid #ccc;
+// TOOLTIP e POPOVER
+.tooltip {
+  .tooltip-inner {
+    background-color: var(--primary-dark) !important;
   }
 }
 
-// High contrast mode
-@media (prefers-contrast: high) {
-  .btn {
-    border: 2px solid currentColor;
-  }
-  
-  .card {
-    border: 2px solid var(--bs-border-color);
-  }
-  
-  .badge {
-    border: 1px solid currentColor;
+.popover {
+  .popover-header {
+    background-color: var(--primary-dark) !important;
+    color: white !important;
   }
 }

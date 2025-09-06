@@ -54,7 +54,7 @@ const LockScreen = () => {
                       <TextFormInput control={control} name="password" placeholder="Enter your password" className="bg-light bg-opacity-50 border-light py-2" />
                     </div>
                     <div className="mb-1 text-center d-grid">
-                      <button className="btn btn-danger py-2" type="submit">
+                      <button className="btn btn-primary py-2" type="submit">
                         Sign In
                       </button>
                     </div>

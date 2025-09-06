@@ -1,7 +1,7 @@
-import { Accordion, AccordionBody, AccordionHeader, AccordionItem, Button, Col, Row } from 'react-bootstrap';
+import { Accordion, AccordionBody, AccordionHeader, AccordionItem, Button, Col, Row, CardTitle } from 'react-bootstrap';
+import ComponentContainerCard from '@/components/ComponentContainerCard';
 import IconifyIcon from '@/components/wrappers/IconifyIcon';
 import { faqData } from './data';
-import PageTitle from '@/components/PageTitle';
 export const metadata = {
   title: 'FAQs'
 };
@@ -58,20 +58,24 @@ const SupportFaqs = () => {
     </>;
 };
 const FAQs = () => {
-  return <>
-      <PageTitle title="FAQs" subName="Pages" />
+  return (
+    <ComponentContainerCard id="tutorial-faq">
+      {/* Cabeçalho: Título */}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <CardTitle as="h4" className="mb-0">Tutorial & FAQs</CardTitle>
+      </div>
+
       <Row>
         <Col>
           <Row className="g-xl-4">
-
-                          <GeneralFaq />
-              <RefundFaqs />
-                            <PaymentsFaqs />
-              <SupportFaqs />
-
+            <GeneralFaq />
+            <RefundFaqs />
+            <PaymentsFaqs />
+            <SupportFaqs />
           </Row>
         </Col>
       </Row>
-    </>;
+    </ComponentContainerCard>
+  );
 };
 export default FAQs;

@@ -1,0 +1,319 @@
+// Página de Login Moderna e Sofisticada
+// Estilos customizados para a tela de login
+
+// Animações suaves
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -468px 0;
+  }
+  100% {
+    background-position: 468px 0;
+  }
+}
+
+// Container principal da página de login
+.login-container {
+  background: linear-gradient(135deg, #1B1236 0%, #2D1B69 50%, #DE488C 100%);
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  
+  // Background decorativo animado
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(222, 72, 140, 0.15) 0%, transparent 50%);
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -50%;
+    left: -50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+    animation: float 8s ease-in-out infinite reverse;
+  }
+}
+
+// Card principal branco
+.login-card {
+  background: #ffffff !important;
+  border: none !important;
+  border-radius: 24px !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+  animation: fadeInUp 0.8s ease-out;
+  transition: all 0.3s ease !important;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+  }
+}
+
+// Logo container com animação
+.login-logo-container {
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.1);
+  borderRadius: 20px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: fadeInUp 0.6s ease-out;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(1.05);
+  }
+}
+
+// Inputs modernos brancos
+.login-input {
+  background: #ffffff !important;
+  border: 1px solid #E5E7EB !important;
+  border-radius: 12px !important;
+  color: #1F2937 !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  
+  &::placeholder {
+    color: #9CA3AF !important;
+  }
+  
+  &:focus {
+    background: #ffffff !important;
+    border-color: #DE488C !important;
+    box-shadow: 0 0 0 3px rgba(222, 72, 140, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+    color: #1F2937 !important;
+  }
+  
+  &:hover {
+    border-color: #D1D5DB !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  }
+}
+
+// Botão principal com gradiente e animações
+.login-btn-primary {
+  background: linear-gradient(45deg, #1B1236, #2D1B69) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px !important;
+  box-shadow: 0 4px 15px rgba(27, 18, 54, 0.4) !important;
+  transition: all 0.3s ease !important;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
+    transition: left 0.5s;
+  }
+  
+  &:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(27, 18, 54, 0.5) !important;
+    
+    &::before {
+      left: 100%;
+    }
+  }
+  
+  &:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 2px 10px rgba(27, 18, 54, 0.3) !important;
+  }
+  
+  &:disabled {
+    opacity: 0.7;
+    transform: none !important;
+    cursor: not-allowed;
+  }
+}
+
+// Links com hover suave
+.login-link {
+  color: #DE488C !important;
+  text-decoration: none !important;
+  transition: all 0.2s ease !important;
+  
+  &:hover {
+    opacity: 0.8 !important;
+    transform: translateX(2px);
+  }
+}
+
+.login-link-secondary {
+  color: rgba(255, 255, 255, 0.6) !important;
+  text-decoration: none !important;
+  transition: all 0.2s ease !important;
+  
+  &:hover {
+    color: rgba(255, 255, 255, 0.9) !important;
+    transform: translateY(-1px);
+  }
+}
+
+// Checkbox customizado
+.login-checkbox {
+  background: #ffffff !important;
+  border-color: #D1D5DB !important;
+  border-radius: 4px !important;
+  transform: scale(1.1);
+  transition: all 0.2s ease !important;
+  
+  &:checked {
+    background-color: #DE488C !important;
+    border-color: #DE488C !important;
+  }
+  
+  &:hover {
+    transform: scale(1.15);
+    border-color: #9CA3AF !important;
+  }
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba(222, 72, 140, 0.2) !important;
+  }
+}
+
+// Ícones dos inputs
+.login-input-icon {
+  color: #9CA3AF;
+  transition: color 0.2s ease;
+}
+
+// Labels elegantes
+.login-label {
+  color: #374151 !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.5px !important;
+  margin-bottom: 0.75rem !important;
+}
+
+// Textos secundários
+.login-text-secondary {
+  color: #6B7280 !important;
+  font-weight: 400 !important;
+}
+
+// Títulos
+.login-title {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.5px !important;
+  margin-bottom: 1rem !important;
+}
+
+.login-subtitle {
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-weight: 400 !important;
+}
+
+// Spinner customizado
+.login-spinner {
+  border-color: rgba(255, 255, 255, 0.3);
+  border-left-color: #ffffff;
+}
+
+// Responsividade
+@media (max-width: 576px) {
+  .login-card {
+    margin: 1rem;
+    border-radius: 16px !important;
+  }
+  
+  .login-logo-container {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .login-title {
+    font-size: 1.5rem !important;
+  }
+}
+
+// Animações de entrada
+.login-animation-delay-1 {
+  animation: fadeInUp 0.8s ease-out 0.1s both;
+}
+
+.login-animation-delay-2 {
+  animation: fadeInUp 0.8s ease-out 0.2s both;
+}
+
+.login-animation-delay-3 {
+  animation: fadeInUp 0.8s ease-out 0.3s both;
+}
+
+// Efeitos especiais para form controls
+.form-control {
+  &:focus {
+    border-color: var(--primary-pink) !important;
+    box-shadow: 0 0 0 3px rgba(222, 72, 140, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+    color: #1F2937 !important;
+  }
+}
+
+// Hover effects para botões
+.btn {
+  transition: all 0.3s ease !important;
+  
+  &:hover {
+    transform: translateY(-1px) !important;
+  }
+  
+  &:active {
+    transform: translateY(0) !important;
+  }
+}
+
+// Logo com sombra suave
+.login-logo {
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15)) !important;
+  transition: all 0.3s ease !important;
+  
+  &:hover {
+    filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.2)) !important;
+    transform: scale(1.05) !important;
+  }
+}

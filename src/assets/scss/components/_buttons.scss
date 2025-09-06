@@ -51,33 +51,33 @@ button:focus {
         }
     }
     
-    // Primary variant
+    // Primary variant - usando cor do sistema
     &.btn-primary {
-        background-color: #3b82f6 !important;
-        border-color: #3b82f6 !important;
+        background-color: var(--primary-dark) !important;
+        border-color: var(--primary-dark) !important;
         color: #ffffff !important;
         
         &:hover {
-            background-color: #2563eb !important;
-            border-color: #2563eb !important;
+            background-color: #0f0a24 !important;
+            border-color: #0f0a24 !important;
         }
         
         &:active {
-            background-color: #1d4ed8 !important;
-            border-color: #1d4ed8 !important;
+            background-color: #0f0a24 !important;
+            border-color: #0f0a24 !important;
         }
     }
     
-    // Secondary variant
+    // Secondary variant - usando cor de destaque
     &.btn-secondary {
-        background-color: #f1f5f9 !important;
-        border-color: #e2e8f0 !important;
-        color: #475569 !important;
+        background-color: var(--primary-pink) !important;
+        border-color: var(--primary-pink) !important;
+        color: #ffffff !important;
         
         &:hover {
-            background-color: #e2e8f0 !important;
-            border-color: #cbd5e1 !important;
-            color: #334155 !important;
+            background-color: #c73d7a !important;
+            border-color: #c73d7a !important;
+            color: #ffffff !important;
         }
     }
     

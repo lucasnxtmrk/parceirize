@@ -25,14 +25,14 @@ export async function GET(req) {
         SELECT 
           p.id as pedido_id,
           p.created_at,
-          SUM(pi.quantidade * pi.preco_unitario * COALESCE(pi.desconto_aplicado, pr.desconto, 0) / 100) as economia_pedido,
+          SUM(pi.quantidade * pi.preco_unitario * pr.desconto / 100) as economia_pedido,
           COUNT(DISTINCT pi.parceiro_id) as parceiros_no_pedido
         FROM pedidos p
         INNER JOIN pedido_itens pi ON p.id = pi.pedido_id
         INNER JOIN produtos pr ON pi.produto_id = pr.id
         WHERE p.cliente_id = $1 
           AND pi.validado_at IS NOT NULL
-          AND (pi.desconto_aplicado > 0 OR pr.desconto > 0)
+          AND pr.desconto > 0
         GROUP BY p.id, p.created_at
       ),
       parceiros_economia AS (
@@ -41,14 +41,14 @@ export async function GET(req) {
           parc.nome_empresa as parceiro_nome,
           parc.foto as parceiro_foto,
           COUNT(DISTINCT p.id) as pedidos_count,
-          SUM(pi.quantidade * pi.preco_unitario * COALESCE(pi.desconto_aplicado, pr.desconto, 0) / 100) as economia_total
+          SUM(pi.quantidade * pi.preco_unitario * pr.desconto / 100) as economia_total
         FROM pedidos p
         INNER JOIN pedido_itens pi ON p.id = pi.pedido_id
         INNER JOIN produtos pr ON pi.produto_id = pr.id
         INNER JOIN parceiros parc ON pi.parceiro_id = parc.id
         WHERE p.cliente_id = $1 
           AND pi.validado_at IS NOT NULL
-          AND (pi.desconto_aplicado > 0 OR pr.desconto > 0)
+          AND pr.desconto > 0
         GROUP BY parc.id, parc.nome_empresa, parc.foto
         ORDER BY economia_total DESC
         LIMIT 10

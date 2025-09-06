@@ -1,11 +1,11 @@
 import LogoBox from '@/components/LogoBox';
-import React from 'react';
+import React, { useMemo } from 'react';
 import HoverMenuToggle from './components/HoverMenuToggle';
 import SimplebarReactClient from '@/components/wrappers/SimplebarReactClient';
 import AppMenu from './components/AppMenu';
 import { getMenuItems } from '@/helpers/Manu2';
-const page = () => {
-  const menuItems = getMenuItems();
+const VerticalNavigationBarCliente = () => {
+  const menuItems = useMemo(() => getMenuItems(), []);
   return <div className="main-nav" id='leftside-menu-container'>
       <LogoBox />
       <HoverMenuToggle />
@@ -14,4 +14,4 @@ const page = () => {
       </SimplebarReactClient>
     </div>;
 };
-export default page;
+export default React.memo(VerticalNavigationBarCliente);

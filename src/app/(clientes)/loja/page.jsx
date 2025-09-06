@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Container, Row, Col, Card, Button, Badge, Alert, Form, Spinner } from "react-bootstrap";
+import ComponentContainerCard from "@/components/ComponentContainerCard";
+import { Container, Row, Col, Card, Button, Badge, Alert, Form, Spinner, CardTitle } from "react-bootstrap";
 import { FaShoppingCart, FaPlus, FaMinus, FaFilter } from "react-icons/fa";
 
 export default function ProdutosPage() {
@@ -144,35 +145,30 @@ export default function ProdutosPage() {
 
   const totalItensCarrinho = carrinho.reduce((total, item) => total + item.quantidade, 0);
 
-  if (loading) {
-    return (
-      <Container className="d-flex justify-content-center align-items-center" style={{ height: "50vh" }}>
-        <Spinner animation="border" role="status">
-          <span className="visually-hidden">Carregando...</span>
-        </Spinner>
-      </Container>
-    );
-  }
-
   return (
-    <Container className="py-4">
-      {alert.show && (
-        <Alert variant={alert.variant} className="mb-4">
-          {alert.message}
-        </Alert>
-      )}
+    <ComponentContainerCard id="loja-produtos">
+      {/* Cabeçalho: Título + Badge do carrinho */}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <CardTitle as="h4" className="mb-0">Produtos Disponíveis</CardTitle>
+        <Badge bg="primary" className="fs-6">
+          <FaShoppingCart className="me-2" />
+          {totalItensCarrinho} {totalItensCarrinho === 1 ? 'item' : 'itens'}
+        </Badge>
+      </div>
 
-      <Row className="mb-4">
-        <Col>
-          <div className="d-flex justify-content-between align-items-center">
-            <h2>Produtos Disponíveis</h2>
-            <Badge bg="primary" className="fs-6">
-              <FaShoppingCart className="me-2" />
-              {totalItensCarrinho} {totalItensCarrinho === 1 ? 'item' : 'itens'}
-            </Badge>
-          </div>
-        </Col>
-      </Row>
+      {loading ? (
+        <div className="d-flex justify-content-center align-items-center" style={{ height: "50vh" }}>
+          <Spinner animation="border" role="status">
+            <span className="visually-hidden">Carregando...</span>
+          </Spinner>
+        </div>
+      ) : (
+        <>
+          {alert.show && (
+            <Alert variant={alert.variant} className="mb-4">
+              {alert.message}
+            </Alert>
+          )}
 
       {/* Filtros */}
       <Row className="mb-4">
@@ -205,101 +201,103 @@ export default function ProdutosPage() {
         </Col>
       </Row>
 
-      {produtos.length === 0 ? (
-        <Row>
-          <Col>
-            <Card className="text-center py-5">
-              <Card.Body>
-                <h4 className="text-muted">Nenhum produto encontrado</h4>
-                <p className="text-muted">Não há produtos disponíveis no momento.</p>
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
-      ) : (
-        <Row>
-          {produtos.map((produto) => {
-            const quantidadeNoCarrinho = getQuantidadeNoCarrinho(produto.id);
-            
-            return (
-              <Col md={6} lg={4} key={produto.id} className="mb-4">
-                <Card className="h-100 shadow-sm">
-                  {produto.imagem_url && (
-                    <Card.Img 
-                      variant="top" 
-                      src={produto.imagem_url} 
-                      style={{ height: "200px", objectFit: "cover" }}
-                    />
-                  )}
-                  <Card.Body className="d-flex flex-column">
-                    <div className="mb-2">
-                      <Badge bg="secondary" className="mb-2">
-                        {produto.parceiro_nicho}
-                      </Badge>
-                      <h5 className="card-title">{produto.nome}</h5>
-                      <p className="text-muted small mb-2">
-                        <strong>{produto.parceiro_nome}</strong>
-                      </p>
-                    </div>
-                    
-                    {produto.descricao && (
-                      <p className="card-text text-muted small flex-grow-1">
-                        {produto.descricao}
-                      </p>
-                    )}
-                    
-                    <div className="mt-auto">
-                      <div className="d-flex justify-content-between align-items-center mb-3">
-                        <span className="h5 mb-0 text-primary fw-bold">
-                          {formatPrice(produto.preco)}
-                        </span>
-                      </div>
-                      
-                      {quantidadeNoCarrinho > 0 ? (
-                        <div className="d-flex align-items-center justify-content-between">
-                          <div className="d-flex align-items-center gap-2">
-                            <Button 
-                              variant="outline-danger" 
-                              size="sm"
-                              onClick={() => atualizarQuantidade(produto.id, quantidadeNoCarrinho - 1)}
-                            >
-                              <FaMinus />
-                            </Button>
-                            <span className="fw-bold mx-2">{quantidadeNoCarrinho}</span>
-                            <Button 
-                              variant="outline-success" 
-                              size="sm"
-                              onClick={() => atualizarQuantidade(produto.id, quantidadeNoCarrinho + 1)}
-                            >
-                              <FaPlus />
-                            </Button>
-                          </div>
-                          <Button 
-                            variant="outline-danger" 
-                            size="sm"
-                            onClick={() => removerDoCarrinho(produto.id)}
-                          >
-                            Remover
-                          </Button>
-                        </div>
-                      ) : (
-                        <Button 
-                          variant="primary" 
-                          className="w-100"
-                          onClick={() => adicionarAoCarrinho(produto)}
-                        >
-                          <FaShoppingCart className="me-2" />
-                          Adicionar ao Carrinho
-                        </Button>
-                      )}
-                    </div>
+          {produtos.length === 0 ? (
+            <Row>
+              <Col>
+                <Card className="text-center py-5">
+                  <Card.Body>
+                    <h4 className="text-muted">Nenhum produto encontrado</h4>
+                    <p className="text-muted">Não há produtos disponíveis no momento.</p>
                   </Card.Body>
                 </Card>
               </Col>
-            );
-          })}
-        </Row>
+            </Row>
+          ) : (
+            <Row>
+              {produtos.map((produto) => {
+                const quantidadeNoCarrinho = getQuantidadeNoCarrinho(produto.id);
+                
+                return (
+                  <Col md={6} lg={4} key={produto.id} className="mb-4">
+                    <Card className="h-100 shadow-sm">
+                      {produto.imagem_url && (
+                        <Card.Img 
+                          variant="top" 
+                          src={produto.imagem_url} 
+                          style={{ height: "200px", objectFit: "cover" }}
+                        />
+                      )}
+                      <Card.Body className="d-flex flex-column">
+                        <div className="mb-2">
+                          <Badge bg="secondary" className="mb-2">
+                            {produto.parceiro_nicho}
+                          </Badge>
+                          <h5 className="card-title">{produto.nome}</h5>
+                          <p className="text-muted small mb-2">
+                            <strong>{produto.parceiro_nome}</strong>
+                          </p>
+                        </div>
+                        
+                        {produto.descricao && (
+                          <p className="card-text text-muted small flex-grow-1">
+                            {produto.descricao}
+                          </p>
+                        )}
+                        
+                        <div className="mt-auto">
+                          <div className="d-flex justify-content-between align-items-center mb-3">
+                            <span className="h5 mb-0 text-primary fw-bold">
+                              {formatPrice(produto.preco)}
+                            </span>
+                          </div>
+                          
+                          {quantidadeNoCarrinho > 0 ? (
+                            <div className="d-flex align-items-center justify-content-between">
+                              <div className="d-flex align-items-center gap-2">
+                                <Button 
+                                  variant="outline-danger" 
+                                  size="sm"
+                                  onClick={() => atualizarQuantidade(produto.id, quantidadeNoCarrinho - 1)}
+                                >
+                                  <FaMinus />
+                                </Button>
+                                <span className="fw-bold mx-2">{quantidadeNoCarrinho}</span>
+                                <Button 
+                                  variant="outline-success" 
+                                  size="sm"
+                                  onClick={() => atualizarQuantidade(produto.id, quantidadeNoCarrinho + 1)}
+                                >
+                                  <FaPlus />
+                                </Button>
+                              </div>
+                              <Button 
+                                variant="outline-danger" 
+                                size="sm"
+                                onClick={() => removerDoCarrinho(produto.id)}
+                              >
+                                Remover
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button 
+                              variant="primary" 
+                              className="w-100"
+                              onClick={() => adicionarAoCarrinho(produto)}
+                            >
+                              <FaShoppingCart className="me-2" />
+                              Adicionar ao Carrinho
+                            </Button>
+                          )}
+                        </div>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                );
+              })}
+            </Row>
+          )}
+        </>
       )}
-    </Container>
+    </ComponentContainerCard>
   );
 }

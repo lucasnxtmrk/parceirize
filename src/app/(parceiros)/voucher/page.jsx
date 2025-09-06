@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Row } from 'react-bootstrap';
+import ComponentContainerCard from '@/components/ComponentContainerCard';
+import { Row, CardTitle } from 'react-bootstrap';
 import VoucherCard from './components/VoucherCard';
 
 const VoucherPage = () => {
@@ -35,24 +36,27 @@ const VoucherPage = () => {
         fetchVoucherData();
     }, []);
 
-    if (loading) {
-        return <div className="text-center">Carregando voucher...</div>;
-    }
-
-    if (error) {
-        return <div className="text-center text-danger">Erro ao carregar voucher: {error.message}</div>;
-    }
-
-    if (vouchers.length === 0) {
-        return <div className="text-center">Nenhum voucher encontrado.</div>;
-    }
-
     return (
-        <Row>
-            {vouchers.map((voucher, idx) => (
-                <VoucherCard key={idx} voucher={voucher} />
-            ))}
-        </Row>
+        <ComponentContainerCard id="vouchers-parceiro">
+            {/* Cabeçalho: Título */}
+            <div className="d-flex justify-content-between align-items-center mb-4">
+                <CardTitle as="h4" className="mb-0">Meus Vouchers</CardTitle>
+            </div>
+
+            {loading ? (
+                <div className="text-center">Carregando vouchers...</div>
+            ) : error ? (
+                <div className="text-center text-danger">Erro ao carregar vouchers: {error.message}</div>
+            ) : vouchers.length === 0 ? (
+                <div className="text-center">Nenhum voucher encontrado.</div>
+            ) : (
+                <Row>
+                    {vouchers.map((voucher, idx) => (
+                        <VoucherCard key={idx} voucher={voucher} />
+                    ))}
+                </Row>
+            )}
+        </ComponentContainerCard>
     );
 };
 

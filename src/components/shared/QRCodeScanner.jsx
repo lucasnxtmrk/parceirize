@@ -297,8 +297,8 @@ const QRCodeScanner = ({
                   <Alert variant="info" className="border-0 bg-info bg-opacity-10">
                     <small>
                       <strong>💡 Dicas:</strong><br />
-                      • Use "Inserir Código" para colar o código manualmente<br />
-                      • Use "Usar Câmera" para escanear o QR Code diretamente<br />
+                      • Use &quot;Inserir Código&quot; para colar o código manualmente<br />
+                      • Use &quot;Usar Câmera&quot; para escanear o QR Code diretamente<br />
                       • Certifique-se de ter boa iluminação ao usar a câmera
                     </small>
                   </Alert>

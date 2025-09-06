@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Row, Col, Container } from "react-bootstrap";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import PageTitle from "@/components/PageTitle";
+import ComponentContainerCard from "@/components/ComponentContainerCard";
+import { CardTitle } from "react-bootstrap";
 import DashboardStats from "./components/DashboardStats";
 import QuickActions from "./components/QuickActions";
 import RecentActivity from "./components/RecentActivity";
@@ -34,21 +35,24 @@ const AdminDashboard = () => {
     };
 
     return (
-        <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-        >
-            <PageTitle title="Dashboard" subName="Visão Geral" />
-            
-            <Container fluid>
+        <ComponentContainerCard id="admin-dashboard">
+            {/* Cabeçalho: Título */}
+            <div className="d-flex justify-content-between align-items-center mb-4">
+                <CardTitle as="h4" className="mb-0">Dashboard - Visão Geral</CardTitle>
+            </div>
+
+            <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+            >
                 {/* Estatísticas Principais */}
-                <motion.section variants={sectionVariants} className="mb-5">
+                <motion.section variants={sectionVariants} className="mb-4">
                     <DashboardStats />
                 </motion.section>
 
                 {/* Ações Rápidas */}
-                <motion.section variants={sectionVariants} className="mb-5">
+                <motion.section variants={sectionVariants} className="mb-4">
                     <QuickActions onActionClick={handleActionClick} />
                 </motion.section>
 
@@ -68,8 +72,8 @@ const AdminDashboard = () => {
                         </motion.div>
                     </Col>
                 </Row>
-            </Container>
-        </motion.div>
+            </motion.div>
+        </ComponentContainerCard>
     );
 };
 

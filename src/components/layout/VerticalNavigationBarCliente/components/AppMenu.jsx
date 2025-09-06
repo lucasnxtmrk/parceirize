@@ -5,9 +5,9 @@ import { findAllParent, findMenuItem, getMenuItemFromURL } from '@/helpers/Manu2
 import clsx from 'clsx';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Fragment, useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useState, useMemo, memo } from 'react';
 import { Collapse } from 'react-bootstrap';
-const MenuItemWithChildren = ({
+const MenuItemWithChildren = memo(({
   item,
   className,
   linkClassName,
@@ -29,7 +29,8 @@ const MenuItemWithChildren = ({
   const getActiveClass = useCallback(item => {
     return activeMenuItems?.includes(item.key) ? 'active' : '';
   }, [activeMenuItems]);
-  return <li className={className}>
+  return (
+    <li className={className}>
       <div onClick={toggleMenuItem} aria-expanded={open} role="button" className={clsx(linkClassName)}>
         {item.icon && <span className="nav-icon">
             {' '}
@@ -44,36 +45,50 @@ const MenuItemWithChildren = ({
             {(item.children || []).map((child, idx) => {
             return <Fragment key={child.key + idx}>
                   {child.children ? <MenuItemWithChildren item={child} linkClassName={clsx('nav-link', getActiveClass(child))} activeMenuItems={activeMenuItems} className="sub-nav-item" subMenuClassName="nav sub-navbar-nav" toggleMenu={toggleMenu} /> : <MenuItem item={child} className="sub-nav-item" linkClassName={clsx('sub-nav-link', getActiveClass(child))} />}
-                </Fragment>;
+                </Fragment>
           })}
           </ul>
         </div>
       </Collapse>
-    </li>;
-};
-const MenuItem = ({
+    </li>
+  );
+});
+
+MenuItemWithChildren.displayName = 'MenuItemWithChildren';
+
+const MenuItem = memo(({
   item,
   className,
   linkClassName
 }) => {
-  return <li className={className}>
+  return (
+    <li className={className}>
       <MenuItemLink item={item} className={linkClassName} />
-    </li>;
-};
-const MenuItemLink = ({
+    </li>
+  );
+});
+
+MenuItem.displayName = 'MenuItem';
+
+const MenuItemLink = memo(({
   item,
   className
 }) => {
-  return <Link href={item.url ?? ''} target={item.target} className={clsx(className, {
-    disabled: item.isDisabled
-  })}>
+  return (
+    <Link href={item.url ?? ''} target={item.target} className={clsx(className, {
+      disabled: item.isDisabled
+    })}>
       {item.icon && <span className="nav-icon">
           <IconifyIcon icon={item.icon} />
         </span>}
       <span className="nav-text">{item.label}</span>
       {item.badge && <span className={`badge badge-pill text-end bg-${item.badge.variant}`}>{item.badge.text}</span>}
-    </Link>;
-};
+    </Link>
+  );
+});
+
+MenuItemLink.displayName = 'MenuItemLink';
+
 const AppMenu = ({
   menuItems
 }) => {
@@ -85,53 +100,58 @@ const AppMenu = ({
   const getActiveClass = useCallback(item => {
     return activeMenuItems?.includes(item.key) ? 'active' : '';
   }, [activeMenuItems]);
-  const activeMenu = useCallback(() => {
+  // Memoize matching menu item calculation
+  const matchingMenuItem = useMemo(() => {
     const trimmedURL = pathname?.replaceAll('', '');
-    const matchingMenuItem = getMenuItemFromURL(menuItems, trimmedURL);
+    return getMenuItemFromURL(menuItems, trimmedURL);
+  }, [pathname, menuItems]);
+
+  // Memoize active menu items calculation
+  const calculatedActiveMenuItems = useMemo(() => {
     if (matchingMenuItem) {
       const activeMt = findMenuItem(menuItems, matchingMenuItem.key);
       if (activeMt) {
-        setActiveMenuItems([activeMt.key, ...findAllParent(menuItems, activeMt)]);
+        return [activeMt.key, ...findAllParent(menuItems, activeMt)];
       }
-      setTimeout(() => {
-        const activatedItem = document.querySelector(`#leftside-menu-container .simplebar-content a[href="${trimmedURL}"]`);
-        if (activatedItem) {
-          const simplebarContent = document.querySelector('#leftside-menu-container .simplebar-content-wrapper');
-          if (simplebarContent) {
-            const offset = activatedItem.offsetTop - window.innerHeight * 0.4;
-            scrollTo(simplebarContent, offset, 600);
-          }
-        }
-      }, 400);
-
-      // scrollTo (Left Side Bar Active Menu)
-      const easeInOutQuad = (t, b, c, d) => {
-        t /= d / 2;
-        if (t < 1) return c / 2 * t * t + b;
-        t--;
-        return -c / 2 * (t * (t - 2) - 1) + b;
-      };
-      const scrollTo = (element, to, duration) => {
-        const start = element.scrollTop,
-          change = to - start,
-          increment = 20;
-        let currentTime = 0;
-        const animateScroll = function () {
-          currentTime += increment;
-          const val = easeInOutQuad(currentTime, start, change, duration);
-          element.scrollTop = val;
-          if (currentTime < duration) {
-            setTimeout(animateScroll, increment);
-          }
-        };
-        animateScroll();
-      };
     }
-  }, [pathname, menuItems]);
+    return [];
+  }, [matchingMenuItem, menuItems]);
+
+  // Optimized scroll function with debouncing
+  const scrollToActiveItem = useCallback(() => {
+    if (!matchingMenuItem) return;
+    
+    const trimmedURL = pathname?.replaceAll('', '');
+    // Use requestAnimationFrame instead of setTimeout for better performance
+    requestAnimationFrame(() => {
+      const activatedItem = document.querySelector(`#leftside-menu-container .simplebar-content a[href="${trimmedURL}"]`);
+      if (activatedItem) {
+        const simplebarContent = document.querySelector('#leftside-menu-container .simplebar-content-wrapper');
+        if (simplebarContent) {
+          const offset = activatedItem.offsetTop - window.innerHeight * 0.4;
+          // Use smooth scroll instead of custom animation for better performance
+          simplebarContent.scrollTo({
+            top: offset,
+            behavior: 'smooth'
+          });
+        }
+      }
+    });
+  }, [pathname, matchingMenuItem]);
+  // Update active menu items when calculation changes
   useEffect(() => {
-    if (menuItems && menuItems.length > 0) activeMenu();
-  }, [activeMenu, menuItems]);
-  return <ul className="navbar-nav" id="navbar-nav">
+    setActiveMenuItems(calculatedActiveMenuItems);
+  }, [calculatedActiveMenuItems]);
+
+  // Handle scroll to active item with debouncing
+  useEffect(() => {
+    if (menuItems && menuItems.length > 0 && matchingMenuItem) {
+      const timeoutId = setTimeout(scrollToActiveItem, 100);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [menuItems, matchingMenuItem, scrollToActiveItem]);
+  return (
+    <ul className="navbar-nav" id="navbar-nav">
       {(menuItems || []).map((item, idx) => {
       return <Fragment key={item.key + idx}>
             {item.isTitle ? <li className={clsx('menu-title')}>{item.label}</li> : <>
@@ -139,6 +159,7 @@ const AppMenu = ({
               </>}
           </Fragment>;
     })}
-    </ul>;
+    </ul>
+  );
 };
-export default AppMenu;
+export default memo(AppMenu);

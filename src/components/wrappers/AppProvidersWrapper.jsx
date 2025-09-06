@@ -2,13 +2,13 @@
 
 import { SessionProvider } from 'next-auth/react';
 import { useEffect } from 'react';
-import { ToastContainer } from 'react-toastify';
 import { DEFAULT_PAGE_TITLE } from '@/context/constants';
 import dynamic from 'next/dynamic';
 const LayoutProvider = dynamic(() => import('@/context/useLayoutContext').then(mod => mod.LayoutProvider), {
   ssr: false
 });
 import { NotificationProvider } from '@/context/useNotificationContext';
+import { ToastProvider } from '@/components/ui/Toast';
 const AppProvidersWrapper = ({
   children
 }) => {
@@ -33,8 +33,9 @@ const AppProvidersWrapper = ({
   return <SessionProvider>
       <LayoutProvider>
         <NotificationProvider>
-          {children}
-          <ToastContainer theme="colored" />
+          <ToastProvider>
+            {children}
+          </ToastProvider>
         </NotificationProvider>
       </LayoutProvider>
     </SessionProvider>;

@@ -94,14 +94,14 @@ const DigitalWalletCard = () => {
     return (
         <>
             {/* Carteirinha Digital Minimalista */}
-            <Col xs={12} className="mb-3">
+            <Col xs={12} className="mb-4">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6 }}
                 >
-                    <Card className="border-0 shadow-sm" style={{ backgroundColor: '#ffffff' }}>
-                        <CardBody className="p-3">
+                    <Card className="border-0" style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+                        <CardBody className="p-4">
                             {/* Header Simples */}
                             <Row className="align-items-center mb-3 pb-3" style={{ borderBottom: '1px solid #e5e7eb' }}>
                                 <Col>
@@ -228,14 +228,14 @@ const DigitalWalletCard = () => {
 
             {/* Estatísticas Simplificadas */}
             {!loadingHistorico && economiaHistorica && (
-                <Col xs={12} className="mb-3">
+                <Col xs={12} className="mb-4">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6, delay: 0.2 }}
                     >
-                        <Card className="border-0 shadow-sm" style={{ backgroundColor: '#ffffff' }}>
-                            <CardBody className="p-3">
+                        <Card className="border-0" style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+                            <CardBody className="p-4">
                                 <div className="mb-3">
                                     <h6 className="mb-0 fw-bold" style={{ color: '#1e293b' }}>Resumo de Economias</h6>
                                 </div>

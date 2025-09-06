@@ -50,6 +50,7 @@
 @import "components/widgets";
 @import "components/ui-system";
 @import "components/fix-colors";
+@import "components/login-modern";
 @import "components/spacing-utilities";
 
 
@@ -82,6 +83,7 @@
 @import "pages/pricing";
 @import "pages/timeline";
 @import "pages/custom-react";
+@import "pages/lojas-parceiros";
 
 .hover-effect:hover {
   transform: translateY(-5px) scale(1.02);

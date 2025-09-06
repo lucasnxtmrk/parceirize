@@ -1,0 +1,453 @@
+// Página de Lojas Parceiros - Estilos Modernos
+// Design System para interface clean e moderna
+
+// ======================
+// VARIÁVEIS E MIXINS
+// ======================
+:root {
+  --lojas-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --lojas-shadow-md: 0 4px 20px rgba(0, 0, 0, 0.12);
+  --lojas-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
+  --lojas-radius-sm: 8px;
+  --lojas-radius-md: 12px;
+  --lojas-radius-lg: 16px;
+  --lojas-radius-xl: 20px;
+  --lojas-gradient-primary: linear-gradient(135deg, var(--primary-dark), var(--primary-pink));
+  --lojas-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// ======================
+// ANIMAÇÕES GLOBAIS
+// ======================
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseScale {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+// ======================
+// PÁGINA PRINCIPAL
+// ======================
+.lojas-page {
+  // Garantir que não interfere com navegação
+  pointer-events: auto;
+  position: relative;
+  z-index: 1;
+  
+  // Garantir que elementos não sobreponham o menu
+  * {
+    max-width: 100%;
+  }
+  
+  // Evitar overflow que possa cobrir o menu
+  .card {
+    overflow: visible;
+  }
+  
+  // Garantir que animações não interfiram
+  .motion-div {
+    pointer-events: auto;
+  }
+  .page-header {
+    .gradient-icon {
+      background: var(--lojas-gradient-primary);
+      border-radius: var(--lojas-radius-md);
+      box-shadow: var(--lojas-shadow-sm);
+      transition: var(--lojas-transition);
+      
+      &:hover {
+        transform: rotate(5deg) scale(1.1);
+        box-shadow: var(--lojas-shadow-md);
+      }
+    }
+    
+    .badge {
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: var(--lojas-transition);
+      
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--lojas-shadow-sm);
+      }
+    }
+  }
+}
+
+// ======================
+// CARDS DE LOJA
+// ======================
+.loja-card {
+  border-radius: var(--lojas-radius-xl) !important;
+  overflow: hidden;
+  transition: var(--lojas-transition);
+  border: none !important;
+  background: white;
+  
+  &:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: var(--lojas-shadow-lg) !important;
+    
+    .loja-image {
+      transform: scale(1.1);
+    }
+    
+    .loja-cta {
+      background: var(--lojas-gradient-primary) !important;
+      box-shadow: 0 4px 16px rgba(27, 18, 54, 0.3);
+    }
+  }
+  
+  .loja-image {
+    transition: transform 0.5s ease;
+    will-change: transform;
+  }
+  
+  .loja-overlay {
+    background: linear-gradient(
+      135deg,
+      transparent 0%,
+      transparent 40%,
+      rgba(0, 0, 0, 0.4) 70%,
+      rgba(0, 0, 0, 0.8) 100%
+    );
+  }
+  
+  .loja-badge {
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: var(--lojas-shadow-sm);
+    
+    &.discount-badge {
+      background: linear-gradient(135deg, #ff6b6b, #ee5a52) !important;
+      animation: pulseScale 2s infinite;
+    }
+    
+    &.product-badge {
+      background: rgba(255, 255, 255, 0.95) !important;
+      color: #333 !important;
+    }
+  }
+  
+  .loja-title {
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  
+  .loja-category {
+    border-radius: var(--lojas-radius-md);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    transition: var(--lojas-transition);
+    
+    &:hover {
+      transform: scale(1.05);
+      border-color: var(--primary-pink);
+      color: var(--primary-pink) !important;
+    }
+  }
+  
+  .loja-price {
+    font-weight: 700;
+    background: linear-gradient(135deg, #10b981, #059669);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .loja-cta {
+    border-radius: var(--lojas-radius-md);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    transition: var(--lojas-transition);
+    position: relative;
+    overflow: hidden;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+      );
+      transition: left 0.6s;
+    }
+    
+    &:hover::before {
+      left: 100%;
+    }
+    
+    &.disabled {
+      cursor: not-allowed;
+      opacity: 0.7;
+      
+      &:hover {
+        transform: none;
+      }
+    }
+  }
+}
+
+// ======================
+// SISTEMA DE FILTROS
+// ======================
+.filtros-container {
+  .filter-header {
+    .filter-icon {
+      background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+      border-radius: var(--lojas-radius-md);
+      transition: var(--lojas-transition);
+      
+      &:hover {
+        background: linear-gradient(135deg, #e9ecef, #dee2e6);
+        transform: rotate(180deg);
+      }
+    }
+  }
+  
+  .filter-toggle {
+    border-radius: 20px !important;
+    transition: var(--lojas-transition);
+    
+    &:hover {
+      transform: scale(1.05);
+    }
+  }
+  
+  .search-input {
+    border-radius: var(--lojas-radius-md) !important;
+    transition: var(--lojas-transition);
+    border: 1px solid #e5e7eb !important;
+    
+    &:focus {
+      border-color: var(--primary-pink) !important;
+      box-shadow: 0 0 0 3px rgba(222, 72, 140, 0.1) !important;
+      transform: translateY(-2px);
+    }
+  }
+  
+  .category-item {
+    border-radius: var(--lojas-radius-lg) !important;
+    transition: var(--lojas-transition);
+    position: relative;
+    overflow: hidden;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--lojas-gradient-primary);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    &.selected {
+      border-color: var(--primary-pink) !important;
+      background: rgba(222, 72, 140, 0.05) !important;
+      
+      &::before {
+        opacity: 0.1;
+      }
+    }
+    
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--lojas-shadow-md);
+      
+      &:not(.selected) {
+        border-color: var(--primary-pink) !important;
+        background: rgba(222, 72, 140, 0.02) !important;
+      }
+    }
+    
+    .check-icon {
+      background: var(--primary-pink);
+      border-radius: 50%;
+      box-shadow: var(--lojas-shadow-sm);
+      animation: fadeInUp 0.3s ease;
+    }
+  }
+  
+  .active-filters {
+    .filter-tag {
+      border-radius: var(--lojas-radius-md);
+      transition: var(--lojas-transition);
+      
+      &:hover {
+        transform: scale(1.05);
+        opacity: 0.8;
+      }
+      
+      .btn-close {
+        transition: var(--lojas-transition);
+        
+        &:hover {
+          transform: rotate(90deg) scale(1.2);
+        }
+      }
+    }
+  }
+}
+
+// ======================
+// ESTATÍSTICAS
+// ======================
+.stats-cards {
+  .stat-card {
+    border-radius: var(--lojas-radius-lg);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    transition: var(--lojas-transition);
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--lojas-shadow-md);
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+    
+    .stat-icon {
+      transition: var(--lojas-transition);
+    }
+    
+    .stat-number {
+      font-weight: 800;
+      background: var(--lojas-gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    &:hover .stat-icon {
+      transform: scale(1.2) rotate(5deg);
+    }
+  }
+}
+
+// ======================
+// ESTADOS ESPECIAIS
+// ======================
+.empty-state {
+  .empty-icon {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    animation: pulseScale 3s infinite;
+  }
+}
+
+.loading-state {
+  .spinner-border {
+    border-color: var(--primary-pink) transparent var(--primary-pink) transparent;
+    animation: spin 1s linear infinite, pulseScale 2s ease-in-out infinite;
+  }
+}
+
+// ======================
+// UTILIDADES DE HOVER
+// ======================
+.hover-shadow {
+  transition: var(--lojas-transition);
+  
+  &:hover {
+    box-shadow: var(--lojas-shadow-sm);
+    transform: translateY(-2px);
+  }
+}
+
+.hover-scale {
+  transition: var(--lojas-transition);
+  
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+.hover-lift {
+  transition: var(--lojas-transition);
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--lojas-shadow-md);
+  }
+}
+
+// ======================
+// RESPONSIVIDADE
+// ======================
+@media (max-width: 768px) {
+  .loja-card {
+    margin-bottom: 1.5rem;
+    
+    &:hover {
+      transform: translateY(-4px) scale(1.01);
+    }
+  }
+  
+  .filtros-container {
+    .category-item {
+      min-height: 80px;
+    }
+  }
+  
+  .stats-cards {
+    .stat-card {
+      margin-bottom: 1rem;
+    }
+  }
+}
+
+@media (max-width: 576px) {
+  .page-header {
+    .gradient-icon {
+      width: 40px !important;
+      height: 40px !important;
+    }
+    
+    h1 {
+      font-size: 1.5rem !important;
+    }
+    
+    .badge {
+      font-size: 0.7rem !important;
+      padding: 0.4rem 0.8rem !important;
+    }
+  }
+  
+  .loja-card {
+    border-radius: var(--lojas-radius-lg) !important;
+    
+    .loja-image {
+      height: 160px !important;
+    }
+  }
+}

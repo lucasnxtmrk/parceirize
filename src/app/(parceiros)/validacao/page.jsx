@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from 'react';
-import { Card, CardBody, Form, Button, Alert, Nav, Tab, Row, Col, Table } from 'react-bootstrap';
+import { Card, CardBody, Form, Button, Nav, Tab, Row, Col, Table, CardTitle } from 'react-bootstrap';
 import { motion } from 'framer-motion';
 import { FaQrcode, FaCamera, FaKeyboard } from 'react-icons/fa';
 import QRCodeScanner from '@/components/shared/QRCodeScanner';
 import PageTransition from '@/components/shared/PageTransition';
-import { useNotifications } from '@/hooks/useNotifications';
-import NotificationContainer from '@/components/shared/NotificationContainer';
+import ComponentContainerCard from '@/components/ComponentContainerCard';
+import { useToast } from '@/components/ui/Toast';
 
 const Validacao = () => {
     const [activeTab, setActiveTab] = useState('voucher');
@@ -22,17 +22,11 @@ const Validacao = () => {
     const [showQRScanner, setShowQRScanner] = useState(false);
     
     // Estados gerais
-    const [message, setMessage] = useState('');
-    const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-
-    // Notificações
-    const { alerts, showSuccess, showError, hideAlert } = useNotifications();
+    const toast = useToast();
 
     const handleVoucherSubmit = async (e) => {
         e.preventDefault();
-        setMessage('');
-        setError('');
         setLoading(true);
 
         try {
@@ -47,23 +41,21 @@ const Validacao = () => {
             const data = await response.json();
 
             if (response.ok) {
-                setMessage(data.message);
+                toast.success('Voucher Validado!', data.message);
                 setClientId('');
                 setCouponCode('');
             } else {
-                setError(data.error || "Erro ao validar o voucher.");
+                toast.error('Erro na Validação', data.error || "Erro ao validar o voucher.");
             }
         } catch (err) {
             console.error("❌ Erro na requisição:", err);
-            setError("Erro ao validar o voucher. Tente novamente mais tarde.");
+            toast.error('Erro no Sistema', "Erro ao validar o voucher. Tente novamente mais tarde.");
         } finally {
             setLoading(false);
         }
     };
 
     const validatePedido = async (code) => {
-        setMessage('');
-        setError('');
         setPedidoDetails(null);
         setLoading(true);
 
@@ -79,20 +71,17 @@ const Validacao = () => {
             const data = await response.json();
 
             if (response.ok) {
-                setMessage(data.message);
+                toast.success('Pedido Validado!', data.message);
                 setPedidoDetails(data);
                 setQrCode('');
-                showSuccess('Pedido validado com sucesso!');
             } else {
                 const errorMsg = data.error || "Erro ao validar o pedido.";
-                setError(errorMsg);
-                showError(errorMsg);
+                toast.error('Erro na Validação', errorMsg);
             }
         } catch (err) {
             console.error("❌ Erro na requisição:", err);
             const errorMsg = "Erro ao validar o pedido. Tente novamente mais tarde.";
-            setError(errorMsg);
-            showError(errorMsg);
+            toast.error('Erro no Sistema', errorMsg);
         } finally {
             setLoading(false);
         }
@@ -116,14 +105,16 @@ const Validacao = () => {
 
     return (
         <PageTransition>
-            <NotificationContainer alerts={alerts} onDismiss={hideAlert} />
-            
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-            >
-                <h2 className="mb-4">Sistema de Validação</h2>
+            <ComponentContainerCard id="validacao-parceiro">
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                    <CardTitle as="h4" className="mb-0">Sistema de Validação</CardTitle>
+                </div>
+                
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                >
             
             <Tab.Container activeKey={activeTab} onSelect={(k) => setActiveTab(k)}>
                 <Nav variant="tabs" className="mb-3">
@@ -143,8 +134,6 @@ const Validacao = () => {
                                 <h4>Validação de Vouchers</h4>
                                 <p className="text-muted">Valide vouchers tradicionais usando ID da carteirinha e código do voucher.</p>
 
-                                {message && activeTab === 'voucher' && <Alert variant="success">{message}</Alert>}
-                                {error && activeTab === 'voucher' && <Alert variant="danger">{error}</Alert>}
 
                                 <Form onSubmit={handleVoucherSubmit}>
                                     <Row>
@@ -188,8 +177,6 @@ const Validacao = () => {
                                 <h4>Validação de Pedidos</h4>
                                 <p className="text-muted">Escaneie o QR Code do pedido do cliente para validar os produtos do seu estabelecimento.</p>
 
-                                {message && activeTab === 'pedidos' && <Alert variant="success">{message}</Alert>}
-                                {error && activeTab === 'pedidos' && <Alert variant="danger">{error}</Alert>}
 
                                 <Form onSubmit={handlePedidoSubmit}>
                                     <Form.Group className="mb-3" controlId="qrCode">
@@ -301,7 +288,8 @@ const Validacao = () => {
                 title="Escanear QR Code do Pedido"
                 placeholder="Cole o código do QR Code do pedido"
             />
-            </motion.div>
+                </motion.div>
+            </ComponentContainerCard>
         </PageTransition>
     );
 };

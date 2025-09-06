@@ -31,7 +31,7 @@ const ValidacaoManual = () => {
                     onChange={(e) => setCouponCode(e.target.value)}
                 />
             </Form.Group>
-            <Button type="submit">Validar</Button>
+            <Button variant="primary" type="submit">Validar</Button>
         </Form>
     );
 };

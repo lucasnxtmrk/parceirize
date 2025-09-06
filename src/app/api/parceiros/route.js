@@ -20,7 +20,8 @@ export async function GET(req) {
         p.email,
         COUNT(pr.id) as total_produtos,
         COALESCE(MIN(pr.preco), 0) as menor_preco,
-        COALESCE(MAX(pr.preco), 0) as maior_preco
+        COALESCE(MAX(pr.preco), 0) as maior_preco,
+        COALESCE(MAX(pr.desconto), 0) as maior_desconto
       FROM parceiros p
       LEFT JOIN produtos pr ON p.id = pr.parceiro_id AND pr.ativo = true
       WHERE 1=1

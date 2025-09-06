@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Container, Row, Col, Card, Badge, Button, Table, Spinner, Alert } from "react-bootstrap";
+import ComponentContainerCard from "@/components/ComponentContainerCard";
+import { Row, Col, Card, Badge, Button, Table, Spinner, Alert, CardTitle } from "react-bootstrap";
 import { FaQrcode, FaShoppingBag, FaClock, FaCheckCircle } from "react-icons/fa";
 import Link from "next/link";
 
@@ -63,39 +64,34 @@ export default function PedidosPage() {
     );
   };
 
-  if (loading) {
-    return (
-      <Container className="d-flex justify-content-center align-items-center" style={{ height: "50vh" }}>
-        <Spinner animation="border" role="status">
-          <span className="visually-hidden">Carregando...</span>
-        </Spinner>
-      </Container>
-    );
-  }
-
   return (
-    <Container className="py-4">
-      {alert.show && (
-        <Alert variant={alert.variant} className="mb-4">
-          {alert.message}
-        </Alert>
-      )}
+    <ComponentContainerCard id="meus-pedidos">
+      {/* Cabeçalho: Título + Botão */}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <CardTitle as="h4" className="mb-0">Meus Pedidos</CardTitle>
+        <Link href="/loja">
+          <Button variant="primary">
+            <FaShoppingBag className="me-2" />
+            Continuar Comprando
+          </Button>
+        </Link>
+      </div>
 
-      <Row className="mb-4">
-        <Col>
-          <div className="d-flex justify-content-between align-items-center">
-            <h2>Meus Pedidos</h2>
-            <Link href="/loja">
-              <Button variant="primary">
-                <FaShoppingBag className="me-2" />
-                Continuar Comprando
-              </Button>
-            </Link>
-          </div>
-        </Col>
-      </Row>
+      {loading ? (
+        <div className="d-flex justify-content-center align-items-center" style={{ height: "50vh" }}>
+          <Spinner animation="border" role="status">
+            <span className="visually-hidden">Carregando...</span>
+          </Spinner>
+        </div>
+      ) : (
+        <>
+          {alert.show && (
+            <Alert variant={alert.variant} className="mb-4">
+              {alert.message}
+            </Alert>
+          )}
 
-      {pedidos.length === 0 ? (
+          {pedidos.length === 0 ? (
         <Row>
           <Col>
             <Card className="text-center py-5">
@@ -158,8 +154,10 @@ export default function PedidosPage() {
               </Card>
             </Col>
           ))}
-        </Row>
+          </Row>
+          )}
+        </>
       )}
-    </Container>
+    </ComponentContainerCard>
   );
 }

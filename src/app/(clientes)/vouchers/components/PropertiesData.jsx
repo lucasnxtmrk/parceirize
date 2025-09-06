@@ -20,7 +20,7 @@ const LojaCard = ({
 }) => {
   return (
     <Card className="overflow-hidden h-100">
-      <div className="position-relative" style={{ height: "150px", overflow: "hidden" }}>
+      <div className="position-relative" style={{ height: "120px", overflow: "hidden" }}>
         <Image
           src={foto && foto.trim() !== "" ? foto : "/assets/images/avatar.jpg"}
           alt={nome_empresa}
@@ -31,30 +31,30 @@ const LojaCard = ({
         />
         {total_produtos > 0 && (
           <div className="position-absolute top-0 end-0 m-2">
-            <span className="badge bg-primary">{total_produtos} produtos</span>
+            <span className="badge bg-primary" style={{ fontSize: '0.7rem' }}>{total_produtos} produtos</span>
           </div>
         )}
       </div>
-      <CardBody className="d-flex flex-column">
+      <CardBody className="d-flex flex-column p-2">
         <div className="flex-grow-1">
-          <h5 className="fw-medium mb-2">{nome_empresa}</h5>
-          <p className="text-muted mb-2">{nicho}</p>
+          <h6 className="fw-medium mb-1" style={{ fontSize: '1rem' }}>{nome_empresa}</h6>
+          <p className="text-muted mb-1 small">{nicho}</p>
           {email && (
-            <p className="text-muted mb-2 small">
+            <p className="text-muted mb-1 small" style={{ fontSize: '0.8rem' }}>
               <IconifyIcon icon="ri-mail-line" className="me-1" />
               {email}
             </p>
           )}
           {total_produtos > 0 && parseFloat(menor_preco) > 0 && (
-            <p className="fw-bold mb-0 text-success">
+            <p className="fw-bold mb-0 text-success small">
               A partir de R$ {parseFloat(menor_preco).toFixed(2)}
             </p>
           )}
         </div>
       </CardBody>
-      <CardFooter className="bg-light-subtle d-flex justify-content-center align-items-center border-top">
+      <CardFooter className="bg-light-subtle d-flex justify-content-center align-items-center border-top py-2">
         {total_produtos > 0 ? (
-          <Link href={`/loja/${id}`} className="btn btn-primary btn-sm">
+          <Link href={`/loja/${id}`} className="btn btn-primary btn-sm" style={{ fontSize: '0.8rem', padding: '4px 8px' }}>
             <IconifyIcon icon="ri-shopping-bag-line" className="me-2" />
             Ver Produtos
           </Link>

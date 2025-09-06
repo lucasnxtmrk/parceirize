@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Container, Row, Col, Card, Button, Modal, Form, Table, Badge, Alert, Spinner } from "react-bootstrap";
+import { Row, Col, Card, Button, Modal, Form, Table, Badge, Alert, Spinner, CardTitle } from "react-bootstrap";
 import { FaPlus, FaEdit, FaTrash, FaEye, FaEyeSlash } from "react-icons/fa";
+import ComponentContainerCard from "@/components/ComponentContainerCard";
 
 export default function ProdutosPage() {
   const [produtos, setProdutos] = useState([]);
@@ -164,33 +165,31 @@ export default function ProdutosPage() {
 
   if (loading) {
     return (
-      <Container className="d-flex justify-content-center align-items-center" style={{ height: "50vh" }}>
-        <Spinner animation="border" role="status">
-          <span className="visually-hidden">Carregando...</span>
-        </Spinner>
-      </Container>
+      <ComponentContainerCard id="produtos-loading">
+        <div className="d-flex justify-content-center align-items-center" style={{ height: "50vh" }}>
+          <Spinner animation="border" role="status">
+            <span className="visually-hidden">Carregando...</span>
+          </Spinner>
+        </div>
+      </ComponentContainerCard>
     );
   }
 
   return (
-    <Container className="py-4">
+    <ComponentContainerCard id="produtos-parceiro">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <CardTitle as="h4" className="mb-0">Gerenciar Produtos</CardTitle>
+        <Button variant="primary" onClick={() => setShowModal(true)}>
+          <FaPlus className="me-2" />
+          Novo Produto
+        </Button>
+      </div>
+
       {alert.show && (
         <Alert variant={alert.variant} className="mb-4">
           {alert.message}
         </Alert>
       )}
-
-      <Row className="mb-4">
-        <Col>
-          <div className="d-flex justify-content-between align-items-center">
-            <h2>Gerenciar Produtos</h2>
-            <Button variant="primary" onClick={() => setShowModal(true)}>
-              <FaPlus className="me-2" />
-              Novo Produto
-            </Button>
-          </div>
-        </Col>
-      </Row>
 
       <Row>
         <Col>
@@ -386,6 +385,6 @@ export default function ProdutosPage() {
           </Modal.Footer>
         </Form>
       </Modal>
-    </Container>
+    </ComponentContainerCard>
   );
 }

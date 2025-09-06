@@ -65,7 +65,7 @@ const SignUp = () => {
                       </div>
                     </div>
                     <div className="mb-1 text-center d-grid">
-                      <button className="btn btn-danger py-2" type="submit">
+                      <button className="btn btn-primary py-2" type="submit">
                         Create Account
                       </button>
                     </div>

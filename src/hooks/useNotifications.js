@@ -7,12 +7,13 @@ const NotificationContext = createContext();
 
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
-  if (context) {
-    return context;
-  }
-
-  // Fallback for when not using provider
+  
+  // Always call hooks
   const [alerts, setAlerts] = useState([]);
+  
+  const hideAlert = useCallback((id) => {
+    setAlerts(prev => prev.filter(alert => alert.id !== id));
+  }, []);
 
   const showAlert = useCallback((message, variant = 'info', duration = 3000) => {
     const id = Date.now() + Math.random();
@@ -54,11 +55,7 @@ export const useNotifications = () => {
     }, duration);
 
     return id;
-  }, []);
-
-  const hideAlert = useCallback((id) => {
-    setAlerts(prev => prev.filter(alert => alert.id !== id));
-  }, []);
+  }, [hideAlert]);
 
   const showSuccess = useCallback((message, duration) => 
     showAlert(message, 'success', duration), [showAlert]);
@@ -108,6 +105,11 @@ export const useNotifications = () => {
   const notifyVoucherUsed = useCallback((voucher, partner) => {
     showSuccess(`Voucher de ${partner?.nome || 'parceiro'} foi usado com sucesso!`, 4000);
   }, [showSuccess]);
+
+  // Return context if available, otherwise fallback
+  if (context) {
+    return context;
+  }
 
   return {
     alerts,

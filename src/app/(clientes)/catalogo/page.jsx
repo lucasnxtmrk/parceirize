@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Container, Row, Col, Card, Button, Badge, Alert, Form, Spinner } from "react-bootstrap";
-import { FaShoppingCart, FaPlus, FaMinus, FaFilter } from "react-icons/fa";
+import { useState, useEffect, useCallback } from "react";
+import { Row, Col, Card, Button, Badge, Alert, Form, Spinner, CardTitle } from "react-bootstrap";
+import { FaShoppingCart, FaFilter } from "react-icons/fa";
+import ComponentContainerCard from "@/components/ComponentContainerCard";
+import ProductCard from "@/components/shared/ProductCard";
 
 export default function ProdutosPage() {
   const [produtos, setProdutos] = useState([]);
@@ -12,11 +14,28 @@ export default function ProdutosPage() {
   const [nichos, setNichos] = useState([]);
   const [alert, setAlert] = useState({ show: false, message: "", variant: "" });
 
+  const fetchProdutosCallback = useCallback(async (nicho = "") => {
+    try {
+      const url = nicho ? `/api/produtos?nicho=${nicho}` : "/api/produtos";
+      const response = await fetch(url);
+      if (response.ok) {
+        const data = await response.json();
+        setProdutos(data);
+      } else {
+        showAlert("Erro ao carregar produtos", "danger");
+      }
+    } catch (error) {
+      showAlert("Erro ao carregar produtos", "danger");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    fetchProdutos();
+    fetchProdutosCallback();
     fetchCarrinho();
     fetchNichos();
-  }, []);
+  }, [fetchProdutosCallback]);
 
   const fetchProdutos = async (nicho = "") => {
     try {
@@ -127,7 +146,7 @@ export default function ProdutosPage() {
   const handleFiltroChange = (nicho) => {
     setFiltroNicho(nicho);
     setLoading(true);
-    fetchProdutos(nicho);
+    fetchProdutosCallback(nicho);
   };
 
   const formatPrice = (price) => {
@@ -146,33 +165,31 @@ export default function ProdutosPage() {
 
   if (loading) {
     return (
-      <Container className="d-flex justify-content-center align-items-center" style={{ height: "50vh" }}>
-        <Spinner animation="border" role="status">
-          <span className="visually-hidden">Carregando...</span>
-        </Spinner>
-      </Container>
+      <ComponentContainerCard id="catalogo-loading">
+        <div className="d-flex justify-content-center align-items-center" style={{ height: "50vh" }}>
+          <Spinner animation="border" role="status">
+            <span className="visually-hidden">Carregando...</span>
+          </Spinner>
+        </div>
+      </ComponentContainerCard>
     );
   }
 
   return (
-    <Container className="py-4">
+    <ComponentContainerCard id="catalogo-produtos">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <CardTitle as="h4" className="mb-0">Produtos Disponíveis</CardTitle>
+        <Badge bg="primary" className="fs-6">
+          <FaShoppingCart className="me-2" />
+          {totalItensCarrinho} {totalItensCarrinho === 1 ? 'item' : 'itens'}
+        </Badge>
+      </div>
+
       {alert.show && (
         <Alert variant={alert.variant} className="mb-4">
           {alert.message}
         </Alert>
       )}
-
-      <Row className="mb-4">
-        <Col>
-          <div className="d-flex justify-content-between align-items-center">
-            <h2>Produtos Disponíveis</h2>
-            <Badge bg="primary" className="fs-6">
-              <FaShoppingCart className="me-2" />
-              {totalItensCarrinho} {totalItensCarrinho === 1 ? 'item' : 'itens'}
-            </Badge>
-          </div>
-        </Col>
-      </Row>
 
       {/* Filtros */}
       <Row className="mb-4">
@@ -218,88 +235,20 @@ export default function ProdutosPage() {
         </Row>
       ) : (
         <Row>
-          {produtos.map((produto) => {
-            const quantidadeNoCarrinho = getQuantidadeNoCarrinho(produto.id);
-            
-            return (
-              <Col md={6} lg={4} key={produto.id} className="mb-4">
-                <Card className="h-100 shadow-sm">
-                  {produto.imagem_url && (
-                    <Card.Img 
-                      variant="top" 
-                      src={produto.imagem_url} 
-                      style={{ height: "200px", objectFit: "cover" }}
-                    />
-                  )}
-                  <Card.Body className="d-flex flex-column">
-                    <div className="mb-2">
-                      <Badge bg="secondary" className="mb-2">
-                        {produto.parceiro_nicho}
-                      </Badge>
-                      <h5 className="card-title">{produto.nome}</h5>
-                      <p className="text-muted small mb-2">
-                        <strong>{produto.parceiro_nome}</strong>
-                      </p>
-                    </div>
-                    
-                    {produto.descricao && (
-                      <p className="card-text text-muted small flex-grow-1">
-                        {produto.descricao}
-                      </p>
-                    )}
-                    
-                    <div className="mt-auto">
-                      <div className="d-flex justify-content-between align-items-center mb-3">
-                        <span className="h5 mb-0 text-primary fw-bold">
-                          {formatPrice(produto.preco)}
-                        </span>
-                      </div>
-                      
-                      {quantidadeNoCarrinho > 0 ? (
-                        <div className="d-flex align-items-center justify-content-between">
-                          <div className="d-flex align-items-center gap-2">
-                            <Button 
-                              variant="outline-danger" 
-                              size="sm"
-                              onClick={() => atualizarQuantidade(produto.id, quantidadeNoCarrinho - 1)}
-                            >
-                              <FaMinus />
-                            </Button>
-                            <span className="fw-bold mx-2">{quantidadeNoCarrinho}</span>
-                            <Button 
-                              variant="outline-success" 
-                              size="sm"
-                              onClick={() => atualizarQuantidade(produto.id, quantidadeNoCarrinho + 1)}
-                            >
-                              <FaPlus />
-                            </Button>
-                          </div>
-                          <Button 
-                            variant="outline-danger" 
-                            size="sm"
-                            onClick={() => removerDoCarrinho(produto.id)}
-                          >
-                            Remover
-                          </Button>
-                        </div>
-                      ) : (
-                        <Button 
-                          variant="primary" 
-                          className="w-100"
-                          onClick={() => adicionarAoCarrinho(produto)}
-                        >
-                          <FaShoppingCart className="me-2" />
-                          Adicionar ao Carrinho
-                        </Button>
-                      )}
-                    </div>
-                  </Card.Body>
-                </Card>
-              </Col>
-            );
-          })}
+          {produtos.map((produto, index) => (
+            <ProductCard
+              key={produto.id}
+              produto={produto}
+              quantidadeNoCarrinho={getQuantidadeNoCarrinho(produto.id)}
+              onAdicionarAoCarrinho={adicionarAoCarrinho}
+              onAtualizarQuantidade={atualizarQuantidade}
+              onRemoverDoCarrinho={removerDoCarrinho}
+              showParceiro={true}
+              index={index}
+            />
+          ))}
         </Row>
       )}
-    </Container>
+    </ComponentContainerCard>
   );
 }

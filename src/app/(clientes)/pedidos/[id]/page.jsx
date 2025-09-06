@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Container, Row, Col, Card, Badge, Button, Table, Spinner, Alert } from "react-bootstrap";
+import { Row, Col, Card, Badge, Button, Table, Spinner, Alert, CardTitle } from "react-bootstrap";
 import { FaQrcode, FaShoppingBag, FaClock, FaCheckCircle, FaArrowLeft, FaEye } from "react-icons/fa";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -9,6 +9,7 @@ import { useParams } from "next/navigation";
 import QRCodeModal from "@/components/shared/QRCodeModal";
 import PageTransition from "@/components/shared/PageTransition";
 import { formatPrice, formatDateTime } from "@/utils/formatters";
+import ComponentContainerCard from "@/components/ComponentContainerCard";
 
 export default function PedidoDetailPage() {
   const [pedido, setPedido] = useState(null);
@@ -70,17 +71,22 @@ export default function PedidoDetailPage() {
 
   if (loading) {
     return (
-      <Container className="d-flex justify-content-center align-items-center" style={{ height: "50vh" }}>
-        <Spinner animation="border" role="status">
-          <span className="visually-hidden">Carregando...</span>
-        </Spinner>
-      </Container>
+      <ComponentContainerCard id="pedido-loading">
+        <div className="d-flex justify-content-center align-items-center" style={{ height: "50vh" }}>
+          <Spinner animation="border" role="status">
+            <span className="visually-hidden">Carregando...</span>
+          </Spinner>
+        </div>
+      </ComponentContainerCard>
     );
   }
 
   if (!pedido) {
     return (
-      <Container className="py-4">
+      <ComponentContainerCard id="pedido-nao-encontrado">
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <CardTitle as="h4" className="mb-0">Pedido não encontrado</CardTitle>
+        </div>
         <Alert variant="danger">
           Pedido não encontrado.
         </Alert>
@@ -90,34 +96,29 @@ export default function PedidoDetailPage() {
             Voltar aos Pedidos
           </Button>
         </Link>
-      </Container>
+      </ComponentContainerCard>
     );
   }
 
 
   return (
     <PageTransition>
-      <Container className="py-4">
+      <ComponentContainerCard id="pedido-detalhes">
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <CardTitle as="h4" className="mb-0">Pedido #{pedido.id}</CardTitle>
+          <Link href="/pedidos">
+            <Button variant="outline-secondary" size="sm">
+              <FaArrowLeft className="me-2" />
+              Voltar
+            </Button>
+          </Link>
+        </div>
+
         {alert.show && (
           <Alert variant={alert.variant} className="mb-4">
             {alert.message}
           </Alert>
         )}
-
-        <Row className="mb-4">
-          <Col>
-            <div className="d-flex justify-content-between align-items-center">
-              <div>
-                <Link href="/pedidos" className="text-decoration-none">
-                  <FaArrowLeft className="me-2" />
-                  Voltar aos Pedidos
-                </Link>
-                <h2 className="mt-2">Pedido #{pedido.pedido.id}</h2>
-              </div>
-              {getStatusBadge(pedido.pedido.status)}
-            </div>
-          </Col>
-        </Row>
 
         <Row>
           {/* QR Code */}
@@ -289,7 +290,7 @@ export default function PedidoDetailPage() {
             </Link>
           </Col>
         </Row>
-      </Container>
+      </ComponentContainerCard>
 
       {/* Modal do QR Code */}
       <QRCodeModal

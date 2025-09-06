@@ -1,7 +1,6 @@
 "use client";
 
 import { Card } from 'react-bootstrap';
-import { motion } from 'framer-motion';
 import { FaArrowUp, FaArrowDown } from 'react-icons/fa';
 
 const DashboardCard = ({ 
@@ -10,8 +9,7 @@ const DashboardCard = ({
     icon: IconComponent, 
     color = 'primary', 
     subtitle, 
-    trend,
-    delay = 0 
+    trend
 }) => {
     const getTrendIcon = () => {
         if (!trend) return null;
@@ -32,56 +30,47 @@ const DashboardCard = ({
     };
 
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay }}
-            whileHover={{ y: -5, transition: { duration: 0.2 } }}
-        >
-            <Card className="h-100 shadow-sm border-0">
-                <Card.Body>
-                    <div className="d-flex justify-content-between align-items-start">
-                        <div className="flex-grow-1">
-                            <div className="d-flex align-items-center mb-2">
-                                <div 
-                                    className={`rounded-circle d-flex align-items-center justify-content-center me-3`}
-                                    style={{
-                                        width: '48px',
-                                        height: '48px',
-                                        backgroundColor: `var(--bs-${color})`,
-                                        opacity: 0.1
-                                    }}
-                                >
-                                    <IconComponent 
-                                        size={20} 
-                                        className={`text-${color}`}
-                                    />
-                                </div>
-                                <div>
-                                    <h6 className="text-muted mb-0 fw-normal">{title}</h6>
-                                </div>
-                            </div>
-                            
-                            <div className="mb-2">
-                                <h3 className="fw-bold mb-0">{value}</h3>
-                                {subtitle && (
-                                    <small className="text-muted">{subtitle}</small>
-                                )}
-                            </div>
-
-                            {trend !== undefined && (
-                                <div className="d-flex align-items-center">
-                                    {getTrendIcon()}
-                                    <small className={`${getTrendColor()} fw-medium`}>
-                                        {getTrendText()}
-                                    </small>
-                                </div>
-                            )}
-                        </div>
+        <Card className="h-100 border-0 bg-white" style={{ 
+            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+            transition: 'box-shadow 0.2s ease'
+        }}>
+            <Card.Body className="p-3">
+                <div className="d-flex align-items-start gap-3">
+                    <div 
+                        className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                        style={{
+                            width: '40px',
+                            height: '40px',
+                            backgroundColor: `var(--bs-${color})`,
+                            opacity: 0.1
+                        }}
+                    >
+                        <IconComponent 
+                            size={18} 
+                            className={`text-${color}`}
+                        />
                     </div>
-                </Card.Body>
-            </Card>
-        </motion.div>
+                    
+                    <div className="flex-grow-1 min-w-0">
+                        <h6 className="text-muted mb-1 fw-normal small">{title}</h6>
+                        <h4 className="fw-bold mb-1 text-truncate">{value}</h4>
+                        
+                        {subtitle && (
+                            <p className="small text-muted mb-2">{subtitle}</p>
+                        )}
+
+                        {trend !== undefined && (
+                            <div className="d-flex align-items-center">
+                                {getTrendIcon()}
+                                <small className={`${getTrendColor()} fw-medium`}>
+                                    {getTrendText()}
+                                </small>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </Card.Body>
+        </Card>
     );
 };
 

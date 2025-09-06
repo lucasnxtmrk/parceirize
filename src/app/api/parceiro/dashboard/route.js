@@ -33,12 +33,13 @@ export async function GET(req) {
       ),
       desconto_stats AS (
         SELECT 
-          COUNT(DISTINCT CASE WHEN pi.desconto_aplicado > 0 THEN pi.pedido_id END) as pedidos_com_desconto,
-          COALESCE(SUM(pi.quantidade * pi.preco_unitario * pi.desconto_aplicado / 100), 0) as desconto_total_dado,
-          COALESCE(SUM(CASE WHEN p.created_at >= NOW() - INTERVAL '30 days' THEN pi.quantidade * pi.preco_unitario * pi.desconto_aplicado / 100 ELSE 0 END), 0) as desconto_mes_atual,
-          COALESCE(SUM(CASE WHEN p.created_at >= NOW() - INTERVAL '60 days' AND p.created_at < NOW() - INTERVAL '30 days' THEN pi.quantidade * pi.preco_unitario * pi.desconto_aplicado / 100 ELSE 0 END), 0) as desconto_mes_anterior
+          COUNT(DISTINCT CASE WHEN pr.desconto > 0 THEN pi.pedido_id END) as pedidos_com_desconto,
+          COALESCE(SUM(pi.quantidade * pi.preco_unitario * pr.desconto / 100), 0) as desconto_total_dado,
+          COALESCE(SUM(CASE WHEN p.created_at >= NOW() - INTERVAL '30 days' THEN pi.quantidade * pi.preco_unitario * pr.desconto / 100 ELSE 0 END), 0) as desconto_mes_atual,
+          COALESCE(SUM(CASE WHEN p.created_at >= NOW() - INTERVAL '60 days' AND p.created_at < NOW() - INTERVAL '30 days' THEN pi.quantidade * pi.preco_unitario * pr.desconto / 100 ELSE 0 END), 0) as desconto_mes_anterior
         FROM pedido_itens pi
         INNER JOIN pedidos p ON pi.pedido_id = p.id
+        INNER JOIN produtos pr ON pi.produto_id = pr.id
         WHERE pi.parceiro_id = $1 AND pi.validado_at IS NOT NULL
       ),
       vendas_stats AS (
@@ -56,6 +57,20 @@ export async function GET(req) {
           COUNT(CASE WHEN ativo = true THEN 1 END) as produtos_ativos
         FROM produtos
         WHERE parceiro_id = $1
+      ),
+      vendas_hoje AS (
+        SELECT 
+          COALESCE(SUM(pi.subtotal), 0) as vendas_hoje
+        FROM pedido_itens pi
+        INNER JOIN pedidos p ON pi.pedido_id = p.id
+        WHERE pi.parceiro_id = $1 
+          AND pi.validado_at IS NOT NULL
+          AND DATE(pi.validado_at) = CURRENT_DATE
+      ),
+      voucher_stats AS (
+        SELECT 
+          0 as vouchers_ativos,
+          0 as vouchers_usados
       )
       SELECT 
         cs.total_clientes,
@@ -81,8 +96,11 @@ export async function GET(req) {
         END as crescimento_vendas,
         ps.produtos_ativos,
         ps.total_produtos,
-        0 as crescimento_produtos
-      FROM cliente_stats cs, desconto_stats ds, vendas_stats vs, produto_stats ps
+        0 as crescimento_produtos,
+        vh.vendas_hoje,
+        vcs.vouchers_ativos,
+        vcs.vouchers_usados
+      FROM cliente_stats cs, desconto_stats ds, vendas_stats vs, produto_stats ps, vendas_hoje vh, voucher_stats vcs
     `;
 
     const statsResult = await pool.query(statsQuery, [parceiroId]);
@@ -154,10 +172,11 @@ export async function GET(req) {
         c.nome as cliente_nome,
         COUNT(pi.id) as itens_count,
         SUM(pi.quantidade * pi.preco_unitario) as total_original,
-        SUM(pi.quantidade * pi.preco_unitario * pi.desconto_aplicado / 100) as desconto_total
+        SUM(pi.quantidade * pi.preco_unitario * COALESCE(pi.desconto_aplicado, pr.desconto, 0) / 100) as desconto_total
       FROM pedidos p
       INNER JOIN clientes c ON p.cliente_id = c.id
       INNER JOIN pedido_itens pi ON p.id = pi.pedido_id
+      INNER JOIN produtos pr ON pi.produto_id = pr.id
       WHERE pi.parceiro_id = $1 AND pi.validado_at IS NOT NULL
       GROUP BY p.id, p.created_at, p.total, p.status, p.cliente_id, c.nome
       ORDER BY p.created_at DESC
@@ -179,7 +198,10 @@ export async function GET(req) {
         crescimentoVendas: parseFloat(stats.crescimento_vendas) || 0,
         produtosAtivos: parseInt(stats.produtos_ativos) || 0,
         totalProdutos: parseInt(stats.total_produtos) || 0,
-        crescimentoProdutos: parseFloat(stats.crescimento_produtos) || 0
+        crescimentoProdutos: parseFloat(stats.crescimento_produtos) || 0,
+        vendasHoje: parseFloat(stats.vendas_hoje) || 0,
+        vouchersAtivos: parseInt(stats.vouchers_ativos) || 0,
+        vouchersUsados: parseInt(stats.vouchers_usados) || 0
       },
       chartData: {
         vendas: chartData

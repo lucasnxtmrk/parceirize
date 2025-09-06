@@ -35,33 +35,35 @@ $black: #000000;
 // scss-docs-end gray-color-variables
 
 
-// scss-docs-start color-variables - Clean Design System Colors
-$blue:  #3b82f6;
-$indigo: #6366f1;
-$purple: #8b5cf6;
-$pink: #ec4899;
-$red: #ef4444;
-$orange: #f97316;
-$yellow: #eab308;
-$green: #22c55e;
-$teal: #14b8a6;
-$cyan: #06b6d4;
+// scss-docs-start color-variables - Clean Design System Colors (Simplified Palette)
+$primary-dark: #1B1236; // Cor principal do sistema - menu e botões
+$primary-pink: #DE488C; // Cor de destaque - itens em destaque
+$blue: $primary-dark;    // Mapear azul para a cor principal
+$indigo: $primary-dark;
+$purple: $primary-pink;  // Mapear roxo para destaque  
+$pink: $primary-pink;
+$red: #ef4444;          // Manter apenas para erros
+$orange: $primary-pink;
+$yellow: #eab308;       // Manter para warnings
+$green: #22c55e;        // Manter para success
+$teal: $primary-pink;
+$cyan: $primary-pink;
 // scss-docs-end color-variables
 
-// scss-docs-start theme-color-variables
-$primary: $blue;
-$secondary: $pink;
-$blue: $blue;
-$indigo: $indigo;
-$purple: $purple;
-$pink: $pink;
-$danger: $red;
-$orange: $orange;
-$warning: $orange;
-$success: $green;
-$info: $cyan;
+// scss-docs-start theme-color-variables - Clean Simplified Theme
+$primary: $primary-dark;     // #1B1236 - Botões principais, menu
+$secondary: $primary-pink;   // #DE488C - Itens em destaque
+$blue: $primary-dark;
+$indigo: $primary-dark;
+$purple: $primary-pink;
+$pink: $primary-pink;
+$danger: $red;               // Manter vermelho apenas para erros
+$orange: $primary-pink;
+$warning: $yellow;           // Manter amarelo para warnings
+$success: $green;            // Manter verde para success
+$info: $primary-pink;        // Usar cor de destaque para info
 $light: $gray-200;
-$dark: $gray-900;
+$dark: $primary-dark;        // Usar nossa cor principal como dark
 // scss-docs-end theme-color-variables
 
 // scss-docs-start gray-colors-map

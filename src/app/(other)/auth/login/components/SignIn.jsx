@@ -12,9 +12,11 @@ import useSignIn from './useSignIn';
 
 const SignIn = () => {
   useEffect(() => {
-    document.body.classList.add('authentication-bg');
+    document.body.style.backgroundColor = '#f8fafc';
+    document.body.style.fontFamily = 'Inter, system-ui, sans-serif';
     return () => {
-      document.body.classList.remove('authentication-bg');
+      document.body.style.backgroundColor = '';
+      document.body.style.fontFamily = '';
     };
   }, []);
 
@@ -24,57 +26,135 @@ const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="account-pages pt-2 pt-sm-5 pb-4 pb-sm-5">
+    <div className="min-vh-100 d-flex align-items-center justify-content-center" style={{backgroundColor: '#f8fafc'}}>
       <Container>
         <Row className="justify-content-center">
-          <Col xl={5}>
-            <Card className="auth-card bg-primary">
-              <CardBody className="px-3 py-5">
-                <div className="mx-auto mb-4 text-center auth-logo">
-                  <Link href="/" className="logo-dark">
-                    <Image src={LogoLight} height={28} alt="logo light" />
-                  </Link>
-                  <Link href="/" className="logo-light">
-                    <Image src={LogoLight} height={28} alt="logo light" />
-                  </Link>
-                </div>
-                <p className="text-muted text-center mt-1 mb-4">Entre com o seu e-mail e senha.</p>
-                <div className="px-4">
-                  <form className="authentication-form" onSubmit={login}>
-                    <div className="mb-3">
-                      <TextFormInput control={control} name="email" placeholder="Digite seu e-mail" className="bg-dark bg-opacity-50 text-gray-100 border-dark py-2" label="E-mail" />
-                    </div>
-                    <div className="mb-3">
-                      <Link href="/auth/reset-password" className="float-end text-muted text-unline-dashed ms-1">
-                        Redefinir senha
+          <Col xs={12} sm={10} md={8} lg={6} xl={5}>
+            <div className="text-center mb-5">
+              <Link href="/" className="d-inline-block mb-4">
+                <Image src={LogoLight} height={40} alt="logo" className="img-fluid" />
+              </Link>
+              <h1 className="mb-2" style={{color: '#0f172a', fontWeight: '600', fontSize: '1.875rem'}}>Bem-vindo de volta</h1>
+              <p className="text-muted mb-0" style={{color: '#64748b', fontSize: '1rem'}}>Entre com suas credenciais para acessar sua conta</p>
+            </div>
+            
+            <Card className="border-0 shadow-card" style={{backgroundColor: '#ffffff', borderRadius: '16px'}}>
+              <CardBody className="p-4 p-sm-5">
+                <form className="authentication-form" onSubmit={login}>
+                  <div className="mb-4">
+                    <label className="form-label fw-medium mb-2" style={{color: '#374151', fontSize: '0.875rem'}}>E-mail</label>
+                    <TextFormInput 
+                      control={control} 
+                      name="email" 
+                      placeholder="seu@email.com" 
+                      className="form-control-lg" 
+                      style={{
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '8px',
+                        padding: '0.75rem 1rem',
+                        fontSize: '0.875rem',
+                        backgroundColor: '#ffffff'
+                      }}
+                    />
+                  </div>
+                  
+                  <div className="mb-4">
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <label className="form-label fw-medium mb-0" style={{color: '#374151', fontSize: '0.875rem'}}>Senha</label>
+                      <Link 
+                        href="/auth/reset-password" 
+                        className="text-decoration-none" 
+                        style={{color: '#3b82f6', fontSize: '0.8125rem', fontWeight: '500'}}
+                      >
+                        Esqueceu a senha?
                       </Link>
-                      <label className="form-label">Senha</label>
-                      <InputGroup className="mb-3">
-                        <FormControl
-                          type={showPassword ? "text" : "password"}
-                          placeholder="Digite sua senha"
-                          className="bg-dark bg-opacity-50 border-dark py-2"
-                          {...control.register("password")}
-                        />
-                        <Button variant="outline-dark" onClick={() => setShowPassword(!showPassword)}>
-                          <IconifyIcon icon={showPassword ? "mdi:eye-off" : "mdi:eye"} width={20} />
-                        </Button>
-                      </InputGroup>
                     </div>
-                    <div className="mb-3">
-                      <div className="form-check">
-                        <input type="checkbox" className="form-check-input bg-dark" id="checkbox-signin" />
-                        <label className="form-check-label" htmlFor="checkbox-signin">
-                          Lembrar-me
-                        </label>
-                      </div>
+                    <InputGroup>
+                      <FormControl
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Digite sua senha"
+                        className="form-control-lg"
+                        style={{
+                          border: '1px solid #e2e8f0',
+                          borderRight: 'none',
+                          borderRadius: '8px 0 0 8px',
+                          padding: '0.75rem 1rem',
+                          fontSize: '0.875rem',
+                          backgroundColor: '#ffffff'
+                        }}
+                        {...control.register("password")}
+                      />
+                      <Button 
+                        variant="outline-secondary" 
+                        onClick={() => setShowPassword(!showPassword)}
+                        style={{
+                          border: '1px solid #e2e8f0',
+                          borderLeft: 'none',
+                          borderRadius: '0 8px 8px 0',
+                          backgroundColor: '#ffffff',
+                          color: '#64748b'
+                        }}
+                      >
+                        <IconifyIcon icon={showPassword ? "heroicons:eye-slash" : "heroicons:eye"} width={18} />
+                      </Button>
+                    </InputGroup>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <div className="form-check">
+                      <input 
+                        type="checkbox" 
+                        className="form-check-input" 
+                        id="checkbox-signin"
+                        style={{
+                          borderColor: '#e2e8f0',
+                          borderRadius: '4px'
+                        }}
+                      />
+                      <label 
+                        className="form-check-label" 
+                        htmlFor="checkbox-signin"
+                        style={{color: '#475569', fontSize: '0.875rem'}}
+                      >
+                        Lembrar-me neste dispositivo
+                      </label>
                     </div>
-                    <div className="mb-1 text-center d-grid">
-                      <button disabled={loading} className="btn btn-secondary py-2 fw-medium" type="submit">
-                        Entrar
-                      </button>
-                    </div>
-                  </form>
+                  </div>
+                  
+                  <div className="d-grid">
+                    <button 
+                      disabled={loading} 
+                      className="btn btn-primary btn-lg" 
+                      type="submit"
+                      style={{
+                        backgroundColor: '#3b82f6',
+                        borderColor: '#3b82f6',
+                        borderRadius: '8px',
+                        padding: '0.75rem 1.5rem',
+                        fontSize: '0.875rem',
+                        fontWeight: '500',
+                        boxShadow: 'none'
+                      }}
+                    >
+                      {loading ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                          Entrando...
+                        </>
+                      ) : (
+                        'Entrar na conta'
+                      )}
+                    </button>
+                  </div>
+                </form>
+                
+                <div className="text-center mt-4 pt-3" style={{borderTop: '1px solid #e2e8f0'}}>
+                  <p className="mb-0" style={{color: '#64748b', fontSize: '0.875rem'}}>
+                    Não tem uma conta? 
+                    <Link href="/auth/sign-up" className="text-decoration-none fw-medium" style={{color: '#3b82f6', marginLeft: '0.25rem'}}>
+                      Criar conta
+                    </Link>
+                  </p>
                 </div>
               </CardBody>
             </Card>

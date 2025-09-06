@@ -9,45 +9,43 @@ $prefix: 'bs-';
 
 // Google Font Family link
 
-// @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-// @import url('https://fonts.googleapis.com/css2?family=Baloo+Bhai+2:wght@400..800&display=swap');
-// @import url('https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&display=swap');
 
 // Font Family
-$font-family-primary: inherit;
-$font-family-secondary: inherit;
+$font-family-primary: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+$font-family-secondary: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
 
 //
 // Color system
 //
 
-// scss-docs-start gray-color-variables
+// scss-docs-start gray-color-variables - Clean neutral palette
 $white: #ffffff;
-$gray-100: #f8f9fa;
-$gray-200: #eef2f7;
-$gray-300: #d8dfe7;
-$gray-400: #b0b0bb;
-$gray-500: #8486a7;
-$gray-600: #687d92;
-$gray-700: #424e5a;
-$gray-800: #36404a;
-$gray-900: #323a46;
+$gray-100: #f8fafc;
+$gray-200: #e2e8f0;
+$gray-300: #cbd5e1;
+$gray-400: #94a3b8;
+$gray-500: #64748b;
+$gray-600: #475569;
+$gray-700: #334155;
+$gray-800: #1e293b;
+$gray-900: #0f172a;
 $black: #000000;
 // scss-docs-end gray-color-variables
 
 
-// scss-docs-start color-variables
-$blue:  #1B1236;
-$indigo: #53389f;
-$purple: #9035e3;
-$pink: #DE488C;
-$red: #e96767;
-$orange: #f0934e;
-$yellow: #f8ac59;
-$green: #5cc184;
-$teal: #040505;
-$cyan: #45c5cd;
+// scss-docs-start color-variables - Clean Design System Colors
+$blue:  #3b82f6;
+$indigo: #6366f1;
+$purple: #8b5cf6;
+$pink: #ec4899;
+$red: #ef4444;
+$orange: #f97316;
+$yellow: #eab308;
+$green: #22c55e;
+$teal: #14b8a6;
+$cyan: #06b6d4;
 // scss-docs-end color-variables
 
 // scss-docs-start theme-color-variables
@@ -448,8 +446,8 @@ $position-values: (
 // Body
 //
 
-$body-bg: #f9f9fc;
-$body-color: #5d7186;
+$body-bg: #f8fafc;
+$body-color: #334155;
 $body-text-align: null;
 
 
@@ -557,16 +555,16 @@ $border-widths: (
 );
 
 $border-style: solid;
-$border-color: #eaedf1;
+$border-color: #e2e8f0;
 $border-color-translucent: rgba($black, .175);
 // scss-docs-end border-variables
 
 // scss-docs-start border-radius-variables
-$border-radius: .35rem;
-$border-radius-sm: .15rem;
-$border-radius-lg: .5rem;
-$border-radius-xl: 1rem;
-$border-radius-xxl: 2rem;
+$border-radius: 8px;
+$border-radius-sm: 6px;
+$border-radius-lg: 12px;
+$border-radius-xl: 16px;
+$border-radius-xxl: 24px;
 $border-radius-pill: 50rem;
 // scss-docs-end border-radius-variables
 // fusv-disable
@@ -574,9 +572,9 @@ $border-radius-2xl: $border-radius-xxl; // Deprecated in v5.3.0
 // fusv-enable
 
 // scss-docs-start box-shadow-variables
-$box-shadow: 0px 3px 4px 0px rgba(0, 0, 0, 0.03);
-$box-shadow-sm: 0 .125rem .25rem rgba($black, .05);
-$box-shadow-lg: 0 5px 10px rgba(30, 32, 37, 0.12);
+$box-shadow: none;
+$box-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+$box-shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 $box-shadow-inset: inset 0 1px 2px rgba($black, .075);
 // scss-docs-end box-shadow-variables
 

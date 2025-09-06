@@ -7,99 +7,103 @@ import PropertiesFilter from "./PropertiesFilter";
 import IconifyIcon from "@/components/wrappers/IconifyIcon";
 import { Nichos } from "@/data/nichos";
 
-// 🧱 Card de Parceiro
-const PropertiesCard = ({
-  voucher_codigo,
-  voucher_desconto,
-  parceiro_nome,
-  parceiro_foto,
-  parceiro_nicho
+// 🏪 Card de Loja/Parceiro
+const LojaCard = ({
+  id,
+  nome_empresa,
+  nicho,
+  foto,
+  email,
+  total_produtos,
+  menor_preco,
+  maior_preco
 }) => {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(voucher_codigo);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 3000);
-  };
-
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden h-100">
       <div className="position-relative" style={{ height: "150px", overflow: "hidden" }}>
         <Image
-          src={parceiro_foto && parceiro_foto.trim() !== "" ? parceiro_foto : "/assets/images/avatar.jpg"}
-          alt={parceiro_nome}
+          src={foto && foto.trim() !== "" ? foto : "/assets/images/avatar.jpg"}
+          alt={nome_empresa}
           className="img-fluid rounded-top"
           width={300}
           height={200}
           style={{ objectFit: "cover", width: "100%", height: "100%" }}
         />
-      </div>
-      <CardBody>
-        <div className="d-flex align-items-center gap-2">
-          <div>
-            <h5 className="fw-medium">{parceiro_nome}</h5>
-            <p className="text-muted mb-0">{parceiro_nicho}</p>
-            <p className="fw-bold mb-0">Desconto: {voucher_desconto}%</p>
+        {total_produtos > 0 && (
+          <div className="position-absolute top-0 end-0 m-2">
+            <span className="badge bg-primary">{total_produtos} produtos</span>
           </div>
+        )}
+      </div>
+      <CardBody className="d-flex flex-column">
+        <div className="flex-grow-1">
+          <h5 className="fw-medium mb-2">{nome_empresa}</h5>
+          <p className="text-muted mb-2">{nicho}</p>
+          {email && (
+            <p className="text-muted mb-2 small">
+              <IconifyIcon icon="ri-mail-line" className="me-1" />
+              {email}
+            </p>
+          )}
+          {total_produtos > 0 && parseFloat(menor_preco) > 0 && (
+            <p className="fw-bold mb-0 text-success">
+              A partir de R$ {parseFloat(menor_preco).toFixed(2)}
+            </p>
+          )}
         </div>
       </CardBody>
-      <CardFooter className="bg-light-subtle d-flex justify-content-between align-items-center border-top">
-        <p className="text-muted mb-0">{voucher_codigo}</p>
-        <Link href="#" className="fw-medium" onClick={handleCopy}>
-          {copied ? (
-            <>
-              Copiado <IconifyIcon icon="ri-check-line" className="align-middle" />
-            </>
-          ) : (
-            <>
-              Copiar <IconifyIcon icon="ri-file-copy-line" className="align-middle" />
-            </>
-          )}
-        </Link>
+      <CardFooter className="bg-light-subtle d-flex justify-content-center align-items-center border-top">
+        {total_produtos > 0 ? (
+          <Link href={`/loja/${id}`} className="btn btn-primary btn-sm">
+            <IconifyIcon icon="ri-shopping-bag-line" className="me-2" />
+            Ver Produtos
+          </Link>
+        ) : (
+          <span className="text-muted small">Sem produtos disponíveis</span>
+        )}
       </CardFooter>
     </Card>
   );
 };
 
-// 📋 Listagem de Parceiros com Filtro
+// 📋 Listagem de Lojas/Parceiros com Filtro
 const PropertiesData = () => {
-  const [vouchers, setVouchers] = useState([]);
-  const [filteredVouchers, setFilteredVouchers] = useState([]);
+  const [parceiros, setParceiros] = useState([]);
+  const [filteredParceiros, setFilteredParceiros] = useState([]);
 
-  // Buscar vouchers da API
+  // Buscar parceiros da API
   useEffect(() => {
-    const fetchVouchers = async () => {
+    const fetchParceiros = async () => {
       try {
-        const response = await fetch("/api/vouchers");
+        const response = await fetch("/api/parceiros");
         const data = await response.json();
-        setVouchers(data);
-        setFilteredVouchers(data);
+        setParceiros(data);
+        setFilteredParceiros(data);
       } catch (error) {
-        console.error("Erro ao buscar vouchers:", error);
+        console.error("Erro ao buscar parceiros:", error);
       }
     };
 
-    fetchVouchers();
+    fetchParceiros();
   }, []);
 
   // Aplicar filtro de nicho e busca
   const handleFilterChange = ({ nichos, search }) => {
-    let filtered = [...vouchers];
+    let filtered = [...parceiros];
 
     if (nichos.length > 0) {
-      filtered = filtered.filter(voucher =>
-        nichos.includes(Number(voucher.parceiro_nicho))
+      filtered = filtered.filter(parceiro =>
+        nichos.includes(Number(parceiro.nicho))
       );
     }
 
     if (search.trim() !== "") {
-      filtered = filtered.filter(voucher =>
-        voucher.parceiro_nome.toLowerCase().includes(search.toLowerCase())
+      filtered = filtered.filter(parceiro =>
+        parceiro.nome_empresa.toLowerCase().includes(search.toLowerCase())
       );
     }
 
-    setFilteredVouchers(filtered);
+    setFilteredParceiros(filtered);
   };
 
   return (
@@ -107,19 +111,19 @@ const PropertiesData = () => {
       <PropertiesFilter onFilterChange={handleFilterChange} />
       <Col xl={9} lg={12}>
         <Row>
-          {filteredVouchers.length > 0 ? (
-            filteredVouchers.map((voucher, idx) => (
-              <Col lg={4} md={6} key={idx}>
-                <PropertiesCard
-                  {...voucher}
-                  parceiro_nicho={
-                    Nichos.find(n => n.id === Number(voucher.parceiro_nicho))?.nome || "Nicho desconhecido"
+          {filteredParceiros.length > 0 ? (
+            filteredParceiros.map((parceiro, idx) => (
+              <Col lg={4} md={6} key={idx} className="mb-4">
+                <LojaCard
+                  {...parceiro}
+                  nicho={
+                    Nichos.find(n => n.id === Number(parceiro.nicho))?.nome || "Categoria"
                   }
                 />
               </Col>
             ))
           ) : (
-            <p className="text-center mt-4">Nenhum voucher encontrado</p>
+            <p className="text-center mt-4">Nenhuma loja encontrada</p>
           )}
         </Row>
       </Col>

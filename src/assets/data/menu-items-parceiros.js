@@ -6,6 +6,12 @@ export const MENU_ITEMS = [
     url: '/relatorio'
   },
   {
+    key: 'produtos',
+    label: 'Produtos',
+    icon: 'ri:shopping-bag-line',
+    url: '/produtos'
+  },
+  {
     key: 'voucher',
     label: 'Voucher',
     icon: 'ri:ticket-line',
@@ -18,12 +24,6 @@ export const MENU_ITEMS = [
     url: '/validacao'
   },
   {
-    key: 'perfil',
-    label: 'Perfil',
-    icon: 'ri:user-line',
-    url: '/perfil'
-  },
-  {
     key: 'clientes',
     label: 'Clientes',
     icon: 'ri:team-line',
@@ -34,5 +34,11 @@ export const MENU_ITEMS = [
     label: 'Integrações',
     icon: 'ri:links-line',
     url: '/integracoes'
+  },
+  {
+    key: 'configuracoes',
+    label: 'Configurações',
+    icon: 'ri:settings-line',
+    url: '/configuracoes'
   },
 ];

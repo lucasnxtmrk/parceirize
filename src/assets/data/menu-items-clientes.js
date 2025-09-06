@@ -10,10 +10,22 @@ export const MENU_ITEMS = [{
   url: '/carteirinha'
 },
 {
-  key: 'vouchers',
-  label: 'Vouchers',
-  icon: 'ri:ticket-line',
-  url: '/vouchers'
+  key: 'lojas',
+  label: 'Lojas Parceiras',
+  icon: 'ri:store-2-line',
+  url: '/lojas'
+},
+{
+  key: 'catalogo',
+  label: 'Catálogo Geral',
+  icon: 'ri:shopping-bag-line',
+  url: '/catalogo'
+},
+{
+  key: 'pedidos',
+  label: 'Meus Pedidos',
+  icon: 'ri:shopping-cart-line',
+  url: '/pedidos'
 },
 {
   key: 'como-usar',

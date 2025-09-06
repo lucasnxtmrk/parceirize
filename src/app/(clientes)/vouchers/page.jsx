@@ -2,7 +2,7 @@ import PageTitle from '@/components/PageTitle';
 import { Row } from 'react-bootstrap';
 import PropertiesData from './components/PropertiesData';
 export const metadata = {
-  title: 'Vouchers'
+  title: 'Lojas'
 };
 const PropertyGridPage = () => {
   return <>

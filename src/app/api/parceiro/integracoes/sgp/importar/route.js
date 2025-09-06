@@ -47,32 +47,69 @@ export async function POST(req) {
     return new Response(JSON.stringify({ error: 'Senha padrão inválida (mín. 6 caracteres)' }), { status: 400 });
   }
 
-  // Busca contratos no SGP
-  const url = `https://${integracao.subdominio}.sgp.net.br/api/contratos`;
+  // Busca clientes no SGP usando endpoint correto
+  const url = `https://${integracao.subdominio}.sgp.net.br/api/clientes`;
+  
+  // Para listar todos os clientes, usar apenas autenticação por Token + App
+  if (!integracao.token || !integracao.app_name) {
+    return new Response(JSON.stringify({ 
+      error: 'Configuração incompleta: é necessário Token + App para listar clientes' 
+    }), { status: 400 });
+  }
+  
+  const authBody = {
+    token: integracao.token,
+    app: integracao.app_name,
+    omitir_contratos: false,
+    limit: 500
+  };
+
   const resp = await fetch(url, {
-    headers: { Authorization: `Bearer ${integracao.token}` },
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(authBody),
     cache: 'no-store',
   });
   if (!resp.ok) {
-    return new Response(JSON.stringify({ error: 'Falha ao consultar SGP', status: resp.status }), { status: 502 });
+    const errorText = await resp.text();
+    return new Response(JSON.stringify({ 
+      error: 'Falha ao consultar SGP', 
+      status: resp.status,
+      statusText: resp.statusText,
+      details: errorText,
+      url: url
+    }), { status: 502 });
   }
-  const contratos = await resp.json();
-
-  const ativos = (Array.isArray(contratos) ? contratos : []).filter(
-    (c) => (c?.status || c?.situacao || '').toString().toUpperCase() === 'ATIVO'
-  );
+  const data = await resp.json();
+  const clientesSGP = data?.clientes || [];
 
   const senhaHash = await bcrypt.hash(senha_padrao, 10);
 
   let criados = 0;
   let atualizados = 0;
-  for (const c of ativos) {
-    const { email, cpf } = pickIdentifier(c);
-    if (!email && !cpf) continue;
-    const loginEmail = email || (cpf ? `${cpf}@sgp.local` : null);
+  let totalProcessados = 0;
+
+  for (const clienteSGP of clientesSGP) {
+    const contratos = clienteSGP?.contratos || [];
+    
+    // Verifica se tem pelo menos um contrato ativo
+    const temContratoAtivo = contratos.some(c => 
+      (c?.status || '').toString().toUpperCase() === 'ATIVO'
+    );
+    
+    if (!temContratoAtivo) continue;
+    
+    totalProcessados++;
+
+    const cpfcnpj = clienteSGP?.cpfcnpj;
+    const email = clienteSGP?.email;
+    const loginEmail = email || (cpfcnpj ? `${cpfcnpj}@sgp.local` : null);
+    
     if (!loginEmail) continue;
 
-    const nomeCompleto = pickName(c);
+    const nomeCompleto = clienteSGP?.nome || 'Cliente SGP';
     let nome = nomeCompleto;
     let sobrenome = '';
     if (nomeCompleto && typeof nomeCompleto === 'string' && nomeCompleto.includes(' ')) {
@@ -82,8 +119,7 @@ export async function POST(req) {
     }
 
     // Se modo integracao, respeita status do contrato; se manual, ativa por padrão
-    const ativo = (integracao.modo_ativacao === 'integracao') ? true : true;
-    // Mesmo em modo manual só importamos contratos ATIVOS, conforme requisito
+    const ativo = (integracao.modo_ativacao === 'integracao') ? temContratoAtivo : true;
 
     const sel = await pool.query('SELECT id FROM clientes WHERE email = $1', [loginEmail]);
     if (sel.rows.length === 0) {
@@ -104,6 +140,6 @@ export async function POST(req) {
     }
   }
 
-  return new Response(JSON.stringify({ success: true, criados, atualizados, totalProcessados: ativos.length }), { status: 200 });
+  return new Response(JSON.stringify({ success: true, criados, atualizados, totalProcessados }), { status: 200 });
 }
 

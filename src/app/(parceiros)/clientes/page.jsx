@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import ComponentContainerCard from '@/components/ComponentContainerCard';
-import { Button, Modal, Form, FormGroup, FormLabel, FormControl } from 'react-bootstrap';
+import { Button, Modal, Form, FormGroup, FormLabel, FormControl, Container, Row, Col, Card } from 'react-bootstrap';
 
 export default function ParceiroClientesPage() {
   const [show, setShow] = useState(false);
@@ -33,11 +33,96 @@ export default function ParceiroClientesPage() {
 
   return (
     <ComponentContainerCard id="clientes-parceiro" title="Clientes" description="Gerencie seus clientes.">
-      <div className="d-flex justify-content-end mb-3">
-        <Button onClick={open}>Importar da Integração</Button>
-      </div>
+      <Container fluid>
+        <Row className="g-3">
+          {/* Header com ação */}
+          <Col xs={12}>
+            <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-3">
+              <div>
+                <h5 className="mb-1">Seus Clientes</h5>
+                <p className="text-muted mb-0 small">Gerencie e visualize todos os seus clientes</p>
+              </div>
+              <Button 
+                onClick={open} 
+                className="d-flex align-items-center gap-2"
+                style={{ whiteSpace: 'nowrap' }}
+              >
+                <i className="bi bi-download"></i>
+                <span className="d-none d-sm-inline">Importar da Integração</span>
+                <span className="d-inline d-sm-none">Importar</span>
+              </Button>
+            </div>
+          </Col>
 
-      <p className="text-muted">Em breve: listagem/gestão de clientes do parceiro.</p>
+          {/* Cards de estatísticas */}
+          <Col xs={12} sm={6} lg={3}>
+            <Card className="h-100 shadow-sm border-0">
+              <Card.Body className="text-center">
+                <div className="display-6 text-primary mb-2">
+                  <i className="bi bi-people"></i>
+                </div>
+                <h4 className="mb-1">0</h4>
+                <p className="text-muted mb-0 small">Total de Clientes</p>
+              </Card.Body>
+            </Card>
+          </Col>
+          
+          <Col xs={12} sm={6} lg={3}>
+            <Card className="h-100 shadow-sm border-0">
+              <Card.Body className="text-center">
+                <div className="display-6 text-success mb-2">
+                  <i className="bi bi-check-circle"></i>
+                </div>
+                <h4 className="mb-1">0</h4>
+                <p className="text-muted mb-0 small">Ativos</p>
+              </Card.Body>
+            </Card>
+          </Col>
+          
+          <Col xs={12} sm={6} lg={3}>
+            <Card className="h-100 shadow-sm border-0">
+              <Card.Body className="text-center">
+                <div className="display-6 text-warning mb-2">
+                  <i className="bi bi-pause-circle"></i>
+                </div>
+                <h4 className="mb-1">0</h4>
+                <p className="text-muted mb-0 small">Inativos</p>
+              </Card.Body>
+            </Card>
+          </Col>
+          
+          <Col xs={12} sm={6} lg={3}>
+            <Card className="h-100 shadow-sm border-0">
+              <Card.Body className="text-center">
+                <div className="display-6 text-info mb-2">
+                  <i className="bi bi-calendar-plus"></i>
+                </div>
+                <h4 className="mb-1">0</h4>
+                <p className="text-muted mb-0 small">Este Mês</p>
+              </Card.Body>
+            </Card>
+          </Col>
+
+          {/* Área de conteúdo */}
+          <Col xs={12}>
+            <Card className="shadow-sm border-0">
+              <Card.Body className="text-center py-5">
+                <div className="display-1 text-muted mb-3">
+                  <i className="bi bi-people"></i>
+                </div>
+                <h4 className="text-muted mb-2">Nenhum cliente encontrado</h4>
+                <p className="text-muted mb-3">
+                  Comece importando clientes de sua integração SGP ou aguarde a funcionalidade de listagem
+                </p>
+                <Button variant="primary" onClick={open} className="d-inline-flex align-items-center gap-2">
+                  <i className="bi bi-download"></i>
+                  Importar Clientes
+                </Button>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+      </Container>
 
       <Modal show={show} onHide={close} centered>
         <Modal.Header closeButton>

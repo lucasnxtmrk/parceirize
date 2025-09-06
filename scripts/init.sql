@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS integracoes (
   tipo VARCHAR(50) NOT NULL, -- 'SGP'
   subdominio TEXT NOT NULL,
   token TEXT NOT NULL,
+  app_name TEXT NOT NULL,
   modo_ativacao VARCHAR(20) DEFAULT 'manual',
   created_at TIMESTAMP DEFAULT NOW()
 );
@@ -29,5 +30,37 @@ BEGIN
     WHERE table_name='clientes' AND column_name='ativo'
   ) THEN
     ALTER TABLE clientes ADD COLUMN ativo BOOLEAN DEFAULT TRUE;
+  END IF;
+END $$;
+
+-- Adiciona coluna app_name para integrações, se não existir
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name='integracoes' AND column_name='app_name'
+  ) THEN
+    ALTER TABLE integracoes ADD COLUMN app_name TEXT DEFAULT 'parceirize';
+  END IF;
+END $$;
+
+-- Adiciona colunas para autenticação CPF/CNPJ + Senha Central
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name='integracoes' AND column_name='cpf_central'
+  ) THEN
+    ALTER TABLE integracoes ADD COLUMN cpf_central VARCHAR(20);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name='integracoes' AND column_name='senha_central'
+  ) THEN
+    ALTER TABLE integracoes ADD COLUMN senha_central TEXT;
   END IF;
 END $$;

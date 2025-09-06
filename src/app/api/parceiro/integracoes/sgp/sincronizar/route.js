@@ -40,29 +40,56 @@ export async function GET() {
     return new Response(JSON.stringify({ skipped: true, motivo: 'Modo de ativação não é integracao' }), { status: 200 });
   }
 
-  const url = `https://${integracao.subdominio}.sgp.net.br/api/contratos`;
+  const url = `https://${integracao.subdominio}.sgp.net.br/api/clientes`;
+  // Para listar todos os clientes, usar apenas autenticação por Token + App
+  if (!integracao.token || !integracao.app_name) {
+    return new Response(JSON.stringify({ 
+      error: 'Configuração incompleta: é necessário Token + App para listar clientes' 
+    }), { status: 400 });
+  }
+  
+  const authBody = {
+    token: integracao.token,
+    app: integracao.app_name,
+    omitir_contratos: false,
+    limit: 500
+  };
+
   const resp = await fetch(url, {
-    headers: { Authorization: `Bearer ${integracao.token}` },
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(authBody),
     cache: 'no-store',
   });
   if (!resp.ok) {
     return new Response(JSON.stringify({ error: 'Falha ao consultar SGP', status: resp.status }), { status: 502 });
   }
-  const contratos = await resp.json();
+  const data = await resp.json();
+  const clientes = data?.clientes || [];
 
   let ativados = 0;
   let desativados = 0;
-  for (const c of (Array.isArray(contratos) ? contratos : [])) {
-    const status = (c?.status || c?.situacao || '').toString().toUpperCase();
-    const loginEmail = idFromContrato(c);
-    if (!loginEmail) continue;
+  
+  for (const cliente of clientes) {
+    const contratos = cliente?.contratos || [];
+    
+    for (const contrato of contratos) {
+      const status = (contrato?.status || '').toString().toUpperCase();
+      const cpfcnpj = cliente?.cpfcnpj;
+      const email = cliente?.email;
+      const loginEmail = email || (cpfcnpj ? `${cpfcnpj}@sgp.local` : null);
+      
+      if (!loginEmail) continue;
 
-    if (status === 'ATIVO') {
-      const r = await pool.query('UPDATE clientes SET ativo = TRUE WHERE email = $1', [loginEmail]);
-      if (r.rowCount > 0) ativados += r.rowCount;
-    } else if (['SUSPENSO', 'CANCELADO', 'INATIVO'].includes(status)) {
-      const r = await pool.query('UPDATE clientes SET ativo = FALSE WHERE email = $1', [loginEmail]);
-      if (r.rowCount > 0) desativados += r.rowCount;
+      if (status === 'ATIVO') {
+        const r = await pool.query('UPDATE clientes SET ativo = TRUE WHERE email = $1', [loginEmail]);
+        if (r.rowCount > 0) ativados += r.rowCount;
+      } else if (['SUSPENSO', 'CANCELADO', 'INATIVO'].includes(status)) {
+        const r = await pool.query('UPDATE clientes SET ativo = FALSE WHERE email = $1', [loginEmail]);
+        if (r.rowCount > 0) desativados += r.rowCount;
+      }
     }
   }
 

@@ -4,30 +4,34 @@ import { options } from '@/app/api/auth/[...nextauth]/options';
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
-async function getParceiroByEmail(email) {
-  const q = 'SELECT id, email FROM parceiros WHERE email = $1';
+async function getAdminByEmail(email) {
+  const q = 'SELECT id, email FROM admins WHERE email = $1';
   const r = await pool.query(q, [email]);
   return r.rows[0] || null;
 }
 
-// GET: retorna config atual do SGP para o parceiro logado
+// GET: retorna config atual do SGP para o admin logado
 export async function GET() {
   const session = await getServerSession(options);
-  if (!session || session.user.role !== 'parceiro') {
+  if (!session || session.user.role !== 'admin') {
     return new Response(JSON.stringify({ error: 'Acesso negado' }), { status: 403 });
   }
 
-  const parceiro = await getParceiroByEmail(session.user.email);
-  if (!parceiro) {
-    return new Response(JSON.stringify({ error: 'Parceiro não encontrado' }), { status: 404 });
+  const admin = await getAdminByEmail(session.user.email);
+  if (!admin) {
+    return new Response(JSON.stringify({ error: 'Admin não encontrado' }), { status: 404 });
   }
 
-  const q = `SELECT id, parceiro_id, tipo, subdominio, token, app_name, cpf_central, senha_central, modo_ativacao, created_at
-             FROM integracoes WHERE parceiro_id = $1 AND tipo = 'SGP'`;
-  const r = await pool.query(q, [parceiro.id]);
+  // Para admin, não vinculamos a um parceiro específico - é global
+  const q = `SELECT id, tipo, subdominio, token, app_name, cpf_central, senha_central, modo_ativacao, created_at, last_sync
+             FROM integracoes WHERE admin_id = $1 AND tipo = 'SGP'`;
+  const r = await pool.query(q, [admin.id]);
   const config = r.rows[0] || null;
 
-  return new Response(JSON.stringify({ config }), {
+  return new Response(JSON.stringify({ 
+    config, 
+    lastSync: config?.last_sync 
+  }), {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
   });
@@ -36,26 +40,26 @@ export async function GET() {
 // POST: salva/atualiza config do SGP (subdominio, token, modo_ativacao)
 export async function POST(req) {
   const session = await getServerSession(options);
-  if (!session || session.user.role !== 'parceiro') {
+  if (!session || session.user.role !== 'admin') {
     return new Response(JSON.stringify({ error: 'Acesso negado' }), { status: 403 });
   }
 
-  const parceiro = await getParceiroByEmail(session.user.email);
-  if (!parceiro) {
-    return new Response(JSON.stringify({ error: 'Parceiro não encontrado' }), { status: 404 });
+  const admin = await getAdminByEmail(session.user.email);
+  if (!admin) {
+    return new Response(JSON.stringify({ error: 'Admin não encontrado' }), { status: 404 });
   }
 
   const { subdominio, token, app_name, cpf_central, senha_central, modo_ativacao } = await req.json();
 
-  // Permite atualização parcial do modo_ativacao pela página de perfil
+  // Permite atualização parcial do modo_ativacao
   if (!subdominio && !token && !app_name && !cpf_central && !senha_central && !modo_ativacao) {
     return new Response(JSON.stringify({ error: 'Nada para atualizar' }), { status: 400 });
   }
 
   // Verifica se já existe
   const sel = await pool.query(
-    `SELECT id FROM integracoes WHERE parceiro_id = $1 AND tipo = 'SGP'`,
-    [parceiro.id]
+    `SELECT id FROM integracoes WHERE admin_id = $1 AND tipo = 'SGP'`,
+    [admin.id]
   );
 
   if (sel.rows.length > 0) {
@@ -69,8 +73,8 @@ export async function POST(req) {
     if (cpf_central) { fields.push(`cpf_central = $${idx++}`); params.push(cpf_central); }
     if (senha_central) { fields.push(`senha_central = $${idx++}`); params.push(senha_central); }
     if (modo_ativacao) { fields.push(`modo_ativacao = $${idx++}`); params.push(modo_ativacao); }
-    params.push(parceiro.id);
-    const sql = `UPDATE integracoes SET ${fields.join(', ')} WHERE parceiro_id = $${idx} AND tipo = 'SGP' RETURNING *`;
+    params.push(admin.id);
+    const sql = `UPDATE integracoes SET ${fields.join(', ')} WHERE admin_id = $${idx} AND tipo = 'SGP' RETURNING *`;
     const up = await pool.query(sql, params);
     return new Response(JSON.stringify({ success: true, config: up.rows[0] }), { status: 200 });
   }
@@ -87,11 +91,10 @@ export async function POST(req) {
   }
   
   const ins = await pool.query(
-    `INSERT INTO integracoes (parceiro_id, tipo, subdominio, token, app_name, cpf_central, senha_central, modo_ativacao)
+    `INSERT INTO integracoes (admin_id, tipo, subdominio, token, app_name, cpf_central, senha_central, modo_ativacao)
      VALUES ($1, 'SGP', $2, $3, $4, $5, $6, COALESCE($7, 'manual'))
      RETURNING *`,
-    [parceiro.id, subdominio, token, app_name, cpf_central, senha_central, modo_ativacao]
+    [admin.id, subdominio, token, app_name, cpf_central, senha_central, modo_ativacao]
   );
   return new Response(JSON.stringify({ success: true, config: ins.rows[0] }), { status: 201 });
 }
-

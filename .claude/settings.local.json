@@ -14,7 +14,9 @@
       "Bash(psql:*)",
       "Bash(curl:*)",
       "Bash(cmd /c:*)",
-      "Bash(npx kill-port:*)"
+      "Bash(npx kill-port:*)",
+      "Bash(set -a)",
+      "Bash(source:*)"
     ],
     "deny": [],
     "ask": []

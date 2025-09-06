@@ -23,6 +23,12 @@ export const MENU_ITEMS = [
     icon: 'ri:qr-code-line',
     url: '/admin-validacao'
   },
+  {
+    key: 'integracoes',
+    label: 'Integrações',
+    icon: 'ri:links-line',
+    url: '/integracoes'
+  },
   // {
   //   key: 'perfil',
   //   label: 'Perfil',

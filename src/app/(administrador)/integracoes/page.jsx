@@ -10,6 +10,9 @@ export default function IntegracoesPage() {
   const [msg, setMsg] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [config, setConfig] = useState(null);
+  const [lastSync, setLastSync] = useState(null);
+  const [cronStatus, setCronStatus] = useState({ running: false, lastRun: null, nextRun: null });
+  const [cronLoading, setCronLoading] = useState(false);
 
   const [subdominio, setSubdominio] = useState('');
   const [token, setToken] = useState('');
@@ -22,16 +25,26 @@ export default function IntegracoesPage() {
     const load = async () => {
       setError(null); setMsg(null); setLoading(true);
       try {
-        const r = await fetch('/api/parceiro/integracoes/sgp');
-        const data = await r.json();
-        if (r.ok && data?.config) {
-          setConfig(data.config);
-          setSubdominio(data.config.subdominio || '');
-          setToken(data.config.token || '');
-          setAppName(data.config.app_name || '');
-          setCpfCentral(data.config.cpf_central || '');
-          setSenhaCentral(data.config.senha_central || '');
-          setModo(data.config.modo_ativacao || 'manual');
+        const [configRes, cronRes] = await Promise.all([
+          fetch('/api/admin/integracoes/sgp'),
+          fetch('/api/admin/sync-cron')
+        ]);
+        
+        const configData = await configRes.json();
+        if (configRes.ok && configData?.config) {
+          setConfig(configData.config);
+          setLastSync(configData.lastSync);
+          setSubdominio(configData.config.subdominio || '');
+          setToken(configData.config.token || '');
+          setAppName(configData.config.app_name || '');
+          setCpfCentral(configData.config.cpf_central || '');
+          setSenhaCentral(configData.config.senha_central || '');
+          setModo(configData.config.modo_ativacao || 'manual');
+        }
+        
+        const cronData = await cronRes.json();
+        if (cronRes.ok) {
+          setCronStatus(cronData);
         }
       } catch (e) { setError('Falha ao carregar configuração'); }
       setLoading(false);
@@ -55,7 +68,7 @@ export default function IntegracoesPage() {
     e.preventDefault();
     setError(null); setMsg(null);
     try {
-      const r = await fetch('/api/parceiro/integracoes/sgp', {
+      const r = await fetch('/api/admin/integracoes/sgp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -80,8 +93,48 @@ export default function IntegracoesPage() {
     }
   };
 
+  const formatLastSync = (timestamp) => {
+    if (!timestamp) return 'Nunca sincronizado';
+    const date = new Date(timestamp);
+    return date.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const handleCronAction = async (action) => {
+    setCronLoading(true);
+    try {
+      const response = await fetch('/api/admin/sync-cron', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action })
+      });
+      
+      const data = await response.json();
+      if (response.ok) {
+        setCronStatus(data.status);
+        if (action === 'run_now') {
+          // Recarregar dados da sincronização
+          const configRes = await fetch('/api/admin/integracoes/sgp');
+          const configData = await configRes.json();
+          if (configRes.ok) {
+            setLastSync(configData.lastSync);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao controlar cron:', error);
+    } finally {
+      setCronLoading(false);
+    }
+  };
+
   return (
-    <ComponentContainerCard id="integracoes" title="Integrações" description="Configure integrações disponíveis para sua conta.">
+    <ComponentContainerCard id="integracoes" title="Integrações" description="Configure integrações disponíveis para importar clientes.">
       {loading && (
         <div className="text-center py-4">
           <div className="spinner-border text-primary mb-2" role="status">
@@ -93,6 +146,76 @@ export default function IntegracoesPage() {
       
       {!loading && (
         <Container fluid>
+          {/* Status da Sincronização Automática */}
+          {config && config.modo_ativacao === 'integracao' && (
+            <Row className="mb-4">
+              <Col xs={12}>
+                <div className="card border-0 shadow-sm">
+                  <div className="card-header bg-light border-0 py-3">
+                    <div className="d-flex justify-content-between align-items-center">
+                      <h6 className="mb-0 d-flex align-items-center gap-2">
+                        <i className="bi bi-clock-history text-primary"></i>
+                        Sincronização Automática (SGP)
+                      </h6>
+                      <Badge bg={cronStatus.running ? 'success' : 'secondary'}>
+                        {cronStatus.running ? 'Ativa' : 'Inativa'}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="card-body py-3">
+                    <Row className="align-items-center">
+                      <Col md={8}>
+                        <div className="d-flex flex-column gap-1">
+                          <div className="d-flex align-items-center gap-3 text-sm">
+                            <span>
+                              <strong>Última sincronização:</strong> {formatLastSync(lastSync)}
+                            </span>
+                            {cronStatus.nextRun && (
+                              <span className="text-muted">
+                                <strong>Próxima:</strong> {formatLastSync(cronStatus.nextRun)}
+                              </span>
+                            )}
+                          </div>
+                          <small className="text-muted">
+                            Sincronização automática a cada 8 horas para atualizar status dos clientes
+                          </small>
+                        </div>
+                      </Col>
+                      <Col md={4} className="text-end">
+                        <div className="d-flex gap-2 justify-content-end">
+                          <Button
+                            variant="outline-primary"
+                            size="sm"
+                            onClick={() => handleCronAction('run_now')}
+                            disabled={cronLoading}
+                            className="d-inline-flex align-items-center gap-1"
+                          >
+                            {cronLoading ? (
+                              <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            ) : (
+                              <i className="bi bi-arrow-clockwise"></i>
+                            )}
+                            Sincronizar Agora
+                          </Button>
+                          <Button
+                            variant={cronStatus.running ? "outline-danger" : "outline-success"}
+                            size="sm"
+                            onClick={() => handleCronAction(cronStatus.running ? 'stop' : 'start')}
+                            disabled={cronLoading}
+                            className="d-inline-flex align-items-center gap-1"
+                          >
+                            <i className={`bi ${cronStatus.running ? 'bi-stop-circle' : 'bi-play-circle'}`}></i>
+                            {cronStatus.running ? 'Parar' : 'Iniciar'}
+                          </Button>
+                        </div>
+                      </Col>
+                    </Row>
+                  </div>
+                </div>
+              </Col>
+            </Row>
+          )}
+
           <Row className="g-4">
             {/* Card SGP */}
             <Col xs={12} sm={6} md={4} lg={3}>
@@ -126,6 +249,17 @@ export default function IntegracoesPage() {
                       <i className="bi bi-gear me-1"></i>
                       Não configurado
                     </Badge>
+                  )}
+                  
+                  {config && (
+                    <div className="mt-2">
+                      <small className="text-muted d-block">
+                        Última sincronização:
+                      </small>
+                      <small className="text-primary">
+                        {formatLastSync(lastSync)}
+                      </small>
+                    </div>
                   )}
                   
                   <div className="mt-3">
@@ -182,7 +316,7 @@ export default function IntegracoesPage() {
                   <i className="bi bi-info-circle-fill"></i>
                   <div>
                     <strong>Sobre a integração:</strong><br />
-                    <small>Conecte-se ao SGP para importar e sincronizar seus clientes automaticamente.</small>
+                    <small>Conecte-se ao SGP para importar e sincronizar clientes de seu provedor automaticamente.</small>
                   </div>
                 </div>
               </Col>
@@ -208,7 +342,7 @@ export default function IntegracoesPage() {
                     <option value="integracao">Automático (Integração)</option>
                   </Form.Select>
                   <small className="text-muted">
-                    {modo === 'integracao' ? 'Status sincronizado automaticamente' : 'Controle manual do status'}
+                    {modo === 'integracao' ? 'Status sincronizado automaticamente a cada 8h' : 'Controle manual do status'}
                   </small>
                 </FormGroup>
               </Col>
@@ -280,4 +414,3 @@ export default function IntegracoesPage() {
     </ComponentContainerCard>
   );
 }
-

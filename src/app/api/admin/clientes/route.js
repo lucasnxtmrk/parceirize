@@ -41,7 +41,7 @@ export async function GET(req) {
 
     console.log("📡 Buscando lista de clientes...");
 
-    const result = await pool.query("SELECT id, nome, sobrenome, email, id_carteirinha FROM clientes");
+    const result = await pool.query("SELECT id, nome, sobrenome, email, id_carteirinha, tipo_cliente, ativo FROM clientes ORDER BY data_criacao DESC");
 
     return new Response(JSON.stringify(result.rows), {
       status: 200,
@@ -82,9 +82,9 @@ export async function POST(req) {
     const senhaHash = await bcrypt.hash(senha, 10);
 
     const result = await pool.query(
-      `INSERT INTO clientes (nome, sobrenome, email, senha, id_carteirinha, data_criacao) 
-       VALUES ($1, $2, $3, $4, $5, NOW()) 
-       RETURNING id, nome, sobrenome, email, id_carteirinha`,
+      `INSERT INTO clientes (nome, sobrenome, email, senha, id_carteirinha, tipo_cliente, ativo, data_criacao) 
+       VALUES ($1, $2, $3, $4, $5, 'cliente', TRUE, NOW()) 
+       RETURNING id, nome, sobrenome, email, id_carteirinha, tipo_cliente, ativo`,
       [nome, sobrenome, email, senhaHash, idCarteirinha]
     );
 

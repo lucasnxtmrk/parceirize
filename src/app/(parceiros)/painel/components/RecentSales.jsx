@@ -78,40 +78,28 @@ const RecentSales = ({ sales = [] }) => {
                                             </td>
                                             <td className="border-0 py-3">
                                                 <div className="d-flex align-items-center">
-                                                    <div className="bg-light rounded-circle d-flex align-items-center justify-content-center me-2"
-                                                         style={{ width: '32px', height: '32px' }}>
-                                                        <FaUser className="text-muted" size={12} />
-                                                    </div>
-                                                    <div>
-                                                        <div className="fw-medium">{sale.cliente_nome}</div>
-                                                        <small className="text-muted">ID: {sale.cliente_id}</small>
-                                                    </div>
+                                                    <FaUser className="text-muted me-2" size={14} />
+                                                    <span className="fw-medium">{sale.cliente_nome}</span>
                                                 </div>
                                             </td>
                                             <td className="border-0 py-3">
                                                 <div className="d-flex align-items-center">
-                                                    <FaCalendarAlt className="text-muted me-1" size={12} />
+                                                    <FaCalendarAlt className="text-muted me-2" size={14} />
                                                     <small>{formatDate(sale.created_at)}</small>
                                                 </div>
                                             </td>
                                             <td className="border-0 py-3">
-                                                <div className="fw-bold text-primary">
+                                                <div className="fw-bold text-success">
                                                     {formatPrice(sale.total)}
                                                 </div>
-                                                {sale.total_original && sale.total_original !== sale.total && (
-                                                    <small className="text-muted text-decoration-line-through">
-                                                        {formatPrice(sale.total_original)}
-                                                    </small>
-                                                )}
+                                                <small className="text-muted">
+                                                    {formatPrice(sale.total_original)} original
+                                                </small>
                                             </td>
                                             <td className="border-0 py-3">
-                                                {sale.desconto_total > 0 ? (
-                                                    <span className="text-success fw-medium">
-                                                        -{formatPrice(sale.desconto_total)}
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-muted">-</span>
-                                                )}
+                                                <div className="fw-medium text-primary">
+                                                    {formatPrice(sale.desconto_total)}
+                                                </div>
                                             </td>
                                             <td className="border-0 py-3">
                                                 {getStatusBadge(sale.status)}
@@ -123,8 +111,8 @@ const RecentSales = ({ sales = [] }) => {
                         </div>
                     ) : (
                         <div className="text-center py-5 text-muted">
-                            <div className="mb-3">📋</div>
-                            <p className="mb-0">Nenhuma venda recente encontrada</p>
+                            <div className="mb-3">📝</div>
+                            <p className="mb-0">Nenhuma venda recente</p>
                         </div>
                     )}
                 </Card.Body>

@@ -9,7 +9,7 @@ import IconifyIcon from "@/components/wrappers/IconifyIcon";
 import { formatPrice } from "@/utils/formatters";
 import { Nichos } from "@/data/nichos";
 import { FaShoppingBag } from "react-icons/fa";
-import Button from "@/components/ui/Button";
+import Button from "@/components/ui/button";
 import ProductCard from "@/components/ui/ProductCard";
 import { CardLoading } from "@/components/ui/Loading";
 import { useRouter } from "next/navigation";

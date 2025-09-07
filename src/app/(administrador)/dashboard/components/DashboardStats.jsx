@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Row, Col, Card } from "react-bootstrap";
 import IconifyIcon from "@/components/wrappers/IconifyIcon";
 
-const DashboardStats = () => {
+const DashboardStats = ({ onDataFetch }) => {
     const [stats, setStats] = useState({
         totalClientes: 0,
         totalParceiros: 0,
@@ -23,6 +23,10 @@ const DashboardStats = () => {
             if (response.ok) {
                 const data = await response.json();
                 setStats(data);
+                // Pass chart data to parent component
+                if (onDataFetch && data.chartData) {
+                    onDataFetch(data.chartData);
+                }
             }
         } catch (error) {
             console.error('Erro ao carregar estatísticas:', error);

@@ -3,7 +3,7 @@
 import { forwardRef } from 'react'
 import { Modal as BootstrapModal } from 'react-bootstrap'
 import { motion, AnimatePresence } from 'framer-motion'
-import Button from './Button'
+import Button from './button'
 
 const Modal = forwardRef(({
   children,

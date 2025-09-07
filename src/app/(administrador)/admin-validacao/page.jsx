@@ -3,7 +3,7 @@
 import { useState } from "react";
 import ComponentContainerCard from "@/components/ComponentContainerCard";
 import { Card, CardBody, Form, Button, CardTitle } from "react-bootstrap";
-import { useToast } from "@/components/ui/Toast";
+import { useToast } from "@/components/ui/toast";
 
 const ValidacaoAdmin = () => {
     const [clientId, setClientId] = useState("");

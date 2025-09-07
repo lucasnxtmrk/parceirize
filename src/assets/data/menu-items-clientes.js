@@ -10,6 +10,12 @@ export const MENU_ITEMS = [{
   url: '/carteirinha'
 },
 {
+  key: 'como-usar',
+  label: 'Como Usar',
+  icon: 'ri:question-line',
+  url: '/tutorial'
+},
+{
   key: 'lojas',
   label: 'Lojas Parceiras',
   icon: 'ri:store-2-line',
@@ -28,9 +34,9 @@ export const MENU_ITEMS = [{
   url: '/pedidos'
 },
 {
-  key: 'como-usar',
-  label: 'Como Usar',
-  icon: 'ri:question-line',
-  url: '/tutorial'
+  key: 'perfil',
+  label: 'Meu Perfil',
+  icon: 'ri:user-line',
+  url: '/perfil'
 },
  ];

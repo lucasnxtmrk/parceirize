@@ -24,7 +24,7 @@ export async function middleware(req) {
       case 'cliente':
         return NextResponse.redirect(new URL('/carteirinha', nextUrl.origin));
       case 'parceiro':
-        return NextResponse.redirect(new URL('/relatorio', nextUrl.origin));
+        return NextResponse.redirect(new URL('/painel', nextUrl.origin));
       default:
         return NextResponse.redirect(new URL('/auth/login', nextUrl.origin));
     }

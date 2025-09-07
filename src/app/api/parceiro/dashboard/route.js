@@ -69,8 +69,43 @@ export async function GET(req) {
       ),
       voucher_stats AS (
         SELECT 
-          0 as vouchers_ativos,
-          0 as vouchers_usados
+          COUNT(*) as vouchers_ativos,
+          (SELECT COUNT(*) FROM voucher_utilizados vu 
+           INNER JOIN vouchers v ON vu.voucher_id = v.id 
+           WHERE v.parceiro_id = $1) as vouchers_usados,
+          (SELECT COUNT(*) FROM voucher_utilizados vu 
+           INNER JOIN vouchers v ON vu.voucher_id = v.id 
+           WHERE v.parceiro_id = $1 AND vu.data_utilizacao >= NOW() - INTERVAL '30 days') as vouchers_usados_mes,
+          (SELECT COUNT(*) FROM voucher_utilizados vu 
+           INNER JOIN vouchers v ON vu.voucher_id = v.id 
+           WHERE v.parceiro_id = $1 AND vu.data_utilizacao >= NOW() - INTERVAL '60 days' 
+           AND vu.data_utilizacao < NOW() - INTERVAL '30 days') as vouchers_usados_mes_anterior,
+          COALESCE(
+            (SELECT SUM(v.desconto * (
+              SELECT AVG(pi.preco_unitario * pi.quantidade) 
+              FROM pedido_itens pi 
+              INNER JOIN pedidos p ON pi.pedido_id = p.id 
+              WHERE pi.parceiro_id = $1 AND pi.validado_at >= NOW() - INTERVAL '30 days'
+            ) / 100) 
+            FROM voucher_utilizados vu 
+            INNER JOIN vouchers v ON vu.voucher_id = v.id 
+            WHERE v.parceiro_id = $1 AND vu.data_utilizacao >= NOW() - INTERVAL '30 days'), 0
+          ) as economia_vouchers_mes,
+          COALESCE(
+            (SELECT SUM(v.desconto * (
+              SELECT AVG(pi.preco_unitario * pi.quantidade) 
+              FROM pedido_itens pi 
+              INNER JOIN pedidos p ON pi.pedido_id = p.id 
+              WHERE pi.parceiro_id = $1 AND pi.validado_at >= NOW() - INTERVAL '60 days' 
+              AND pi.validado_at < NOW() - INTERVAL '30 days'
+            ) / 100) 
+            FROM voucher_utilizados vu 
+            INNER JOIN vouchers v ON vu.voucher_id = v.id 
+            WHERE v.parceiro_id = $1 AND vu.data_utilizacao >= NOW() - INTERVAL '60 days' 
+            AND vu.data_utilizacao < NOW() - INTERVAL '30 days'), 0
+          ) as economia_vouchers_mes_anterior
+        FROM vouchers
+        WHERE parceiro_id = $1
       )
       SELECT 
         cs.total_clientes,
@@ -99,7 +134,19 @@ export async function GET(req) {
         0 as crescimento_produtos,
         vh.vendas_hoje,
         vcs.vouchers_ativos,
-        vcs.vouchers_usados
+        vcs.vouchers_usados,
+        vcs.vouchers_usados_mes,
+        vcs.economia_vouchers_mes,
+        CASE 
+          WHEN vcs.vouchers_usados_mes_anterior > 0 THEN 
+            ROUND(((vcs.vouchers_usados_mes - vcs.vouchers_usados_mes_anterior) * 100.0 / vcs.vouchers_usados_mes_anterior), 1)
+          ELSE 0 
+        END as crescimento_vouchers,
+        CASE 
+          WHEN vcs.economia_vouchers_mes_anterior > 0 THEN 
+            ROUND(((vcs.economia_vouchers_mes - vcs.economia_vouchers_mes_anterior) * 100.0 / vcs.economia_vouchers_mes_anterior), 1)
+          ELSE 0 
+        END as crescimento_economia_vouchers
       FROM cliente_stats cs, desconto_stats ds, vendas_stats vs, produto_stats ps, vendas_hoje vh, voucher_stats vcs
     `;
 
@@ -201,7 +248,11 @@ export async function GET(req) {
         crescimentoProdutos: parseFloat(stats.crescimento_produtos) || 0,
         vendasHoje: parseFloat(stats.vendas_hoje) || 0,
         vouchersAtivos: parseInt(stats.vouchers_ativos) || 0,
-        vouchersUsados: parseInt(stats.vouchers_usados) || 0
+        vouchersUsados: parseInt(stats.vouchers_usados) || 0,
+        vouchersUsadosMes: parseInt(stats.vouchers_usados_mes) || 0,
+        economiaVouchersMes: parseFloat(stats.economia_vouchers_mes) || 0,
+        crescimentoVouchers: parseFloat(stats.crescimento_vouchers) || 0,
+        crescimentoEconomiaVouchers: parseFloat(stats.crescimento_economia_vouchers) || 0
       },
       chartData: {
         vendas: chartData

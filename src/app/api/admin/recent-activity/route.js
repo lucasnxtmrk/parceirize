@@ -22,15 +22,15 @@ export async function GET() {
     const activities = [];
 
     try {
-      // 1. Buscar vouchers utilizados recentemente
+      // 1. Buscar vouchers utilizados recentemente na tabela correta
       const vouchersQuery = `
         SELECT 'voucher_used' as type, 
-               CONCAT('Voucher ', codigo, ' utilizado') as description,
-               data_utilizacao as timestamp,
+               CONCAT('Voucher ', v.codigo, ' utilizado') as description,
+               vu.data_utilizacao as timestamp,
                'Voucher utilizado' as action
-        FROM vouchers 
-        WHERE data_utilizacao IS NOT NULL 
-        ORDER BY data_utilizacao DESC 
+        FROM voucher_utilizados vu
+        INNER JOIN vouchers v ON vu.voucher_id = v.id
+        ORDER BY vu.data_utilizacao DESC 
         LIMIT 3
       `;
       const vouchersResult = await pool.query(vouchersQuery);
@@ -41,15 +41,15 @@ export async function GET() {
     }
 
     try {
-      // 2. Buscar clientes cadastrados recentemente
+      // 2. Buscar clientes cadastrados recentemente (usando COALESCE para created_at)
       const clientesQuery = `
         SELECT 'new_client' as type,
-               CONCAT('Novo cliente cadastrado: ', nome) as description,
-               created_at as timestamp,
-               'Cliente cadastrado' as action
+               CONCAT('Cliente: ', nome) as description,
+               COALESCE(created_at, NOW()) as timestamp,
+               'Cliente ativo' as action
         FROM clientes 
-        WHERE created_at IS NOT NULL
-        ORDER BY created_at DESC 
+        WHERE ativo = true
+        ORDER BY COALESCE(created_at, NOW()) DESC 
         LIMIT 3
       `;
       const clientesResult = await pool.query(clientesQuery);
@@ -60,15 +60,15 @@ export async function GET() {
     }
 
     try {
-      // 3. Buscar parceiros atualizados recentemente
+      // 3. Buscar parceiros ativos recentemente (usando COALESCE para updated_at)
       const parceirosQuery = `
-        SELECT 'partner_update' as type,
-               CONCAT('Parceiro ', nome_empresa, ' atualizou perfil') as description,
-               updated_at as timestamp,
-               'Perfil atualizado' as action
+        SELECT 'partner_active' as type,
+               CONCAT('Parceiro: ', nome_empresa) as description,
+               COALESCE(updated_at, created_at, NOW()) as timestamp,
+               'Parceiro ativo' as action
         FROM parceiros 
-        WHERE updated_at IS NOT NULL
-        ORDER BY updated_at DESC 
+        WHERE ativo = true
+        ORDER BY COALESCE(updated_at, created_at, NOW()) DESC 
         LIMIT 2
       `;
       const parceirosResult = await pool.query(parceirosQuery);

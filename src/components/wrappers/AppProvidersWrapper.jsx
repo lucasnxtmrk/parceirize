@@ -8,7 +8,7 @@ const LayoutProvider = dynamic(() => import('@/context/useLayoutContext').then(m
   ssr: false
 });
 import { NotificationProvider } from '@/context/useNotificationContext';
-import { ToastProvider } from '@/components/ui/Toast';
+import { ToastProvider } from '@/components/ui/toast';
 const AppProvidersWrapper = ({
   children
 }) => {

@@ -16,7 +16,11 @@
       "Bash(cmd /c:*)",
       "Bash(npx kill-port:*)",
       "Bash(set -a)",
-      "Bash(source:*)"
+      "Bash(source:*)",
+      "Bash(find:*)",
+      "Bash(move:*)",
+      "Bash(mv:*)",
+      "Bash(del \"C:\\TRABALHO\\NEXTMARK\\SISTEMAS\\parceirize\\src\\app\\api\\test-parceiro-data\\route.js\")"
     ],
     "deny": [],
     "ask": []

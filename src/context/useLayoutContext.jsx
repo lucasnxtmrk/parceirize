@@ -1,12 +1,12 @@
 'use client';
 
-import { createContext, use, useCallback, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useCallback, useEffect, useMemo, useState } from 'react';
 import { toggleDocumentAttribute } from '@/utils/layout';
 import useQueryParams from '@/hooks/useQueryParams';
 import useLocalStorage from '@/hooks/useLocalStorage';
 const ThemeContext = createContext(undefined);
 const useLayoutContext = () => {
-  const context = use(ThemeContext);
+  const context = useContext(ThemeContext);
   if (!context) {
     throw new Error('useLayoutContext can only be used within LayoutProvider');
   }

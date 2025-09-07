@@ -7,7 +7,7 @@ import { FaQrcode, FaCamera, FaKeyboard } from 'react-icons/fa';
 import QRCodeScanner from '@/components/shared/QRCodeScanner';
 import PageTransition from '@/components/shared/PageTransition';
 import ComponentContainerCard from '@/components/ComponentContainerCard';
-import { useToast } from '@/components/ui/Toast';
+import { useToast } from '@/components/ui/toast';
 
 const Validacao = () => {
     const [activeTab, setActiveTab] = useState('voucher');

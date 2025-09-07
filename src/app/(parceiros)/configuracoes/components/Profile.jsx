@@ -14,7 +14,6 @@ const BrowserDefault = () => {
             email: "",
             nicho: "",
             foto: "",
-            desconto: "Carregando...",
         },
     });
 
@@ -44,21 +43,7 @@ const BrowserDefault = () => {
             }
         };
 
-        // Buscar desconto do parceiro separadamente
-        const fetchDiscount = async () => {
-            try {
-                const response = await fetch("/api/parceiro/voucher");
-                if (!response.ok) throw new Error("Erro ao buscar desconto");
-
-                const data = await response.json();
-                setValue("desconto", data.desconto || "Nenhum desconto disponível");
-            } catch (err) {
-                setValue("desconto", "Nenhum desconto disponível");
-            }
-        };
-
         fetchProfile();
-        fetchDiscount();
     }, [setValue]);
 
     const onDrop = useCallback((acceptedFiles) => {
@@ -134,30 +119,11 @@ const BrowserDefault = () => {
                     </FormGroup>
                 </Col>
 
-                <Col md={6}>
+                <Col md={12}>
                     <FormGroup>
                         <FormLabel>Nicho de Atuação</FormLabel>
                         <Controller name="nicho" control={control} render={({ field }) => <FormControl type="text" {...field} required />} />
-                    </FormGroup>
-                </Col>
-
-                <Col md={6}>
-                    <FormGroup>
-                        <FormLabel>Desconto</FormLabel>
-                        <Controller
-                            name="desconto"
-                            control={control}
-                            render={({ field }) => (
-                                <FormControl
-                                    type="text"
-                                    {...field}
-                                    value={isNaN(field.value) || field.value === "Nenhum desconto disponível" 
-                                        ? field.value 
-                                        : `${field.value}%`}
-                                    disabled
-                                />
-                            )}
-                        />
+                        <small className="text-muted">Ex: Alimentação, Beleza, Tecnologia, etc.</small>
                     </FormGroup>
                 </Col>
 

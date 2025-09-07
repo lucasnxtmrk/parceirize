@@ -54,7 +54,7 @@ Autenticação e Autorização
 - Redirecionamento por perfil (ver callbacks em `src/app/api/auth/[...nextauth]/options.js`):
   - admin → `/dashboard`
   - cliente → `/carteirinha`
-  - parceiro → `/relatorio`
+  - parceiro → `/painel`
 - Proteção de rotas por middleware: `src/middleware.js`
   - Bloqueia acesso não autenticado
   - Restringe `/（administrador）`, `/（clientes）`, `/（parceiros）` por role

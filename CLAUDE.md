@@ -28,7 +28,7 @@ node gerar_hash.js         # Generate bcrypt password hashes
 **Parceirize** is a Next.js 14 discount club management platform with three distinct user roles:
 - **Administradores** → `/dashboard` routes - manage customers, partners, vouchers
 - **Clientes** → `/carteirinha` routes - digital membership card, browse vouchers
-- **Parceiros** → `/relatorio` routes - sales reporting, voucher management
+- **Parceiros** → `/painel` routes - sales reporting, voucher management
 
 ### Core Directory Structure
 

@@ -22,18 +22,17 @@ export async function GET() {
     // Query para buscar vouchers utilizados com informações do cliente e parceiro
     const query = `
       SELECT 
-        v.id,
+        vu.id,
         v.codigo,
-        v.desconto as valor_desconto,
-        v.data_utilizacao,
+        vu.desconto as valor_desconto,
+        vu.data_utilizacao,
         c.nome as cliente_nome,
-        p.nome_empresa as parceiro_nome,
-        v.status
-      FROM vouchers v
-      LEFT JOIN clientes c ON v.cliente_id = c.id
+        p.nome_empresa as parceiro_nome
+      FROM voucher_utilizados vu
+      INNER JOIN vouchers v ON vu.voucher_id = v.id
+      LEFT JOIN clientes c ON vu.cliente_id = c.id
       LEFT JOIN parceiros p ON v.parceiro_id = p.id
-      WHERE v.status = 'usado' OR v.data_utilizacao IS NOT NULL
-      ORDER BY v.data_utilizacao DESC
+      ORDER BY vu.data_utilizacao DESC
       LIMIT 50
     `;
 
@@ -47,7 +46,7 @@ export async function GET() {
       dataUtilizacao: row.data_utilizacao ? new Date(row.data_utilizacao).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       valorDesconto: row.valor_desconto ? `R$ ${parseFloat(row.valor_desconto).toFixed(2).replace('.', ',')}` : 'R$ 0,00',
       parceiro: row.parceiro_nome || 'Parceiro não identificado',
-      status: row.status || 'utilizado'
+      status: 'utilizado'
     }));
 
     console.log("🔍 Vouchers utilizados encontrados:", vouchersUtilizados.length);

@@ -45,7 +45,7 @@ const useSignIn = () => {
     
             let redirectUrl = '/';
             if (role === 'cliente') redirectUrl = '/carteirinha';
-            if (role === 'parceiro') redirectUrl = '/relatorio';
+            if (role === 'parceiro') redirectUrl = '/painel';
             if (role === 'admin') redirectUrl = '/dashboard';
     
             push(redirectUrl); // Agora redireciona corretamente!

@@ -177,12 +177,25 @@ export default function ProdutosPage() {
 
   return (
     <ComponentContainerCard id="produtos-parceiro">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <CardTitle as="h4" className="mb-0">Gerenciar Produtos</CardTitle>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <CardTitle as="h4" className="mb-0">Meus Produtos</CardTitle>
         <Button variant="primary" onClick={() => setShowModal(true)}>
           <FaPlus className="me-2" />
           Novo Produto
         </Button>
+      </div>
+
+      {/* Explicação clara */}
+      <div className="alert alert-info d-flex align-items-start gap-2 mb-4">
+        <i className="bi bi-info-circle-fill"></i>
+        <div>
+          <strong>💡 Sobre o Catálogo de Produtos:</strong><br />
+          <small>
+            Aqui você cadastra produtos/serviços específicos que os clientes podem comprar pelo app. 
+            Cada produto pode ter seu próprio desconto e os clientes podem adicionar múltiplos itens no carrinho.
+            <br /><strong>Exemplo:</strong> Pizza Margherita por R$ 25,00 (30% off), Corte de cabelo por R$ 40,00 (20% off)
+          </small>
+        </div>
       </div>
 
       {alert.show && (

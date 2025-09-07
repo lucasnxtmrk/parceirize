@@ -1,8 +1,8 @@
 export const MENU_ITEMS = [
   {
-    key: 'relatorios',
-    label: 'Relatórios',
-    icon: 'ri:bar-chart-line',
+    key: 'dashboard',
+    label: 'Dashboard',
+    icon: 'ri:dashboard-3-line',
     url: '/dashboard'
   },
   {
@@ -18,6 +18,12 @@ export const MENU_ITEMS = [
     url: '/admin-parceiro'
   },
   {
+    key: 'vouchers',
+    label: 'Gestão de Vouchers',
+    icon: 'ri:ticket-line',
+    url: '/admin-vouchers/cadastrar'
+  },
+  {
     key: 'validacao',
     label: 'Validação',
     icon: 'ri:qr-code-line',
@@ -29,10 +35,10 @@ export const MENU_ITEMS = [
     icon: 'ri:links-line',
     url: '/integracoes'
   },
-  // {
-  //   key: 'perfil',
-  //   label: 'Perfil',
-  //   icon: 'ri:user-line',
-  //   url: '/perfil'
-  // },
+  {
+    key: 'perfil',
+    label: 'Perfil',
+    icon: 'ri:user-line',
+    url: '/perfil'
+  },
 ];

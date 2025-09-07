@@ -13,6 +13,7 @@ export default function LojaProdutosPage() {
   const [parceiro, setParceiro] = useState(null);
   const [produtos, setProdutos] = useState([]);
   const [carrinho, setCarrinho] = useState([]);
+  const [cupomGeral, setCupomGeral] = useState(null);
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState({ show: false, message: "", variant: "" });
   const params = useParams();
@@ -23,6 +24,7 @@ export default function LojaProdutosPage() {
       fetchParceiro();
       fetchProdutos();
       fetchCarrinho();
+      fetchCupomGeral();
     }
   }, [params.id]);
 
@@ -66,6 +68,21 @@ export default function LojaProdutosPage() {
       }
     } catch (error) {
       console.error("Erro ao carregar carrinho:", error);
+    }
+  };
+
+  const fetchCupomGeral = async () => {
+    try {
+      const response = await fetch(`/api/vouchers?parceiro_id=${params.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        // Pega o primeiro voucher/cupom do parceiro
+        if (data && data.length > 0) {
+          setCupomGeral(data[0]);
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao carregar cupom geral:", error);
     }
   };
 
@@ -225,23 +242,79 @@ export default function LojaProdutosPage() {
         </Row>
       )}
 
-      {produtos.length === 0 ? (
-        <Row>
-          <Col>
-            <Card className="text-center py-5">
-              <Card.Body>
-                <h4 className="text-muted">Nenhum produto disponível</h4>
-                <p className="text-muted">Este parceiro ainda não cadastrou produtos.</p>
-                <Link href="/vouchers">
-                  <Button variant="primary">Explorar Outras Lojas</Button>
-                </Link>
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
-      ) : (
+      {/* Seção de Opções: Produtos e/ou Cupom */}
+      <Row className="mb-4">
+        <Col>
+          <Card>
+            <Card.Header>
+              <h5 className="mb-0">Como você quer economizar?</h5>
+            </Card.Header>
+            <Card.Body>
+              <Row className="g-3">
+                {produtos.length > 0 && (
+                  <Col md={cupomGeral ? 6 : 12}>
+                    <Card className="h-100 text-center border-primary">
+                      <Card.Body className="d-flex flex-column justify-content-center">
+                        <div className="display-4 text-primary mb-3">
+                          <i className="bi bi-bag-check"></i>
+                        </div>
+                        <h5 className="mb-2">🛒 Comprar Produtos</h5>
+                        <p className="text-muted mb-3">
+                          Navegue pelo catálogo, adicione ao carrinho e finalize sua compra
+                        </p>
+                        <Button 
+                          variant="primary" 
+                          onClick={() => document.getElementById('produtos-section').scrollIntoView({behavior: 'smooth'})}
+                        >
+                          Ver Produtos ({produtos.length})
+                        </Button>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                )}
+                
+                {cupomGeral && (
+                  <Col md={produtos.length > 0 ? 6 : 12}>
+                    <Card className="h-100 text-center border-success">
+                      <Card.Body className="d-flex flex-column justify-content-center">
+                        <div className="display-4 text-success mb-3">
+                          <i className="bi bi-qr-code"></i>
+                        </div>
+                        <h5 className="mb-2">🎫 Usar Cupom Geral</h5>
+                        <p className="text-muted mb-2">
+                          <strong>{cupomGeral.voucher_desconto}% off</strong> em qualquer produto/serviço
+                        </p>
+                        <p className="text-muted small mb-3">
+                          Código: <strong>{cupomGeral.voucher_codigo}</strong>
+                        </p>
+                        <Link href={`/vouchers/${cupomGeral.voucher_id}`}>
+                          <Button variant="success">
+                            Usar Cupom
+                          </Button>
+                        </Link>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                )}
+              </Row>
+              
+              {!produtos.length && !cupomGeral && (
+                <div className="text-center py-4">
+                  <h5 className="text-muted">Nenhuma oferta disponível</h5>
+                  <p className="text-muted">Este parceiro ainda não configurou produtos ou cupom geral.</p>
+                  <Link href="/vouchers">
+                    <Button variant="primary">Explorar Outras Lojas</Button>
+                  </Link>
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      {produtos.length === 0 ? null : (
         <>
-          <Row className="mb-3">
+          <Row id="produtos-section" className="mb-3">
             <Col>
               <h4>Produtos Disponíveis ({produtos.length})</h4>
             </Col>

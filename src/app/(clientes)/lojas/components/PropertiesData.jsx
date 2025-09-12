@@ -8,7 +8,7 @@ import PropertiesFilter from "./PropertiesFilter";
 import IconifyIcon from "@/components/wrappers/IconifyIcon";
 import { formatPrice } from "@/utils/formatters";
 import { Nichos } from "@/data/nichos";
-import { FaShoppingBag } from "react-icons/fa";
+import { FaShoppingBag, FaCopy } from "react-icons/fa";
 import Button from "@/components/ui/button";
 import ProductCard from "@/components/ui/ProductCard";
 import { CardLoading } from "@/components/ui/Loading";
@@ -35,6 +35,20 @@ const LojaCard = ({
     router.push(`/lojas/${id}`);
   };
 
+  const handleCopyVoucher = async () => {
+    try {
+      // Aqui você pode buscar o voucher do cliente ou usar um código padrão
+      const voucherCode = "CLIENTE2024"; // Substituir pela lógica real de voucher
+      await navigator.clipboard.writeText(voucherCode);
+      
+      // Você pode adicionar uma notificação de sucesso aqui
+      alert("Voucher copiado para a área de transferência!");
+    } catch (error) {
+      console.error("Erro ao copiar voucher:", error);
+      alert("Erro ao copiar voucher. Tente novamente.");
+    }
+  };
+
   // Preparar dados para o ProductCard genérico
   const priceRange = hasProducts && menor_preco > 0 ? {
     min: formatPrice(menor_preco),
@@ -45,9 +59,10 @@ const LojaCard = ({
     // Badge de produtos
     ...(hasProducts ? [{
       label: total_produtos,
-      variant: 'white',
+      variant: 'primary',
       icon: 'heroicons:cube',
-      position: 'top-0 end-0'
+      position: 'top-0 start-0',
+      style: { zIndex: 10 }
     }] : [])
   ];
 
@@ -67,9 +82,9 @@ const LojaCard = ({
       discount={maior_desconto}
       badges={badges}
       status={hasProducts ? 'available' : 'coming_soon'}
-      onAction={hasProducts ? handleViewProducts : null}
-      actionLabel={hasProducts ? "Ver Produtos" : "Em breve"}
-      actionIcon={hasProducts ? FaShoppingBag : null}
+      onAction={hasProducts ? handleViewProducts : handleCopyVoucher}
+      actionLabel={hasProducts ? "Ver Produtos" : "Copiar Voucher"}
+      actionIcon={hasProducts ? FaShoppingBag : FaCopy}
       index={index}
       className="loja-card"
     />

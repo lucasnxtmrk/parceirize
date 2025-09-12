@@ -1,6 +1,7 @@
 import { Pool } from "pg";
 import { getServerSession } from "next-auth";
 import { options } from "@/app/api/auth/[...nextauth]/options";
+import { validatePlanLimits } from "@/lib/tenant-helper";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -9,7 +10,7 @@ const pool = new Pool({
 export async function POST(req) {
   try {
     const session = await getServerSession(options);
-    if (!session || session.user.role !== "admin") {
+    if (!session || !["provedor", "superadmin"].includes(session.user.role)) {
       return new Response(JSON.stringify({ error: "Acesso negado" }), { status: 403 });
     }
 
@@ -55,13 +56,18 @@ export async function POST(req) {
         throw new Error('Já existe um parceiro com este email');
       }
 
+      // Verificar limite do plano antes de criar parceiro (apenas para provedores)
+      if (session.user.role === 'provedor') {
+        await validatePlanLimits(session.user.tenant_id, 'parceiros');
+      }
+
       // 4. Criar registro na tabela parceiros
       const parceiroResult = await client.query(
         `INSERT INTO parceiros 
-         (nome_empresa, email, senha, nicho, descricao, ativo, data_criacao) 
-         VALUES ($1, $2, $3, $4, $5, TRUE, NOW()) 
+         (nome_empresa, email, senha, nicho, descricao, ativo, data_criacao, tenant_id) 
+         VALUES ($1, $2, $3, $4, $5, TRUE, NOW(), $6) 
          RETURNING id`,
-        [nome_empresa, cliente.email, cliente.senha, categoria_id, descricao || '']
+        [nome_empresa, cliente.email, cliente.senha, categoria_id, descricao || '', session.user.tenant_id || null]
       );
 
       const parceiroId = parceiroResult.rows[0].id;

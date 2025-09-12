@@ -1,152 +1,408 @@
-Parceirize — Clube de Descontos (Next.js 14)
+# 🎯 Parceirize - Plataforma de Clube de Descontos
 
-Descrição
+<div align="center">
 
-- Plataforma web para gerenciamento e uso de descontos com três perfis de acesso: administrador, cliente e parceiro.
-- Autenticação via credenciais (email/senha) usando NextAuth + JWT com proteção de rotas por middleware e redirecionamento por perfil.
-- Persistência em PostgreSQL utilizando `pg` e consultas SQL diretas.
-- UI baseada em React 18 + Next.js (App Router), Bootstrap 5/SCSS e diversos componentes (calendário, gráficos, mapas, etc.).
+![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 
-Stack
+*Sistema completo de gestão de clube de descontos com arquitetura multi-tenant SaaS*
 
-- Framework: Next.js 14 (App Router)
-- Linguagem: TypeScript/JavaScript (React 18)
-- Autenticação: NextAuth (Credentials Provider + JWT)
-- Banco de dados: PostgreSQL (`pg`)
-- Estilo/UI: Bootstrap 5, SCSS, React Bootstrap, ApexCharts, FullCalendar, Swiper
-- Utilitários: Day.js, Yup, React Hook Form, Toastify
+</div>
 
-Pré‑requisitos
+## 🆕 Atualizações Recentes
 
-- Node.js 18.17+ (recomendado 18 LTS)
-- PostgreSQL 13+ (recomendado 14 ou superior)
-- Gerenciador de pacotes: npm, yarn ou bun
+### **🏢 Arquitetura Multi-Tenant Implementada (v2.0)**
+- ✅ **Isolamento de dados** por tenant_id com UUID
+- ✅ **Sistema de planos** SaaS (Básico, Profissional, Enterprise)
+- ✅ **Limitações automáticas** baseadas no plano do provedor
+- ✅ **SuperAdmin** para gestão global da plataforma
+- ✅ **Provedores** substituíram administradores no modelo de negócio
 
-Instalação
+### **🗄️ Drizzle ORM Integrado**
+- ✅ **Schema automático** extraído do banco existente (14 tabelas)
+- ✅ **Type Safety** completo com TypeScript
+- ✅ **Interface visual** para explorar dados (`npm run db:studio`)
+- ✅ **Migrações automáticas** e controle de versão
+- ✅ **Comandos de gerenciamento** para stats e cleanup
 
-1. Instale dependências
-   - npm: `npm install`
-   - yarn: `yarn`
-   - bun: `bun install`
-2. Variáveis de ambiente
-   - Crie um arquivo `.env.local` para desenvolvimento com base no `.env.example`.
-   - Produção: use `.env.production` (ou variáveis no ambiente de execução).
-   - Variáveis mínimas:
-     - `NEXTAUTH_URL` — URL base do app (ex.: `http://localhost:3000` em dev)
-     - `DATABASE_URL` — conexão PostgreSQL (ex.: `postgresql://usuario:senha@localhost:5432/protege`)
-     - `NEXTAUTH_SECRET` — segredo para assinar JWT (use um valor forte)
+### **🎯 Lógica de Negócio Refinada**
+- ✅ **Provedores** gerenciam apenas clientes e parceiros
+- ✅ **Parceiros** gerenciam seus próprios vouchers e produtos
+- ✅ **Validação de limites** em tempo real durante criação
+- ✅ **Menus específicos** por tipo de usuário
+- ✅ **Terminologia padronizada** em todo o sistema
 
-Execução
+</div>
 
-- Desenvolvimento (porta 3000): `npm run dev`
-  - Acesse: `http://localhost:3000`
-- Build de produção: `npm run build`
-- Start de produção (porta 3100): `npm run start`
-  - Acesse: `http://localhost:3100`
+## 📋 Visão Geral
 
-Importante: no desenvolvimento, deixe `NEXTAUTH_URL` alinhado com a porta em uso (3000 por padrão). Em produção, ajuste para o domínio público.
+**Parceirize** é uma plataforma **multi-tenant SaaS** desenvolvida em **Next.js 14** que conecta clientes, parceiros e provedores em um ecossistema de descontos. O sistema oferece:
 
-Autenticação e Autorização
+- 🏢 **Arquitetura Multi-Tenant** com isolamento de dados por provedor
+- 💎 **Sistema de Planos** com limitações automáticas (Básico, Profissional, Enterprise)
+- 🛡️ **Autenticação segura** com NextAuth.js + JWT e proteção por roles
+- 🎨 **Interface moderna** com React 18, Bootstrap 5 e componentes UI avançados
+- 🗄️ **Drizzle ORM** para type safety e gestão de schema
+- 🔄 **Integração SGP** para sincronização automática de clientes
+- 📱 **Carteira digital** com QR codes para validação de vouchers
+- 📊 **Dashboards analíticos** com métricas e relatórios em tempo real
 
-- Provider: Credentials (email/senha) com verificação via `bcrypt`.
-- Tabelas consultadas no login: `clientes`, `parceiros`, `admins`.
-- Após login, NextAuth grava os dados do usuário no JWT e na sessão.
-- Redirecionamento por perfil (ver callbacks em `src/app/api/auth/[...nextauth]/options.js`):
-  - admin → `/dashboard`
-  - cliente → `/carteirinha`
-  - parceiro → `/painel`
-- Proteção de rotas por middleware: `src/middleware.js`
-  - Bloqueia acesso não autenticado
-  - Restringe `/（administrador）`, `/（clientes）`, `/（parceiros）` por role
+### 👥 Perfis de Usuário
 
-Banco de Dados (visão geral mínima)
+| Perfil | Rota Base | Funcionalidades |
+|--------|-----------|-----------------|
+| **👑 SuperAdmin** | `/superadmin` | Gestão global, provedores, planos |
+| **🏢 Provedor** | `/dashboard` | Gestão clientes/parceiros, relatórios, integrações |
+| **🛍️ Cliente** | `/carteirinha` | Carteira digital, vouchers, histórico |
+| **🏪 Parceiro** | `/painel` | Produtos, vouchers próprios, validações QR |
 
-O projeto consulta as seguintes estruturas (exemplos mínimos, ajuste ao seu schema real):
+## 🛠️ Stack Tecnológica
 
-- clientes: `id`, `nome`, `sobrenome`, `email`, `id_carteirinha`, `data_ultimo_voucher`, `senha`
-- parceiros: `id`, `nome_empresa`, `email`, `senha`, `nicho`, `foto`
-- admins: `id`, `email`, `senha`
-- vouchers: `id`, `codigo`, `desconto`, `parceiro_id`, `data_criacao`
+### **Frontend**
+- **Next.js 14** (App Router) + **TypeScript**
+- **React 18.3** com Server Components
+- **Bootstrap 5.3** + React Bootstrap + **SCSS**
+- **UI Components**: Radix UI, Material-UI, ApexCharts
+- **Funcionalidades**: QR codes, calendários, mapas, gráficos
 
-Para gerar hash de senha (bcrypt) para seeds/testes:
+### **Backend**
+- **NextAuth.js** (Credentials + JWT)
+- **PostgreSQL** com conexões diretas via `pg`
+- **Drizzle ORM** para schema management e type safety
+- **API Routes** do Next.js
+- **bcryptjs** para hash de senhas
 
-- Rode `node gerar_hash.js` e copie o hash gerado para o campo `senha`.
+### **Ferramentas**
+- **ESLint** + **Prettier** (formatação automática)
+- **TypeScript** com path aliases `@/*`
+- **Drizzle Kit** para migrações e introspection
+- **Bun/npm/yarn** para gerenciamento de pacotes
 
-Principais Pastas
+## 📋 Pré-requisitos
 
-- `src/app` — App Router e páginas segmentadas por perfil
-  - `(administrador)`, `(clientes)`, `(parceiros)`, `(other)`
-  - `api/` — rotas de API (Next.js Route Handlers)
-  - `layout.jsx` — layout raiz e carregamento inicial
-- `src/middleware.js` — proteção e redirecionamento por role
-- `src/lib` — utilidades de auth (ex.: `auth.js` reexporta opções do NextAuth)
-- `src/components` — componentes UI reutilizáveis
-- `src/context`, `src/hooks`, `src/utils` — estado, hooks e utilitários
-- `public/` — recursos estáticos
+- **Node.js** 18.17+ (recomendado 20 LTS)
+- **PostgreSQL** 13+ (recomendado 15+)
+- **Gerenciador de pacotes**: npm, yarn ou bun (recomendado)
 
-API (resumo das rotas)
+## 🚀 Instalação e Configuração
 
-- `src/app/api/auth/[...nextauth]` — autenticação (Credentials + JWT)
-- `src/app/api/vouchers` — lista vouchers (join com `parceiros`)
-- `src/app/api/validarVoucher` — validação de voucher
-- `src/app/api/nichos` — nichos de parceiros
-- `src/app/api/parceiro/*` — dados de parceiro autenticado
-  - `perfil` — informa dados do parceiro logado
-  - `voucher` — lista vouchers do parceiro logado
-  - `vouchers-utilizados` — estatísticas/uso de vouchers
-  - `integracoes/sgp` — GET/POST configurações da integração SGP (subdomínio, token, modo)
-  - `integracoes/sgp/importar` — POST importa clientes ativos do SGP
-  - `integracoes/sgp/sincronizar` — GET sincroniza status ativo/inativo conforme SGP
-- `src/app/api/admin/*` — endpoints administrativos
-  - `clientes` — gestão de clientes
-  - `parceiros` — gestão de parceiros
-  - `relatorios/vouchers-utilizados` — relatórios
-  - `validarVoucher` — validação administrativa
-  - `verify-carteirinha` — verificação de carteirinha
+### 1. **Clone e Instale Dependências**
+```bash
+# Clone o repositório
+git clone <repo-url>
+cd parceirize
 
-Scripts Úteis
+# Instale dependências (escolha um)
+bun install         # Recomendado (mais rápido)
+npm install         # Alternativa
+yarn install        # Alternativa
+```
 
-- `npm run lint` — análise estática
-- `npm run format` — formatação do código (Prettier)
-- `node gerar_hash.js` — gerar hash bcrypt de senha
+### 2. **Configure o Banco de Dados**
+```bash
+# Execute o script de inicialização
+node scripts/run-init.js
 
-Configurações e Ambiente
+# Opcional: adicione dados de exemplo
+node scripts/seed.js
 
-- `next.config.js` — ativa `reactStrictMode` e expõe `NEXTAUTH_SECRET`. Carrega `.env.local` via `dotenv`.
-- `tsconfig.json`, `.eslintrc.json`, `.prettierrc.json` — base de TypeScript, ESLint e Prettier.
+# Drizzle: gerar schema do banco existente
+npm run db:introspect
 
-Implantação
+# Drizzle: interface visual do banco
+npm run db:studio
+```
 
-- Gere o build: `npm run build`
-- Defina as variáveis de ambiente de produção (`NEXTAUTH_URL`, `DATABASE_URL`, `NEXTAUTH_SECRET`).
-- Inicie o servidor: `npm run start` (porta 3100 por padrão)
-- Coloque um proxy reverso (Nginx/Caddy) apontando para a porta do Node.
+### 3. **Variáveis de Ambiente**
+Crie `.env.local` baseado em `.env.example`:
 
-Solução de Problemas
+```env
+# URL da aplicação
+NEXTAUTH_URL=http://localhost:3000
 
-- Erro de callback/CSRF após login
-  - Verifique `NEXTAUTH_URL` (precisa coincidir com a URL/porta real)
-- Falha ao conectar no banco
-  - Teste `DATABASE_URL` e permissões do usuário no PostgreSQL
-- Login sempre falha
-  - Confirme que `senha` no banco está com hash `bcrypt` compatível
-- Página redireciona para `/not-authorized`
-  - Usuário logado não tem a role correta para a rota acessada
+# Banco PostgreSQL
+DATABASE_URL=postgresql://usuario:senha@localhost:5432/nome_db
 
-Integração SGP
+# Chave JWT (gere uma segura)
+NEXTAUTH_SECRET=sua_chave_super_secreta_aqui_2024
+```
 
-- Configuração pelo painel do parceiro em `/(parceiros)/integracoes`.
-- Campos: subdomínio, token (Bearer) e modo de ativação (manual/integracao).
-- Importação manual em `/(parceiros)/clientes` via botão “Importar da Integração”.
-- Endpoints chamados:
-  - `POST /api/parceiro/integracoes/sgp` — salva config
-  - `POST /api/parceiro/integracoes/sgp/importar` — importa clientes ativos (senha padrão informada)
-  - `GET /api/parceiro/integracoes/sgp/sincronizar` — atualiza status (ativo/inativo) se o modo for `integracao`
-- Banco:
-  - Tabela `integracoes` criada em `scripts/init.sql`
-  - Coluna `clientes.ativo` adicionada para suportar login condicionado
-- Login: clientes inativos não autenticam no sistema (verificação em NextAuth `options.js`).
+### 4. **Executar o Projeto**
 
-Licença
+```bash
+# Desenvolvimento (porta 3000)
+bun dev              # Recomendado
+npm run dev          # Alternativa
 
-- Uso interno/privado (sem licença pública definida neste repositório).
+# Build e produção
+npm run build        # Build TypeScript + Next.js
+npm run start        # Servidor produção (porta 3100)
+
+# Ferramentas de qualidade
+npm run lint         # Análise estática
+npm run format       # Formatação Prettier
+```
+
+> 📌 **Importante**: Em desenvolvimento, mantenha `NEXTAUTH_URL=http://localhost:3000`. Em produção, ajuste para seu domínio.
+
+## 🔐 Autenticação e Autorização
+
+### **Sistema de Login**
+- **Provider**: Credentials (email/senha) com hash **bcryptjs**
+- **Tabelas**: Consulta unificada em `clientes`, `parceiros` e `admins`
+- **JWT**: Dados do usuário armazenados no token para sessão
+- **Middleware**: Proteção automática de rotas por role (`src/middleware.js`)
+
+### **Redirecionamentos Automáticos**
+| Role | Rota de Destino | Arquivo de Config |
+|------|----------------|-------------------|
+| `superadmin` | `/superadmin/dashboard` | `src/middleware.js:83` |
+| `provedor` | `/dashboard` | `src/middleware.js:85` |
+| `cliente` | `/carteirinha` | `src/middleware.js:87` |
+| `parceiro` | `/painel` | `src/middleware.js:89` |
+
+### **Proteção de Rotas**
+```javascript
+// src/middleware.js - Proteção automática
+/superadmin/*       → Apenas superadmin
+/(administrador)/*  → Apenas provedor + superadmin
+/(clientes)/*       → Apenas cliente  
+/(parceiros)/*      → Apenas parceiro
+```
+
+## 🗄️ Estrutura do Banco de Dados
+
+### **Tabelas Principais**
+```sql
+-- Multi-Tenant Architecture
+provedores   → id, tenant_id, nome_empresa, email, plano_id, ativo
+planos       → id, nome, limite_clientes, limite_parceiros, limite_vouchers
+superadmins  → id, email, senha
+tenant_logs  → id, tenant_id, usuario_tipo, acao, detalhes
+
+-- Usuários do sistema (por tenant)
+clientes     → id, nome, sobrenome, email, senha, id_carteirinha, tenant_id
+parceiros    → id, nome_empresa, email, senha, nicho, foto, tenant_id
+admins       → id, email, senha (legado)
+
+-- Sistema de vouchers/produtos
+vouchers     → id, codigo, desconto, parceiro_id, data_criacao
+produtos     → id, nome, descricao, preco, parceiro_id, desconto
+pedidos      → id, cliente_id, qr_code, status, total, tenant_id
+pedido_itens → id, pedido_id, produto_id, quantidade, preco_unitario
+
+-- Integrações externas
+integracoes  → id, admin_id, tipo, subdominio, token, app_name
+```
+
+### **Utilitários**
+```bash
+# Gerar hash de senha para seeds/testes
+node gerar_hash.js
+
+# Inicializar tabelas
+node scripts/run-init.js
+
+# Drizzle: comandos de gerenciamento
+npm run db:generate      # Gerar migrações
+npm run db:migrate       # Aplicar migrações
+npm run db:push          # Sincronizar schema
+npm run db:studio        # Interface visual
+npm run db:stats         # Estatísticas das tabelas
+npm run db:cleanup       # Limpar dados de teste
+```
+
+## 📂 Arquitetura do Projeto
+
+### **Estrutura de Pastas**
+```
+src/
+├── app/                          # App Router do Next.js 14
+│   ├── (administrador)/          # 🏢 Rotas protegidas para provedores
+│   ├── (clientes)/               # 🛍️ Rotas protegidas para clientes  
+│   ├── (parceiros)/              # 🏪 Rotas protegidas para parceiros
+│   ├── (other)/                  # 🌐 Rotas públicas (auth, errors)
+│   ├── superadmin/               # 👑 Rotas protegidas para superadmin
+│   ├── api/                      # 🔗 API Routes do Next.js
+│   └── layout.jsx                # 🎨 Layout raiz + splash screen
+├── components/                   # 🧩 Componentes UI reutilizáveis
+├── context/                      # 🔄 Estados globais React
+├── db/                           # 🗄️ Drizzle ORM (schema, connection, migrations)
+├── lib/                          # 📚 Utilitários (tenant-helper, etc.)
+├── middleware.js                 # 🛡️ Proteção de rotas por role
+└── utils/                        # 🛠️ Utilitários e helpers
+```
+
+## 🔗 API Endpoints
+
+### **Autenticação**
+- `POST /api/auth/signin` → Login com credenciais
+- `POST /api/auth/signout` → Logout seguro
+
+### **APIs por Perfil**
+
+#### 👑 **SuperAdmin** (`/api/superadmin/*`)
+```bash
+GET    /api/superadmin/provedores       # Gestão global de provedores
+GET    /api/superadmin/dashboard-stats  # Métricas globais do sistema
+POST   /api/superadmin/planos           # Gestão de planos SaaS
+```
+
+#### 🏢 **Provedor** (`/api/admin/*`)
+```bash
+GET    /api/admin/clientes              # Listar/gerenciar clientes (tenant isolado)
+GET    /api/admin/parceiros             # Listar/gerenciar parceiros (tenant isolado)
+GET    /api/admin/dashboard-stats       # Métricas do dashboard (tenant isolado)
+GET    /api/admin/perfil                # Perfil do provedor
+POST   /api/admin/integracoes/sgp       # Integrações SGP
+```
+
+#### 🛍️ **Cliente** (`/api/cliente/*`)
+```bash
+GET    /api/cliente/economia-historica  # Histórico de economia
+GET    /api/vouchers                    # Vouchers disponíveis
+POST   /api/validarVoucher              # Usar voucher
+GET    /api/produtos                    # Catálogo de produtos
+```
+
+#### 🏪 **Parceiro** (`/api/parceiro/*`) 
+```bash
+GET    /api/parceiro/perfil             # Dados do parceiro
+GET    /api/parceiro/dashboard          # Métricas de vendas
+GET    /api/parceiro/produtos           # Produtos do parceiro
+GET    /api/parceiro/vouchers           # Vouchers próprios (gestão)
+POST   /api/parceiro/vouchers           # Criar vouchers próprios
+PUT    /api/parceiro/vouchers           # Editar vouchers próprios
+DELETE /api/parceiro/vouchers           # Remover vouchers próprios
+```
+
+### **Integrações Externas**
+- `POST /api/admin/integracoes/sgp/sincronizar` → Sync automática SGP
+- `GET /api/nichos` → Categorias de parceiros
+
+## 🛠️ Scripts Disponíveis
+
+| Script | Comando | Descrição |
+|--------|---------|-----------|
+| **Desenvolvimento** | `bun dev` | Servidor dev (porta 3000) |
+| **Build** | `npm run build` | Build TypeScript + Next.js |
+| **Produção** | `npm run start` | Servidor produção (porta 3100) |
+| **Qualidade** | `npm run lint` | Análise estática ESLint |
+| **Formatação** | `npm run format` | Prettier (150 chars, sem ;) |
+| **Senha Hash** | `node gerar_hash.js` | Gerar hash bcrypt |
+| **Init DB** | `node scripts/run-init.js` | Inicializar banco |
+| **DB Schema** | `npm run db:introspect` | Gerar schema do banco |
+| **DB Studio** | `npm run db:studio` | Interface visual do banco |
+| **DB Stats** | `npm run db:stats` | Estatísticas das tabelas |
+| **DB Cleanup** | `npm run db:cleanup` | Limpar dados de teste |
+
+## 🚀 Implantação (Deploy)
+
+### **Build e Produção**
+```bash
+# 1. Build da aplicação
+npm run build
+
+# 2. Configurar variáveis de produção
+export NEXTAUTH_URL="https://seudominio.com"
+export DATABASE_URL="postgresql://user:pass@servidor:5432/db"
+export NEXTAUTH_SECRET="chave_jwt_super_segura_produção"
+
+# 3. Iniciar servidor (porta 3100)
+npm run start
+```
+
+### **Proxy Reverso (Nginx)**
+```nginx
+server {
+    listen 80;
+    server_name seudominio.com;
+    
+    location / {
+        proxy_pass http://localhost:3100;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+## ⚙️ Configurações
+
+### **Arquivos de Config**
+- `next.config.js` → React Strict Mode, variáveis de ambiente
+- `tsconfig.json` → TypeScript + paths aliases `@/*`
+- `.eslintrc.json` → Regras de linting
+- `.prettierrc.json` → Formatação (150 chars, sem semicolons)
+
+## 🔧 Solução de Problemas
+
+### **Erros Comuns**
+
+| Problema | Causa | Solução |
+|----------|-------|---------|
+| **Callback/CSRF erro** | `NEXTAUTH_URL` incorreta | Verificar URL exata da aplicação |
+| **Falha conexão DB** | `DATABASE_URL` inválida | Testar conexão PostgreSQL |
+| **Login falha sempre** | Hash bcrypt incompatível | Usar `node gerar_hash.js` |
+| **Página `/not-authorized`** | Role incorreta | Verificar permissões do usuário |
+| **Build falha** | Erro TypeScript | Executar `npm run lint` |
+
+### **Logs de Debug**
+```bash
+# Verificar logs do NextAuth
+DEBUG=nextauth* npm run dev
+
+# Logs do banco de dados
+tail -f /var/log/postgresql/postgresql.log
+```
+
+## 🔄 Integração SGP (Sistema de Gestão)
+
+A plataforma suporta **integração automática** com sistemas SGP para sincronização de clientes.
+
+### **Configuração**
+1. **Acesso**: Parceiro → `/(parceiros)/integracoes`
+2. **Campos obrigatórios**:
+   - **Subdomínio**: URL base do SGP
+   - **Token**: Bearer token de autenticação
+   - **Modo**: `manual` ou `integracao` (sync automática)
+
+### **Funcionalidades**
+- ✅ **Importação manual** de clientes ativos do SGP
+- ✅ **Sincronização automática** de status (ativo/inativo)
+- ✅ **Bloqueio de login** para clientes inativos
+- ✅ **Senhas padronizadas** para novos clientes
+
+### **Endpoints da Integração**
+```bash
+POST /api/parceiro/integracoes/sgp           # Salvar configuração
+POST /api/parceiro/integracoes/sgp/importar  # Importar clientes ativos  
+GET  /api/parceiro/integracoes/sgp/sincronizar # Sync automática (cron)
+```
+
+### **Tabela de Controle**
+```sql
+-- Configurações de integração por parceiro
+integracoes → id, parceiro_id, tipo, subdominio, token, modo_ativacao
+
+-- Status de clientes (sincronizado com SGP)  
+clientes.ativo → BOOLEAN (bloqueia login se FALSE)
+```
+
+## 📄 Licença
+
+**Uso interno/privado** - Sistema proprietário da NEXTMARK
+
+---
+
+<div align="center">
+
+**🎯 Parceirize** - *Conectando clientes, parceiros e descontos*
+
+Desenvolvido com ❤️ usando **Next.js 14** + **TypeScript** + **PostgreSQL**
+
+</div>

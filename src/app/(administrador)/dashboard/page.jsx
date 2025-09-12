@@ -21,7 +21,7 @@ import {
     KPICard
 } from "./components/ModernCharts";
 
-const AdminDashboard = () => {
+const ProvedorDashboard = () => {
     const router = useRouter();
     const [dashboardData, setDashboardData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -205,4 +205,4 @@ const AdminDashboard = () => {
     );
 };
 
-export default AdminDashboard;
+export default ProvedorDashboard;

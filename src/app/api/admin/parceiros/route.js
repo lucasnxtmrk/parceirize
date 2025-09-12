@@ -2,6 +2,7 @@
 import { Pool } from "pg";
 import { getServerSession } from "next-auth";
 import { options } from "@/app/api/auth/[...nextauth]/options";
+import { withTenantIsolation, getTenantContext, logTenantAction, validatePlanLimits } from "@/lib/tenant-helper";
 import bcrypt from "bcryptjs"; 
 import fs from "fs";
 import path from "path";
@@ -36,29 +37,47 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-// ✅ GET - LISTA PARCEIROS
-export async function GET(req) {
+// ✅ GET - LISTA PARCEIROS - COM ISOLAMENTO MULTI-TENANT
+export const GET = withTenantIsolation(async (request, { tenant }) => {
   try {
-    const session = await getServerSession(options);
-    if (!session || session.user.role !== "admin") {
-      return new Response(JSON.stringify({ error: "Acesso negado" }), { status: 403 });
+    console.log("📡 Buscando lista de parceiros para tenant:", tenant.tenant_id);
+
+    let query = `
+      SELECT 
+        p.id,
+        p.nome_empresa,
+        p.email,
+        p.nicho,
+        p.foto,
+        p.data_criacao,
+        COUNT(DISTINCT v.id) as total_vouchers
+      FROM parceiros p
+      LEFT JOIN vouchers v ON p.id = v.parceiro_id
+    `;
+    
+    let params = [];
+
+    if (!tenant.isGlobalAccess) {
+      query += " WHERE p.tenant_id = $1";
+      params.push(tenant.tenant_id);
     }
 
-    console.log("📡 Buscando lista de parceiros...");
+    query += `
+      GROUP BY p.id, p.nome_empresa, p.email, p.nicho, p.foto, p.data_criacao
+      ORDER BY p.data_criacao DESC
+    `;
 
-    const result = await pool.query(`
-      SELECT 
-  p.id, p.nome_empresa, p.email, p.foto, 
-  v.codigo AS voucher_codigo, v.desconto, 
-  COALESCE(v.limite_uso, 0) AS limite_uso,
-  p.nicho
-FROM parceiros p
-LEFT JOIN vouchers v ON p.id = v.parceiro_id
-    `);
+    const result = await pool.query(query, params);
 
-    console.log("✅ Parceiros encontrados:", result.rowCount);
-
-    return new Response(JSON.stringify(result.rows), {
+    return new Response(JSON.stringify({
+      parceiros: result.rows,
+      total: result.rows.length,
+      tenant_info: {
+        tenant_id: tenant.tenant_id,
+        is_global: tenant.isGlobalAccess,
+        role: tenant.role
+      }
+    }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
@@ -67,19 +86,28 @@ LEFT JOIN vouchers v ON p.id = v.parceiro_id
     console.error("❌ Erro ao buscar parceiros:", error);
     return new Response(JSON.stringify({ error: "Erro ao buscar parceiros" }), { status: 500 });
   }
-}
+});
 
 // ✅ POST - CRIAR PARCEIRO
 export async function POST(req) {
   try {
     const session = await getServerSession(options);
-    if (!session || session.user.role !== "admin") {
+    if (!session || !["provedor", "superadmin"].includes(session.user.role)) {
       console.log("🚫 Acesso negado");
       return new Response(JSON.stringify({ error: "Acesso negado" }), { status: 403 });
     }
 
     const body = await req.json();
     console.log("📥 Dados recebidos:", body);
+
+    // Verificar limite do plano antes de criar
+    if (session.user.role === 'provedor') {
+      try {
+        await validatePlanLimits(session.user.tenant_id, 'parceiros');
+      } catch (error) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 403 });
+      }
+    }
 
     const {
       nome_empresa,
@@ -113,9 +141,10 @@ export async function POST(req) {
     }
 
     console.log("📥 Inserindo parceiro...");
+    const tenant_id = session.user.tenant_id;
     const parceiroResult = await pool.query(
-  "INSERT INTO parceiros (nome_empresa, email, senha, foto, nicho, data_criacao) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id",
-  [nome_empresa, email, senhaHash, fotoParceiro, nicho]
+  "INSERT INTO parceiros (nome_empresa, email, senha, foto, nicho, tenant_id, data_criacao) VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING id",
+  [nome_empresa, email, senhaHash, fotoParceiro, nicho, tenant_id]
 );
 
 
@@ -127,8 +156,8 @@ export async function POST(req) {
 
     console.log("🎟️ Criando voucher...");
     await pool.query(
-      "INSERT INTO vouchers (parceiro_id, codigo, desconto, data_criacao, limite_uso) VALUES ($1, $2, $3, NOW(), $4)",
-      [parceiroId, voucherCode, desconto, limiteUsoFinal]
+      "INSERT INTO vouchers (parceiro_id, codigo, desconto, tenant_id, data_criacao, limite_uso) VALUES ($1, $2, $3, $4, NOW(), $5)",
+      [parceiroId, voucherCode, desconto, tenant_id, limiteUsoFinal]
     );
 
     console.log("✅ Voucher criado:", voucherCode);
@@ -149,7 +178,7 @@ export async function POST(req) {
 export async function PUT(req) {
   try {
     const session = await getServerSession(options);
-    if (!session || session.user.role !== "admin") {
+    if (!session || !["provedor", "superadmin"].includes(session.user.role)) {
       return new Response(JSON.stringify({ error: "Acesso negado" }), { status: 403 });
     }
 
@@ -230,7 +259,7 @@ if (senhaHash) {
 export async function DELETE(req) {
   try {
     const session = await getServerSession(options);
-    if (!session || session.user.role !== "admin") {
+    if (!session || !["provedor", "superadmin"].includes(session.user.role)) {
       return new Response(JSON.stringify({ error: "Acesso negado" }), { status: 403 });
     }
 

@@ -30,9 +30,25 @@ export const options = {
                    id_carteirinha,
                    data_ultimo_voucher,
                    ativo,
+                   tenant_id,
                    senha AS "password",
                    'cliente' AS role
             FROM clientes
+            WHERE email = $1 AND ativo = true
+
+            UNION ALL
+
+            SELECT id,
+                   nome_empresa AS nome,
+                   NULL AS sobrenome,
+                   email,
+                   NULL AS id_carteirinha,
+                   NULL AS data_ultimo_voucher,
+                   true AS ativo,
+                   tenant_id,
+                   senha AS "password",
+                   'parceiro' AS role
+            FROM parceiros
             WHERE email = $1
 
             UNION ALL
@@ -43,25 +59,27 @@ export const options = {
                    email,
                    NULL AS id_carteirinha,
                    NULL AS data_ultimo_voucher,
-                   NULL AS ativo,
+                   ativo,
+                   tenant_id,
                    senha AS "password",
-                   'parceiro' AS role
-            FROM parceiros
-            WHERE email = $1
+                   'provedor' AS role
+            FROM provedores
+            WHERE email = $1 AND ativo = true
 
             UNION ALL
 
             SELECT id,
-                   'Admin' AS nome,
+                   nome AS nome,
                    NULL AS sobrenome,
                    email,
                    NULL AS id_carteirinha,
                    NULL AS data_ultimo_voucher,
-                   NULL AS ativo,
+                   ativo,
+                   NULL AS tenant_id,
                    senha AS "password",
-                   'admin' AS role
-            FROM admins
-            WHERE email = $1
+                   'superadmin' AS role
+            FROM superadmins
+            WHERE email = $1 AND ativo = true
           `;
 
           const result = await pool.query(query, [email]);
@@ -97,7 +115,8 @@ export const options = {
             id_carteirinha: userRecord.id_carteirinha,
             data_ultimo_voucher: userRecord.data_ultimo_voucher,
             role: userRecord.role,
-            ativo: userRecord.ativo
+            ativo: userRecord.ativo,
+            tenant_id: userRecord.tenant_id
           };
         } catch (err) {
           console.error("⚠️ Erro na autenticação:", err.message);
@@ -123,25 +142,17 @@ export const options = {
       session.user = token.user;
       return session;
     },
-    // Redireciona de acordo com a role
-    async redirect({ url, baseUrl, token }) {
+    // Redireciona de acordo com a role - simplificado
+    async redirect({ url, baseUrl }) {
       console.log("🔄 Redirecionando... URL original:", url);
-      console.log("🔍 Token recebido:", token);
-
-      // Se não houver token, provavelmente é logout, então use a URL passada
-      if (!token || !token.user) {
+      
+      // Se não for a página de login, permite o redirecionamento normal
+      if (!url.includes('/auth/login')) {
         return url.startsWith('/') ? `${baseUrl}${url}` : url;
       }
-
-      const role = token.user.role;
-      console.log("🎯 Role detectado:", role);
-
-      if (role === 'cliente') return `${baseUrl}/carteirinha`;
-      if (role === 'parceiro') return `${baseUrl}/relatorio`;
-      if (role === 'admin') return `${baseUrl}/dashboard`;
-
-      // Caso não corresponda a nenhuma role conhecida
-      return baseUrl;
+      
+      // Para login, redireciona para home e deixa o middleware decidir
+      return `${baseUrl}/`;
     }
   }
 };

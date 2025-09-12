@@ -10,7 +10,7 @@ export async function GET(req) {
   try {
     const session = await getServerSession(options);
 
-    if (!session || session.user.role !== "admin") {
+    if (!session || !["provedor", "superadmin"].includes(session.user.role)) {
       return new Response(JSON.stringify({ error: "Acesso negado" }), { status: 403 });
     }
 

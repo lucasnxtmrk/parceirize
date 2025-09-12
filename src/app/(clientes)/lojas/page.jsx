@@ -43,14 +43,15 @@ const LojasPage = () => {
             </div>
             
             {/* Stats Badge */}
-            <div className="d-flex gap-2">
+            <div className="d-flex flex-wrap justify-content-start justify-content-md-end gap-2" style={{ minWidth: 'fit-content' }}>
               <Badge 
                 bg="light" 
                 text="dark" 
-                className="px-3 py-2 fw-medium border"
+                className="px-3 py-2 fw-medium border flex-shrink-0"
                 style={{
                   borderRadius: '20px',
-                  fontSize: '0.8125rem'
+                  fontSize: '0.8125rem',
+                  whiteSpace: 'nowrap'
                 }}
               >
                 <IconifyIcon icon="heroicons:fire" className="me-1 text-danger" />
@@ -59,10 +60,11 @@ const LojasPage = () => {
               <Badge 
                 bg="light" 
                 text="dark" 
-                className="px-3 py-2 fw-medium border"
+                className="px-3 py-2 fw-medium border flex-shrink-0"
                 style={{
                   borderRadius: '20px',
-                  fontSize: '0.8125rem'
+                  fontSize: '0.8125rem',
+                  whiteSpace: 'nowrap'
                 }}
               >
                 <IconifyIcon icon="heroicons:gift" className="me-1 text-success" />

@@ -9,6 +9,7 @@ const LayoutProvider = dynamic(() => import('@/context/useLayoutContext').then(m
 });
 import { NotificationProvider } from '@/context/useNotificationContext';
 import { ToastProvider } from '@/components/ui/toast';
+import CustomThemeProvider from '@/components/CustomThemeProvider';
 const AppProvidersWrapper = ({
   children
 }) => {
@@ -31,13 +32,15 @@ const AppProvidersWrapper = ({
     };
   }, []);
   return <SessionProvider>
-      <LayoutProvider>
-        <NotificationProvider>
-          <ToastProvider>
-            {children}
-          </ToastProvider>
-        </NotificationProvider>
-      </LayoutProvider>
+      <CustomThemeProvider>
+        <LayoutProvider>
+          <NotificationProvider>
+            <ToastProvider>
+              {children}
+            </ToastProvider>
+          </NotificationProvider>
+        </LayoutProvider>
+      </CustomThemeProvider>
     </SessionProvider>;
 };
 export default AppProvidersWrapper;

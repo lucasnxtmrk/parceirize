@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import { Suspense } from 'react';
 import { Container } from 'react-bootstrap';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { options as authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { redirect } from 'next/navigation';
 import ClientWrapperLayout from '@/components/layout/ClientWrapperLayout';
 

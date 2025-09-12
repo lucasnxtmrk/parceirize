@@ -22,14 +22,6 @@ const QuickActions = ({ onActionClick }) => {
             path: "/admin-parceiro"
         },
         {
-            title: "Criar Voucher",
-            description: "Criar novo voucher de desconto",
-            icon: "heroicons:ticket",
-            color: "warning",
-            bgColor: "#fffbeb",
-            path: "/admin-vouchers/cadastrar"
-        },
-        {
             title: "Validar Voucher",
             description: "Validar voucher de cliente",
             icon: "heroicons:qr-code",

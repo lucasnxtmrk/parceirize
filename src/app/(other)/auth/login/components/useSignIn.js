@@ -23,8 +23,8 @@ const useSignIn = () => {
     const { control, handleSubmit } = useForm({
         resolver: yupResolver(loginFormSchema),
         defaultValues: {
-            email: 'cliente@protegenet.com.br',
-            password: '12345678'
+            email: '',
+            password: ''
         }
     });
 
@@ -46,7 +46,8 @@ const useSignIn = () => {
             let redirectUrl = '/';
             if (role === 'cliente') redirectUrl = '/carteirinha';
             if (role === 'parceiro') redirectUrl = '/painel';
-            if (role === 'admin') redirectUrl = '/dashboard';
+            if (role === 'provedor') redirectUrl = '/dashboard';
+            if (role === 'superadmin') redirectUrl = '/superadmin/dashboard';
     
             push(redirectUrl); // Agora redireciona corretamente!
         } else {

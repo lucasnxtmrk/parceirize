@@ -254,7 +254,7 @@ const ProductCard = forwardRef(({
           </div>
         </div>
 
-        <CardBody className="p-2">
+        <CardBody className="p-2 d-flex flex-column" style={{ minHeight: '200px' }}>
           {/* Categoria */}
           {category && (
             <div className="mb-2">
@@ -303,8 +303,11 @@ const ProductCard = forwardRef(({
           {/* Preços */}
           {renderPrice()}
 
+          {/* Spacer para empurrar as ações para baixo */}
+          <div className="flex-grow-1"></div>
+          
           {/* Ações */}
-          <div className="mt-auto">
+          <div className="mt-2">
             {renderActions()}
           </div>
         </CardBody>

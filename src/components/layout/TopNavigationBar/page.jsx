@@ -4,7 +4,6 @@ import LeftSideBarToggle from './components/LeftSideBarToggle';
 import ProfileDropdown from './components/ProfileDropdown';
 import ThemeCustomizerToggle from './components/ThemeCustomizerToggle';
 import Notifications from './components/Notifications';
-import ThemeModeToggle from './components/ThemeModeToggle';
 import MaximizeScreen from './components/MaximizeScreen';
 import LogoutButton from './components/LogoutButton';
 import { Container } from 'react-bootstrap';
@@ -35,7 +34,6 @@ const Page = () => {
       <IconifyIcon icon="ri:menu-line" width={20} height={20} />
     </button>
   )}
-  <ThemeModeToggle />
   <ThemeCustomizerToggle />
 </div>
 

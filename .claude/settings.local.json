@@ -20,7 +20,18 @@
       "Bash(find:*)",
       "Bash(move:*)",
       "Bash(mv:*)",
-      "Bash(del \"C:\\TRABALHO\\NEXTMARK\\SISTEMAS\\parceirize\\src\\app\\api\\test-parceiro-data\\route.js\")"
+      "Bash(del \"C:\\TRABALHO\\NEXTMARK\\SISTEMAS\\parceirize\\src\\app\\api\\test-parceiro-data\\route.js\")",
+      "Bash(npm uninstall:*)",
+      "Bash(npm run:*)",
+      "Bash(tail:*)",
+      "Bash(dir \"C:\\TRABALHO\\NEXTMARK\\SISTEMAS\\parceirize\\scripts\" /b)",
+      "Bash(npx tailwindcss init:*)",
+      "Bash(del fix-superadmin-password.js)",
+      "Read(//c/**)",
+      "Bash(del \"src/app/superadmin/layout.tsx\")",
+      "Bash(timeout 30 npm run build)",
+      "Bash(timeout 60 npm run build)",
+      "Bash(npx next build:*)"
     ],
     "deny": [],
     "ask": []

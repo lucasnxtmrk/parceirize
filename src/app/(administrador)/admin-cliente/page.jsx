@@ -46,7 +46,7 @@ const ClientesPage = () => {
             if (!response.ok) throw new Error("Erro ao buscar clientes");
 
             const data = await response.json();
-            setClientes(data);
+            setClientes(data.clientes || []);
             setLoading(false);
         } catch (err) {
             setError(err.message);

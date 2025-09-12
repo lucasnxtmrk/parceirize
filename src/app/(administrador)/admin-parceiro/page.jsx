@@ -23,7 +23,7 @@ const ParceirosPage = () => {
             if (!response.ok) throw new Error("Erro ao buscar parceiros");
 
             const data = await response.json();
-            setParceiros(data);
+            setParceiros(data.parceiros || []);
             setLoading(false);
         } catch (err) {
             setError(err.message);

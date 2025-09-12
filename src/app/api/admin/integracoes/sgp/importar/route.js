@@ -1,6 +1,7 @@
 import { Pool } from 'pg';
 import { getServerSession } from 'next-auth';
 import { options } from '@/app/api/auth/[...nextauth]/options';
+import { validatePlanLimits } from '@/lib/tenant-helper';
 import bcrypt from 'bcryptjs';
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -20,7 +21,7 @@ async function getIntegracao(adminId) {
 
 export async function POST(req) {
   const session = await getServerSession(options);
-  if (!session || session.user.role !== 'admin') {
+  if (!session || !['provedor', 'superadmin'].includes(session.user.role)) {
     return new Response(JSON.stringify({ error: 'Acesso negado' }), { status: 403 });
   }
 
@@ -78,6 +79,7 @@ export async function POST(req) {
   let criados = 0;
   let atualizados = 0;
   let totalProcessados = 0;
+  let limitesAtingidos = 0;
   const errosDetalhados = [];
 
   for (const clienteSGP of clientesSGP) {
@@ -116,12 +118,28 @@ export async function POST(req) {
     try {
       const sel = await pool.query('SELECT id, tipo_cliente FROM clientes WHERE email = $1', [loginEmail]);
       if (sel.rows.length === 0) {
+        // Verificar limite do plano antes de criar novo cliente (apenas para provedores)
+        if (session.user.role === 'provedor') {
+          try {
+            await validatePlanLimits(session.user.tenant_id, 'clientes');
+          } catch (limitError) {
+            limitesAtingidos++;
+            errosDetalhados.push(`Limite atingido: ${limitError.message}`);
+            // Para na primeira vez que atingir o limite para evitar spam de erros
+            if (limitesAtingidos === 1) {
+              errosDetalhados.push('Importação interrompida devido ao limite do plano');
+              break;
+            }
+            continue;
+          }
+        }
+        
         // Criar novo cliente
         const idCarteirinha = (Math.random().toString(36).slice(2, 8) + Math.random().toString(36).slice(2, 4)).toUpperCase().slice(0, 6);
         await pool.query(
-          `INSERT INTO clientes (nome, sobrenome, email, senha, id_carteirinha, ativo, tipo_cliente, data_criacao)
-           VALUES ($1, $2, $3, $4, $5, $6, 'cliente', NOW())`,
-          [nome || 'Cliente', sobrenome || '', loginEmail, senhaHash, idCarteirinha, ativo]
+          `INSERT INTO clientes (nome, sobrenome, email, senha, id_carteirinha, ativo, tipo_cliente, data_criacao, tenant_id)
+           VALUES ($1, $2, $3, $4, $5, $6, 'cliente', NOW(), $7)`,
+          [nome || 'Cliente', sobrenome || '', loginEmail, senhaHash, idCarteirinha, ativo, session.user.tenant_id || null]
         );
         criados++;
       } else {
@@ -154,6 +172,7 @@ export async function POST(req) {
     criados, 
     atualizados, 
     totalProcessados,
+    limitesAtingidos,
     erros: errosDetalhados.length > 0 ? errosDetalhados : null
   }), { status: 200 });
 }

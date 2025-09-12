@@ -17,7 +17,7 @@ export async function POST(req) {
       return new Response(JSON.stringify({ error: "Acesso negado - Usuário não autenticado" }), { status: 403 });
     }
 
-    if (session.user.role !== "admin") {
+    if (!["provedor", "superadmin"].includes(session.user.role)) {
       console.log("❌ Acesso negado - Apenas admins podem validar vouchers.");
       return new Response(JSON.stringify({ error: "Acesso negado - Apenas admins podem validar vouchers" }), { status: 403 });
     }

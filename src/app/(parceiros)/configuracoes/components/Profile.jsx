@@ -14,6 +14,7 @@ const BrowserDefault = () => {
             email: "",
             nicho: "",
             foto: "",
+            descontoPadrao: 0,
         },
     });
 
@@ -35,6 +36,7 @@ const BrowserDefault = () => {
                 setValue("email", data.email || "");
                 setValue("nicho", data.nicho || "");
                 setValue("foto", data.foto || "");
+                setValue("descontoPadrao", data.desconto_padrao || 0);
                 
                 setLoading(false);
             } catch (err) {
@@ -76,6 +78,7 @@ const BrowserDefault = () => {
                     email: formData.email,
                     foto: formData.foto,
                     nicho: formData.nicho,
+                    desconto_padrao: formData.descontoPadrao,
                 }),
             });
 
@@ -119,11 +122,31 @@ const BrowserDefault = () => {
                     </FormGroup>
                 </Col>
 
-                <Col md={12}>
+                <Col md={6}>
                     <FormGroup>
                         <FormLabel>Nicho de Atuação</FormLabel>
                         <Controller name="nicho" control={control} render={({ field }) => <FormControl type="text" {...field} required />} />
                         <small className="text-muted">Ex: Alimentação, Beleza, Tecnologia, etc.</small>
+                    </FormGroup>
+                </Col>
+
+                <Col md={6}>
+                    <FormGroup>
+                        <FormLabel>Desconto Padrão (%)</FormLabel>
+                        <Controller
+                            name="descontoPadrao"
+                            control={control}
+                            render={({ field }) => (
+                                <FormControl
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    step="0.01"
+                                    {...field}
+                                />
+                            )}
+                        />
+                        <small className="text-muted">Desconto aplicado automaticamente em produtos sem desconto específico</small>
                     </FormGroup>
                 </Col>
 

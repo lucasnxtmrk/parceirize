@@ -17,23 +17,23 @@ async function executarSincronizacao() {
   
   try {
     const integracoes = await pool.query(
-      `SELECT admin_id, subdominio, token, app_name 
-       FROM integracoes 
-       WHERE tipo = 'SGP' 
-       AND modo_ativacao = 'integracao' 
-       AND admin_id IS NOT NULL`
+      `SELECT provedor_id, subdominio, token, app_name
+       FROM integracoes
+       WHERE tipo = 'SGP'
+       AND modo_ativacao = 'integracao'
+       AND provedor_id IS NOT NULL`
     );
     
     let totalSincronizacoes = 0;
     
     for (const integracao of integracoes.rows) {
       try {
-        const url = `https://${integracao.subdominio}.sgp.net.br/api/clientes`;
+        const url = `https://${integracao.subdominio}.sgp.net.br/api/ura/clientes/`;
         const authBody = {
           token: integracao.token,
           app: integracao.app_name,
           omitir_contratos: false,
-          limit: 500
+          limit: 100 // API SGP permite max 100
         };
 
         const resp = await fetch(url, {
@@ -91,14 +91,14 @@ async function executarSincronizacao() {
 
         // Atualizar timestamp
         await pool.query(
-          `UPDATE integracoes SET last_sync = NOW() WHERE admin_id = $1 AND tipo = 'SGP'`,
-          [integracao.admin_id]
+          `UPDATE integracoes SET last_sync = NOW() WHERE provedor_id = $1 AND tipo = 'SGP'`,
+          [integracao.provedor_id]
         );
 
         totalSincronizacoes++;
         
       } catch (error) {
-        console.error(`Erro na sincronização admin_id ${integracao.admin_id}:`, error.message);
+        console.error(`Erro na sincronização provedor_id ${integracao.provedor_id}:`, error.message);
       }
     }
     

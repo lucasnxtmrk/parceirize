@@ -18,6 +18,10 @@ export async function GET(req) {
         p.nicho,
         p.foto,
         p.email,
+        p.cidade,
+        p.estado,
+        p.cep,
+        p.endereco,
         COUNT(pr.id) as total_produtos,
         COALESCE(MIN(pr.preco), 0) as menor_preco,
         COALESCE(MAX(pr.preco), 0) as maior_preco,
@@ -42,8 +46,8 @@ export async function GET(req) {
       paramIndex++;
     }
 
-    query += ` 
-      GROUP BY p.id, p.nome_empresa, p.nicho, p.foto, p.email
+    query += `
+      GROUP BY p.id, p.nome_empresa, p.nicho, p.foto, p.email, p.cidade, p.estado, p.cep, p.endereco
       ORDER BY p.nome_empresa ASC
     `;
 

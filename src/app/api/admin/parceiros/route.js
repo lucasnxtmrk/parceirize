@@ -156,8 +156,18 @@ export async function POST(req) {
 
     console.log("🎟️ Criando voucher...");
     await pool.query(
-      "INSERT INTO vouchers (parceiro_id, codigo, desconto, tenant_id, data_criacao, limite_uso) VALUES ($1, $2, $3, $4, NOW(), $5)",
-      [parceiroId, voucherCode, desconto, tenant_id, limiteUsoFinal]
+      "INSERT INTO vouchers (parceiro_id, codigo, desconto, titulo, tipo_desconto, valor_desconto, condicoes, tenant_id, data_criacao, limite_uso) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9)",
+      [
+        parceiroId,
+        voucherCode,
+        desconto,
+        'Desconto Exclusivo',
+        'percentual',
+        desconto,
+        'Válido para compras no estabelecimento. Não cumulativo com outras promoções.',
+        tenant_id,
+        limiteUsoFinal
+      ]
     );
 
     console.log("✅ Voucher criado:", voucherCode);

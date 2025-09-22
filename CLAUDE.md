@@ -25,21 +25,38 @@ node gerar_hash.js         # Generate bcrypt password hashes
 
 ## Architecture Overview
 
-**Parceirize** is a Next.js 14 discount club management platform with three distinct user roles:
-- **Administradores** → `/dashboard` routes - manage customers, partners, vouchers
-- **Clientes** → `/carteirinha` routes - digital membership card, browse vouchers
-- **Parceiros** → `/painel` routes - sales reporting, voucher management
+**Parceirize** is a Next.js 14 discount club management platform with a 4-level hierarchical structure:
+- **ADMIN** (Superadmin) → Manages provedores, full system control
+- **PROVEDORES** (Tenant Admins) → `/dashboard` routes - manage their own parceiros and clientes, pay for platform access
+- **PARCEIROS** (Partners/Stores) → `/painel` routes - sales reporting, voucher management within their provedor
+- **CLIENTES** (End Users) → `/carteirinha` routes - digital membership card, browse vouchers from their provedor's parceiros
+
+### Hierarchical Structure
+```
+ADMIN
+├── PROVEDOR A
+│   ├── PARCEIRO A1
+│   ├── PARCEIRO A2
+│   ├── CLIENTE A1
+│   └── CLIENTE A2
+├── PROVEDOR B
+│   ├── PARCEIRO B1
+│   ├── CLIENTE B1
+│   └── CLIENTE B2
+```
+
+Each provedor operates as an isolated tenant with their own ecosystem of parceiros and clientes.
 
 ### Core Directory Structure
 
 ```
 src/app/
-├── (administrador)/    # Admin-only routes (role-protected)
-├── (clientes)/        # Customer-only routes  
-├── (parceiros)/       # Partner-only routes
+├── (administrador)/    # Provedor routes (tenant admin) - /dashboard
+├── (clientes)/        # Customer routes - /carteirinha
+├── (parceiros)/       # Partner routes - /painel
 ├── (other)/           # Public routes (auth, errors, home)
-├── api/               # API Route Handlers
-└── middleware.js      # Role-based route protection
+├── api/               # API Route Handlers with tenant isolation
+└── middleware.js      # Role-based route protection + tenant isolation
 ```
 
 ### Authentication System
@@ -47,21 +64,26 @@ src/app/
 - **NextAuth.js** with JWT tokens (`src/app/api/auth/[...nextauth]/options.js`)
 - **Credentials provider** with bcryptjs password hashing
 - **Database authentication** via UNION query across `clientes`, `parceiros`, `admins` tables
+- **Tenant isolation** - each provedor has isolated data access to their own parceiros/clientes
 - **Automatic role-based redirects** after login handled by middleware
+- **Superadmin access** for full system control and provedor management
 
 ### Database Architecture
 
 **PostgreSQL** with raw SQL queries (no ORM):
-- `clientes` - Customer data with carteirinha (membership card) system
-- `parceiros` - Partners with nicho (niche) categorization  
-- `admins` - Administrative users
+- `admins` - Administrative users (includes superadmin and provedores)
+- `clientes` - Customer data with carteirinha system + `provedor_id` for tenant isolation
+- `parceiros` - Partners with nicho categorization + `provedor_id` for tenant isolation
 - `vouchers` - Discount vouchers linked to partners
-- `integracoes` - SGP third-party integration settings
+- `integracoes` - SGP third-party integration settings per provedor
 
 Key patterns:
-- User roles determined by which table contains their record
-- Status management (ativo/inativo) for customers and partners
-- External SGP integration for customer synchronization
+- **Tenant isolation**: All data filtered by `provedor_id` except for superadmin
+- **4-level hierarchy**: ADMIN → PROVEDOR → PARCEIRO/CLIENTE relationship
+- User roles determined by which table contains their record + `tipo` field in admins
+- Status management (ativo/inativo) for all user levels
+- Payment control for provedores (manual payment to maintain platform access)
+- External SGP integration for customer synchronization per provedor
 
 ### Technology Stack
 

@@ -82,9 +82,15 @@ const MENU_ITEMS = [
     hasSubmenu: true,
     submenu: [
       {
+        key: 'financeiro',
+        label: 'Controle Financeiro',
+        icon: DollarSign,
+        url: '/superadmin/financeiro'
+      },
+      {
         key: 'transacoes',
         label: 'Transações',
-        icon: DollarSign,
+        icon: TrendingUp,
         url: '/superadmin/transacoes'
       },
       {

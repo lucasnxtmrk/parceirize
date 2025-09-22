@@ -19,7 +19,7 @@ export async function GET(req) {
 
     // Buscar os dados do parceiro
     const query = `
-      SELECT id, nome_empresa, email, foto, nicho
+      SELECT id, nome_empresa, email, foto, nicho, desconto_padrao
       FROM parceiros
       WHERE email = $1
     `;
@@ -49,19 +49,19 @@ export async function PUT(req) {
       return new Response(JSON.stringify({ error: "Acesso negado" }), { status: 403 });
     }
 
-    const { nome_empresa, email, foto, nicho } = await req.json();
+    const { nome_empresa, email, foto, nicho, desconto_padrao } = await req.json();
 
     console.log("📡 Atualizando perfil do parceiro:", session.user.email);
 
     // Atualizar os dados do parceiro no banco
     const updateQuery = `
       UPDATE parceiros
-      SET nome_empresa = $1, email = $2, foto = $3, nicho = $4
-      WHERE email = $5
-      RETURNING id, nome_empresa, email, foto, nicho
+      SET nome_empresa = $1, email = $2, foto = $3, nicho = $4, desconto_padrao = $5
+      WHERE email = $6
+      RETURNING id, nome_empresa, email, foto, nicho, desconto_padrao
     `;
 
-    const result = await pool.query(updateQuery, [nome_empresa, email, foto, nicho, session.user.email]);
+    const result = await pool.query(updateQuery, [nome_empresa, email, foto, nicho, desconto_padrao, session.user.email]);
 
     if (result.rows.length === 0) {
       return new Response(JSON.stringify({ error: "Erro ao atualizar perfil." }), { status: 400 });

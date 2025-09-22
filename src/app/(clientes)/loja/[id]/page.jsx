@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Row, Col, Card, Button, Badge, Alert, Spinner, CardTitle } from "react-bootstrap";
-import { FaArrowLeft, FaEnvelope, FaShoppingCart } from "react-icons/fa";
+import { Row, Col, Card, Button, Badge, Alert, Spinner, CardTitle, Modal } from "react-bootstrap";
+import { FaArrowLeft, FaEnvelope, FaShoppingCart, FaExclamationTriangle, FaTrash } from "react-icons/fa";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import ComponentContainerCard from "@/components/ComponentContainerCard";
 import ProductCard from "@/components/shared/ProductCard";
+import { Nichos } from "@/data/nichos";
 
 export default function LojaProdutosPage() {
   const [parceiro, setParceiro] = useState(null);
@@ -18,6 +19,11 @@ export default function LojaProdutosPage() {
   const [alert, setAlert] = useState({ show: false, message: "", variant: "" });
   const params = useParams();
   const router = useRouter();
+
+  // Estados para modal de confirmação de parceiro diferente
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const [produtoConflito, setProdutoConflito] = useState(null);
+  const [parceiroAtual, setParceiroAtual] = useState("");
 
   useEffect(() => {
     if (params.id) {
@@ -104,6 +110,15 @@ export default function LojaProdutosPage() {
         fetchCarrinho();
       } else {
         const errorData = await response.json();
+
+        // Tratar erro específico de parceiro diferente
+        if (errorData.error === "PARCEIRO_DIFERENTE") {
+          setProdutoConflito(produto);
+          setParceiroAtual(errorData.parceiro_atual);
+          setShowConflictModal(true);
+          return;
+        }
+
         showAlert(errorData.error || "Erro ao adicionar ao carrinho", "danger");
       }
     } catch (error) {
@@ -161,6 +176,28 @@ export default function LojaProdutosPage() {
   const getQuantidadeNoCarrinho = (produtoId) => {
     const item = carrinho.find(item => item.produto_id === produtoId);
     return item ? item.quantidade : 0;
+  };
+
+  const limparCarrinhoEAdicionar = async () => {
+    try {
+      // Primeiro limpar o carrinho
+      const clearResponse = await fetch("/api/carrinho?limpar_tudo=true", {
+        method: "DELETE"
+      });
+
+      if (clearResponse.ok) {
+        // Depois adicionar o novo produto
+        await adicionarAoCarrinho(produtoConflito);
+      } else {
+        showAlert("Erro ao limpar carrinho", "danger");
+      }
+    } catch (error) {
+      showAlert("Erro ao limpar carrinho", "danger");
+    } finally {
+      setShowConflictModal(false);
+      setProdutoConflito(null);
+      setParceiroAtual("");
+    }
   };
 
   const totalItensCarrinho = carrinho.reduce((total, item) => total + item.quantidade, 0);
@@ -227,7 +264,9 @@ export default function LojaProdutosPage() {
                   </Col>
                   <Col md={10}>
                     <h2 className="mb-2">{parceiro.nome_empresa}</h2>
-                    <Badge bg="secondary" className="mb-2">{parceiro.nicho}</Badge>
+                    <Badge bg="secondary" className="mb-2">
+                      {Nichos.find(n => n.id === Number(parceiro.nicho))?.nome || "Categoria"}
+                    </Badge>
                     {parceiro.email && (
                       <p className="text-muted mb-0">
                         <FaEnvelope className="me-2" />
@@ -336,6 +375,45 @@ export default function LojaProdutosPage() {
           </Row>
         </>
       )}
+
+      {/* Modal de Confirmação - Parceiro Diferente */}
+      <Modal show={showConflictModal} onHide={() => setShowConflictModal(false)} centered>
+        <Modal.Header closeButton className="border-0 pb-0">
+          <Modal.Title className="d-flex align-items-center gap-2">
+            <FaExclamationTriangle className="text-warning" />
+            Produtos de Parceiros Diferentes
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="pt-2">
+          <div className="text-center mb-3">
+            <p className="mb-3">
+              Seu carrinho já contém produtos de <strong>{parceiroAtual}</strong>.
+            </p>
+            <p className="mb-3">
+              Para adicionar <strong>{produtoConflito?.nome}</strong> ao carrinho, você precisa limpar os produtos atuais primeiro.
+            </p>
+            <div className="alert alert-info">
+              <small>
+                <FaShoppingCart className="me-2" />
+                Isso garante que todos os produtos sejam validados pelo mesmo parceiro.
+              </small>
+            </div>
+          </div>
+        </Modal.Body>
+        <Modal.Footer className="border-0 pt-0">
+          <Button variant="secondary" onClick={() => setShowConflictModal(false)}>
+            Cancelar
+          </Button>
+          <Button
+            variant="warning"
+            onClick={limparCarrinhoEAdicionar}
+            className="d-flex align-items-center gap-2"
+          >
+            <FaTrash />
+            Limpar e Adicionar
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </ComponentContainerCard>
   );
 }

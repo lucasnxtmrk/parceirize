@@ -6,12 +6,6 @@ export const MENU_ITEMS = [
     url: '/painel'
   },
   {
-    key: 'relatorios',
-    label: 'Relatórios',
-    icon: 'ri:bar-chart-line',
-    url: '/relatorio'
-  },
-  {
     key: 'produtos',
     label: 'Meus Produtos',
     icon: 'ri:shopping-bag-line',
@@ -19,9 +13,15 @@ export const MENU_ITEMS = [
   },
   {
     key: 'voucher',
-    label: 'Meus Vouchers',
+    label: 'Meu Voucher',
     icon: 'ri:ticket-line',
-    url: '/voucher'
+    url: '/meu-voucher'
+  },
+  {
+    key: 'solicitacoes-voucher',
+    label: 'Solicitações',
+    icon: 'ri:inbox-line',
+    url: '/solicitacoes-voucher'
   },
   {
     key: 'validacao',

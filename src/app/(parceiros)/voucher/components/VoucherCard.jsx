@@ -8,7 +8,6 @@ import { useToast } from '@/components/ui/toast';
 const VoucherCard = ({ voucher, onUpdate }) => {
     const [showEditModal, setShowEditModal] = useState(false);
     const [formData, setFormData] = useState({
-        desconto: voucher.desconto || 0,
         limite_uso: voucher.limite_uso || 0
     });
     const [loading, setLoading] = useState(false);
@@ -16,7 +15,6 @@ const VoucherCard = ({ voucher, onUpdate }) => {
 
     const handleEdit = () => {
         setFormData({
-            desconto: voucher.desconto || 0,
             limite_uso: voucher.limite_uso || 0
         });
         setShowEditModal(true);
@@ -30,7 +28,6 @@ const VoucherCard = ({ voucher, onUpdate }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     id: voucher.id,
-                    desconto: parseFloat(formData.desconto),
                     limite_uso: parseInt(formData.limite_uso)
                 })
             });
@@ -137,19 +134,16 @@ const VoucherCard = ({ voucher, onUpdate }) => {
                 <Modal.Body className="p-4">
                     <Form>
                         <div className="mb-4">
-                            <Form.Label className="fw-bold">Desconto (%)</Form.Label>
-                            <div className="input-group">
-                                <Form.Control
-                                    type="number"
-                                    min="1"
-                                    max="100"
-                                    value={formData.desconto}
-                                    onChange={(e) => setFormData({...formData, desconto: e.target.value})}
-                                    className="form-control-lg"
-                                />
-                                <span className="input-group-text">%</span>
+                            <Form.Label className="fw-bold">Desconto Atual</Form.Label>
+                            <div className="d-flex align-items-center gap-2 p-3 bg-light rounded">
+                                <FaPercentage className="text-primary" />
+                                <div>
+                                    <span className="fw-bold fs-5">{voucher.desconto}%</span>
+                                    <small className="text-muted d-block">
+                                        O desconto só pode ser alterado pelo provedor (acordo de contrato)
+                                    </small>
+                                </div>
                             </div>
-                            <small className="text-muted">Percentual de desconto que será aplicado</small>
                         </div>
 
                         <div className="mb-4">

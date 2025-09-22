@@ -67,10 +67,10 @@ export async function GET(request) {
             ELSE 'Desktop'
           END as device_type,
           -- Simular localização baseada no IP (em produção seria uma API de geolocalização)
-          CASE 
-            WHEN tl.ip_address LIKE '192.168.%' OR tl.ip_address LIKE '10.%' OR tl.ip_address = '127.0.0.1' THEN 'Local, BR'
-            WHEN tl.ip_address LIKE '189.%' OR tl.ip_address LIKE '201.%' THEN 'São Paulo, SP'
-            WHEN tl.ip_address LIKE '177.%' OR tl.ip_address LIKE '179.%' THEN 'Rio de Janeiro, RJ'
+          CASE
+            WHEN tl.ip_address::text LIKE '192.168.%' OR tl.ip_address::text LIKE '10.%' OR tl.ip_address::text = '127.0.0.1' THEN 'Local, BR'
+            WHEN tl.ip_address::text LIKE '189.%' OR tl.ip_address::text LIKE '201.%' THEN 'São Paulo, SP'
+            WHEN tl.ip_address::text LIKE '177.%' OR tl.ip_address::text LIKE '179.%' THEN 'Rio de Janeiro, RJ'
             ELSE 'Brasil'
           END as location,
           ROW_NUMBER() OVER (PARTITION BY tl.usuario_tipo, tl.usuario_id ORDER BY tl.created_at DESC) as rn
@@ -81,29 +81,30 @@ export async function GET(request) {
       user_details AS (
         SELECT 
           us.*,
-          CASE 
+          CASE
             WHEN us.usuario_tipo = 'cliente' THEN (SELECT nome FROM clientes WHERE id = us.usuario_id LIMIT 1)
-            WHEN us.usuario_tipo = 'parceiro' THEN (SELECT nome FROM parceiros WHERE id = us.usuario_id LIMIT 1)
-            WHEN us.usuario_tipo = 'admin' THEN (SELECT nome_empresa FROM provedores WHERE id = us.usuario_id LIMIT 1)
-            WHEN us.usuario_tipo = 'superadmin' THEN 'SuperAdmin'
+            WHEN us.usuario_tipo = 'parceiro' THEN (SELECT nome_empresa FROM parceiros WHERE id = us.usuario_id LIMIT 1)
+            WHEN us.usuario_tipo = 'provedor' THEN (SELECT nome_empresa FROM provedores WHERE id = us.usuario_id LIMIT 1)
+            WHEN us.usuario_tipo = 'superadmin' THEN (SELECT nome FROM admins WHERE id = us.usuario_id LIMIT 1)
             ELSE 'Usuário Desconhecido'
           END as user_name,
-          CASE 
+          CASE
             WHEN us.usuario_tipo = 'cliente' THEN (SELECT email FROM clientes WHERE id = us.usuario_id LIMIT 1)
             WHEN us.usuario_tipo = 'parceiro' THEN (SELECT email FROM parceiros WHERE id = us.usuario_id LIMIT 1)
-            WHEN us.usuario_tipo = 'admin' THEN (SELECT email FROM provedores WHERE id = us.usuario_id LIMIT 1)
-            WHEN us.usuario_tipo = 'superadmin' THEN 'admin@sistema.com'
+            WHEN us.usuario_tipo = 'provedor' THEN (SELECT email FROM provedores WHERE id = us.usuario_id LIMIT 1)
+            WHEN us.usuario_tipo = 'superadmin' THEN (SELECT email FROM admins WHERE id = us.usuario_id LIMIT 1)
             ELSE NULL
           END as user_email,
-          CASE 
+          CASE
             WHEN us.usuario_tipo = 'cliente' THEN (SELECT p.nome_empresa FROM clientes c JOIN provedores p ON c.tenant_id = p.tenant_id WHERE c.id = us.usuario_id LIMIT 1)
             WHEN us.usuario_tipo = 'parceiro' THEN (SELECT p.nome_empresa FROM parceiros pa JOIN provedores p ON pa.tenant_id = p.tenant_id WHERE pa.id = us.usuario_id LIMIT 1)
+            WHEN us.usuario_tipo = 'provedor' THEN (SELECT nome_empresa FROM provedores WHERE id = us.usuario_id LIMIT 1)
             ELSE NULL
           END as provider_name,
-          CASE 
+          CASE
             WHEN us.usuario_tipo = 'cliente' THEN (SELECT c.tenant_id FROM clientes c WHERE c.id = us.usuario_id LIMIT 1)
             WHEN us.usuario_tipo = 'parceiro' THEN (SELECT pa.tenant_id FROM parceiros pa WHERE pa.id = us.usuario_id LIMIT 1)
-            WHEN us.usuario_tipo = 'admin' THEN (SELECT p.tenant_id FROM provedores p WHERE p.id = us.usuario_id LIMIT 1)
+            WHEN us.usuario_tipo = 'provedor' THEN (SELECT p.tenant_id FROM provedores p WHERE p.id = us.usuario_id LIMIT 1)
             ELSE NULL
           END as tenant_id
         FROM user_sessions us
@@ -133,40 +134,28 @@ export async function GET(request) {
 
     const sessoesResult = await pool.query(sessoesQuery, params)
 
-    // Estatísticas de sessões
+    // Estatísticas de sessões com queries separadas para evitar problemas de agregação
     const statsQuery = `
-      WITH session_stats AS (
-        SELECT 
-          COUNT(DISTINCT CONCAT(tl.usuario_tipo, '_', tl.usuario_id)) as total_sessions,
-          COUNT(DISTINCT tl.usuario_id) as unique_users,
-          COUNT(DISTINCT CONCAT(tl.usuario_tipo, '_', tl.usuario_id)) FILTER (
-            WHERE MAX(tl.created_at) > NOW() - INTERVAL '1 hour'
-          ) as active_sessions,
-          COUNT(DISTINCT CONCAT(tl.usuario_tipo, '_', tl.usuario_id)) FILTER (
-            WHERE MAX(tl.created_at) BETWEEN NOW() - INTERVAL '24 hours' AND NOW() - INTERVAL '1 hour'
-          ) as expired_sessions,
-          AVG(EXTRACT(EPOCH FROM (MAX(tl.created_at) - MIN(tl.created_at))) / 60) as avg_session_duration
+      WITH user_sessions AS (
+        SELECT DISTINCT
+          tl.usuario_tipo,
+          tl.usuario_id,
+          MAX(tl.created_at) as last_activity,
+          MIN(tl.created_at) as first_activity,
+          COUNT(DISTINCT tl.ip_address) as unique_ips
         FROM tenant_logs tl
         WHERE (tl.acao ILIKE '%login%' OR tl.acao ILIKE '%acesso%')
           AND tl.created_at >= NOW() - INTERVAL '7 days'
         GROUP BY tl.usuario_tipo, tl.usuario_id
       )
-      SELECT 
-        SUM(total_sessions) as total_sessions,
-        SUM(active_sessions) as active_sessions,
-        SUM(expired_sessions) as expired_sessions,
-        SUM(unique_users) as unique_users,
-        COALESCE(AVG(avg_session_duration), 0) as avg_session_duration,
-        -- Detectar sessões suspeitas (múltiplos IPs para mesmo usuário)
-        COUNT(*) FILTER (WHERE suspicious_ips > 1) as suspicious_sessions
-      FROM (
-        SELECT 
-          ss.*,
-          COUNT(DISTINCT tl2.ip_address) as suspicious_ips
-        FROM session_stats ss
-        LEFT JOIN tenant_logs tl2 ON tl2.created_at >= NOW() - INTERVAL '24 hours'
-        GROUP BY ss.total_sessions, ss.active_sessions, ss.expired_sessions, ss.unique_users, ss.avg_session_duration
-      ) subq
+      SELECT
+        COUNT(*) as total_sessions,
+        COUNT(*) as unique_users,
+        COUNT(*) FILTER (WHERE last_activity > NOW() - INTERVAL '1 hour') as active_sessions,
+        COUNT(*) FILTER (WHERE last_activity BETWEEN NOW() - INTERVAL '24 hours' AND NOW() - INTERVAL '1 hour') as expired_sessions,
+        COALESCE(AVG(EXTRACT(EPOCH FROM (last_activity - first_activity)) / 60), 0) as avg_session_duration,
+        COUNT(*) FILTER (WHERE unique_ips > 1) as suspicious_sessions
+      FROM user_sessions
     `
 
     const statsResult = await pool.query(statsQuery)

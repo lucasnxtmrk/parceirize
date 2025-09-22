@@ -229,24 +229,34 @@ export async function GET(request) {
       }
     ]
 
-    // Buscar estatísticas de uso dos endpoints baseado nos logs
+    // Buscar estatísticas de uso dos endpoints baseado nos logs (simplificado)
     const endpointUsageQuery = `
-      SELECT 
-        tl.detalhes::jsonb->>'endpoint' as endpoint_path,
+      SELECT
+        endpoint_path,
         COUNT(*) as total_requests,
-        AVG(CASE 
-          WHEN tl.detalhes::jsonb->>'response_time' IS NOT NULL 
-          THEN (tl.detalhes::jsonb->>'response_time')::int 
-          ELSE 500 
-        END) as avg_response_time,
-        COUNT(*) FILTER (WHERE tl.detalhes::text ILIKE '%erro%' OR tl.detalhes::text ILIKE '%error%') as error_count,
-        MAX(tl.created_at) as last_used
-      FROM tenant_logs tl
-      WHERE tl.acao ILIKE '%api%' 
-        OR tl.detalhes::text ILIKE '%/api/%'
-        AND tl.created_at >= NOW() - INTERVAL '30 days'
+        AVG(500) as avg_response_time,
+        COUNT(*) FILTER (WHERE detalhes::text ILIKE '%erro%' OR detalhes::text ILIKE '%error%') as error_count,
+        MAX(created_at) as last_used
+      FROM (
+        SELECT
+          CASE
+            WHEN tl.acao ILIKE '%dashboard%' THEN '/api/superadmin/dashboard'
+            WHEN tl.acao ILIKE '%cliente%' THEN '/api/admin/clientes'
+            WHEN tl.acao ILIKE '%parceiro%' THEN '/api/admin/parceiros'
+            WHEN tl.acao ILIKE '%voucher%' THEN '/api/vouchers'
+            WHEN tl.acao ILIKE '%produto%' THEN '/api/parceiro/produtos'
+            WHEN tl.acao ILIKE '%login%' THEN '/api/auth/nextauth'
+            WHEN tl.acao ILIKE '%validar%' THEN '/api/validarVoucher'
+            ELSE '/api/other'
+          END as endpoint_path,
+          tl.detalhes,
+          tl.created_at
+        FROM tenant_logs tl
+        WHERE (tl.acao ILIKE '%api%' OR tl.acao ILIKE '%dashboard%' OR tl.acao ILIKE '%cliente%' OR tl.acao ILIKE '%parceiro%')
+          AND tl.created_at >= NOW() - INTERVAL '30 days'
+      ) mapped_logs
+      WHERE endpoint_path != '/api/other'
       GROUP BY endpoint_path
-      HAVING endpoint_path IS NOT NULL
     `
 
     const usageResult = await pool.query(endpointUsageQuery)

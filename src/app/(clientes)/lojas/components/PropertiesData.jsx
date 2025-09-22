@@ -8,19 +8,23 @@ import PropertiesFilter from "./PropertiesFilter";
 import IconifyIcon from "@/components/wrappers/IconifyIcon";
 import { formatPrice } from "@/utils/formatters";
 import { Nichos } from "@/data/nichos";
-import { FaShoppingBag, FaCopy } from "react-icons/fa";
+import { FaShoppingBag } from "react-icons/fa";
 import Button from "@/components/ui/button";
 import ProductCard from "@/components/ui/ProductCard";
 import { CardLoading } from "@/components/ui/Loading";
 import { useRouter } from "next/navigation";
 
-// 🏪 Card de Loja/Parceiro usando ProductCard genérico
+// 🏪 Card de Loja/Parceiro customizado
 const LojaCard = ({
   id,
   nome_empresa,
   nicho,
   foto,
   email,
+  cidade,
+  estado,
+  cep,
+  endereco,
   total_produtos,
   menor_preco,
   maior_preco,
@@ -30,64 +34,126 @@ const LojaCard = ({
   const router = useRouter();
   const nichoInfo = Nichos.find(n => n.id === Number(nicho));
   const hasProducts = total_produtos > 0;
-  
-  const handleViewProducts = () => {
+
+
+  const handleViewParceiro = () => {
     router.push(`/lojas/${id}`);
   };
 
-  const handleCopyVoucher = async () => {
-    try {
-      // Aqui você pode buscar o voucher do cliente ou usar um código padrão
-      const voucherCode = "CLIENTE2024"; // Substituir pela lógica real de voucher
-      await navigator.clipboard.writeText(voucherCode);
-      
-      // Você pode adicionar uma notificação de sucesso aqui
-      alert("Voucher copiado para a área de transferência!");
-    } catch (error) {
-      console.error("Erro ao copiar voucher:", error);
-      alert("Erro ao copiar voucher. Tente novamente.");
+  const formatLocation = () => {
+    if (cidade && estado) {
+      return `${cidade}, ${estado}`;
     }
+    if (estado) {
+      return estado;
+    }
+    return null;
   };
 
-  // Preparar dados para o ProductCard genérico
+  const location = formatLocation();
   const priceRange = hasProducts && menor_preco > 0 ? {
     min: formatPrice(menor_preco),
     max: maior_preco > menor_preco ? formatPrice(maior_preco) : null
   } : null;
 
-  const badges = [
-    // Badge de produtos
-    ...(hasProducts ? [{
-      label: total_produtos,
-      variant: 'primary',
-      icon: 'heroicons:cube',
-      position: 'top-0 start-0',
-      style: { zIndex: 10 }
-    }] : [])
-  ];
-
-  const category = nichoInfo ? {
-    name: nichoInfo.nome,
-    icon: nichoInfo.icone
-  } : { name: "Categoria" };
-
   return (
-    <ProductCard
-      id={id}
-      title={nome_empresa}
-      subtitle={email ? `📧 ${email}` : null}
-      image={foto && foto.trim() !== "" ? foto : "/assets/images/avatar.jpg"}
-      category={category}
-      priceRange={priceRange}
-      discount={maior_desconto}
-      badges={badges}
-      status={hasProducts ? 'available' : 'coming_soon'}
-      onAction={hasProducts ? handleViewProducts : handleCopyVoucher}
-      actionLabel={hasProducts ? "Ver Produtos" : "Copiar Voucher"}
-      actionIcon={hasProducts ? FaShoppingBag : FaCopy}
-      index={index}
-      className="loja-card"
-    />
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1 }}
+      className="h-100"
+    >
+      <Card className="h-100 shadow-sm border">
+        <CardBody className="p-3 d-flex flex-column">
+          {/* Header com imagem pequena */}
+          <div className="d-flex align-items-start mb-2">
+            <div className="position-relative me-3">
+              <Image
+                src={foto && foto.trim() !== "" ? foto : "/assets/images/avatar.jpg"}
+                alt={nome_empresa}
+                width={50}
+                height={50}
+                className="rounded"
+                style={{ objectFit: "cover" }}
+              />
+              {maior_desconto > 0 && (
+                <Badge
+                  bg="light"
+                  text="dark"
+                  className="position-absolute top-0 start-100 translate-middle"
+                  style={{ fontSize: "0.6rem" }}
+                >
+                  -{maior_desconto}%
+                </Badge>
+              )}
+            </div>
+
+            <div className="flex-grow-1">
+              <h6 className="fw-bold mb-1">{nome_empresa}</h6>
+
+              {/* Categoria inline */}
+              {nichoInfo && (
+                <Badge bg="secondary" className="small me-2">
+                  {nichoInfo.nome}
+                </Badge>
+              )}
+
+              {/* Badge de produtos */}
+              {hasProducts && (
+                <Badge bg="light" text="dark" className="small">
+                  {total_produtos} produtos
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          {/* Informações compactas */}
+          <div className="mb-2">
+            {/* Localização */}
+            {location && (
+              <div className="d-flex align-items-center text-muted small mb-1">
+                <IconifyIcon icon="heroicons:map-pin" className="me-1" size={12} />
+                {location}
+              </div>
+            )}
+
+            {/* Email */}
+            {email && (
+              <div className="d-flex align-items-center text-muted small mb-1">
+                <IconifyIcon icon="heroicons:envelope" className="me-1" size={12} />
+                {email}
+              </div>
+            )}
+
+            {/* Preços */}
+            {priceRange && (
+              <div className="d-flex align-items-center text-muted small">
+                <IconifyIcon icon="heroicons:currency-dollar" className="me-1" size={12} />
+                <span className="fw-bold text-dark">
+                  {priceRange.max ? `${priceRange.min} - ${priceRange.max}` : priceRange.min}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Spacer para manter botões alinhados */}
+          <div className="flex-grow-1"></div>
+
+          {/* Ação única */}
+          <div className="d-grid">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleViewParceiro}
+              className="d-flex align-items-center justify-content-center"
+            >
+              <FaShoppingBag className="me-2" size={12} />
+              Ver Parceiro
+            </Button>
+          </div>
+        </CardBody>
+      </Card>
+    </motion.div>
   );
 };
 
@@ -161,9 +227,9 @@ const PropertiesData = () => {
   }, []);
 
   // Aplicar filtro - memoizado para evitar re-renders infinitos
-  const handleFilterChange = useCallback(({ nichos, search, hasDiscount }) => {
+  const handleFilterChange = useCallback(({ nichos, search, hasDiscount, estado, cidade, hasProducts }) => {
     let filtered = [...parceiros];
-    const hasActiveFilters = nichos.length > 0 || search.trim() !== "" || hasDiscount;
+    const hasActiveFilters = nichos.length > 0 || search.trim() !== "" || hasDiscount || estado || cidade || hasProducts;
     setHasFilters(hasActiveFilters);
 
     if (nichos.length > 0) {
@@ -181,6 +247,24 @@ const PropertiesData = () => {
     if (hasDiscount) {
       filtered = filtered.filter(parceiro =>
         parceiro.maior_desconto && Number(parceiro.maior_desconto) > 0
+      );
+    }
+
+    if (estado) {
+      filtered = filtered.filter(parceiro =>
+        parceiro.estado === estado
+      );
+    }
+
+    if (cidade) {
+      filtered = filtered.filter(parceiro =>
+        parceiro.cidade === cidade
+      );
+    }
+
+    if (hasProducts) {
+      filtered = filtered.filter(parceiro =>
+        parceiro.total_produtos > 0
       );
     }
 

@@ -34,9 +34,9 @@ export const MENU_ITEMS = [{
   url: '/pedidos'
 },
 {
-  key: 'perfil',
+  key: 'meu-perfil',
   label: 'Meu Perfil',
   icon: 'ri:user-line',
-  url: '/perfil'
+  url: '/meu-perfil'
 },
  ];

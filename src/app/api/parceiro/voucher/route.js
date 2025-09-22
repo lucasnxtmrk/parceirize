@@ -78,7 +78,7 @@ export async function PUT(req) {
     }
 
     const body = await req.json();
-    const { id, desconto, limite_uso } = body;
+    const { id, limite_uso } = body;
 
     // Buscar o ID do parceiro logado
     const parceiroQuery = `SELECT id FROM parceiros WHERE email = $1`;
@@ -90,14 +90,15 @@ export async function PUT(req) {
 
     const parceiro_id = parceiroResult.rows[0].id;
 
-    // Atualizar o voucher
+    // Atualizar o voucher - parceiro só pode alterar limite de uso
+    // Desconto só pode ser alterado pelo provedor (acordo de contrato)
     const updateQuery = `
-      UPDATE vouchers 
-      SET desconto = $1, limite_uso = $2, data_atualizacao = NOW()
-      WHERE id = $3 AND parceiro_id = $4
+      UPDATE vouchers
+      SET limite_uso = $1, data_atualizacao = NOW()
+      WHERE id = $2 AND parceiro_id = $3
     `;
-    
-    const result = await pool.query(updateQuery, [desconto, limite_uso, id, parceiro_id]);
+
+    const result = await pool.query(updateQuery, [limite_uso, id, parceiro_id]);
 
     if (result.rowCount === 0) {
       return new Response(JSON.stringify({ error: "Voucher não encontrado ou sem permissão" }), { status: 404 });

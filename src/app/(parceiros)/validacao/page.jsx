@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from 'react';
-import { Card, CardBody, Form, Button, Nav, Tab, Row, Col, Table, CardTitle } from 'react-bootstrap';
+import { useState, useEffect } from 'react';
+import { Card, CardBody, Form, Button, Nav, Tab, Row, Col, Table, CardTitle, Alert, Spinner } from 'react-bootstrap';
 import { motion } from 'framer-motion';
-import { FaQrcode, FaCamera, FaKeyboard } from 'react-icons/fa';
+import { FaQrcode, FaCamera, FaKeyboard, FaTicketAlt } from 'react-icons/fa';
 import QRCodeScanner from '@/components/shared/QRCodeScanner';
 import PageTransition from '@/components/shared/PageTransition';
 import ComponentContainerCard from '@/components/ComponentContainerCard';
@@ -11,19 +11,44 @@ import { useToast } from '@/components/ui/toast';
 
 const Validacao = () => {
     const [activeTab, setActiveTab] = useState('voucher');
-    
+
     // Estados para voucher
     const [clientId, setClientId] = useState('');
-    const [couponCode, setCouponCode] = useState('');
-    
+    const [voucherData, setVoucherData] = useState(null);
+    const [loadingVoucher, setLoadingVoucher] = useState(true);
+
     // Estados para pedidos
     const [qrCode, setQrCode] = useState('');
     const [pedidoDetails, setPedidoDetails] = useState(null);
     const [showQRScanner, setShowQRScanner] = useState(false);
-    
+
     // Estados gerais
     const [loading, setLoading] = useState(false);
     const toast = useToast();
+
+    // Buscar o voucher do parceiro ao carregar a página
+    useEffect(() => {
+        const fetchVoucherData = async () => {
+            try {
+                setLoadingVoucher(true);
+                const response = await fetch('/api/parceiro/meu-voucher');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.voucher) {
+                        setVoucherData(data.voucher);
+                    }
+                } else {
+                    console.error('Erro ao buscar voucher do parceiro');
+                }
+            } catch (error) {
+                console.error('Erro ao buscar voucher:', error);
+            } finally {
+                setLoadingVoucher(false);
+            }
+        };
+
+        fetchVoucherData();
+    }, []);
 
     const handleVoucherSubmit = async (e) => {
         e.preventDefault();
@@ -35,7 +60,10 @@ const Validacao = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ clientId, couponCode }),
+                body: JSON.stringify({
+                    clientId,
+                    couponCode: voucherData?.codigo || ''
+                }),
             });
 
             const data = await response.json();
@@ -43,7 +71,6 @@ const Validacao = () => {
             if (response.ok) {
                 toast.success('Voucher Validado!', data.message);
                 setClientId('');
-                setCouponCode('');
             } else {
                 toast.error('Erro na Validação', data.error || "Erro ao validar o voucher.");
             }
@@ -129,45 +156,178 @@ const Validacao = () => {
                 <Tab.Content>
                     {/* Tab de Vouchers */}
                     <Tab.Pane eventKey="voucher">
-                        <Card>
-                            <CardBody>
-                                <h4>Validação de Vouchers</h4>
-                                <p className="text-muted">Valide vouchers tradicionais usando ID da carteirinha e código do voucher.</p>
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3 }}
+                        >
+                            <Card className="border-0 shadow-sm">
+                                <CardBody className="p-4">
+                                    <div className="text-center mb-4">
+                                        <div className="bg-primary bg-opacity-10 rounded-circle p-3 d-inline-flex mb-3">
+                                            <FaQrcode size={32} className="text-primary" />
+                                        </div>
+                                        <h4 className="fw-bold mb-2">Validação de Voucher Geral</h4>
+                                        <p className="text-muted mb-0">
+                                            Valide cupons gerais do seu estabelecimento de forma rápida e segura
+                                        </p>
+                                    </div>
 
+                                    <div className="row g-3 mb-4">
+                                        <div className="col-md-4">
+                                            <div className="d-flex align-items-center p-3 border rounded h-100">
+                                                <div className="bg-primary rounded-circle p-2 me-3">
+                                                    <FaKeyboard size={16} className="text-white" />
+                                                </div>
+                                                <div>
+                                                    <div className="fw-bold text-dark">1. Digite o ID</div>
+                                                    <small className="text-muted">ID da carteirinha</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-4">
+                                            <div className="d-flex align-items-center p-3 border rounded h-100">
+                                                <div className="bg-dark rounded-circle p-2 me-3">
+                                                    <FaQrcode size={16} className="text-white" />
+                                                </div>
+                                                <div>
+                                                    <div className="fw-bold text-dark">2. Validar</div>
+                                                    <small className="text-muted">Sistema verifica</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-4">
+                                            <div className="d-flex align-items-center p-3 border rounded h-100">
+                                                <div className="bg-primary rounded-circle p-2 me-3">
+                                                    <FaCamera size={16} className="text-white" />
+                                                </div>
+                                                <div>
+                                                    <div className="fw-bold text-dark">3. Confirmar</div>
+                                                    <small className="text-muted">Desconto aplicado</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
 
-                                <Form onSubmit={handleVoucherSubmit}>
-                                    <Row>
-                                        <Col md={6}>
-                                            <Form.Group className="mb-3" controlId="clientId">
-                                                <Form.Label>ID da Carteirinha do Cliente</Form.Label>
-                                                <Form.Control
-                                                    type="text"
-                                                    value={clientId}
-                                                    onChange={(e) => setClientId(e.target.value)}
-                                                    placeholder="Ex: 12345"
-                                                    required
-                                                />
-                                            </Form.Group>
-                                        </Col>
-                                        <Col md={6}>
-                                            <Form.Group className="mb-3" controlId="couponCode">
-                                                <Form.Label>Código do Voucher</Form.Label>
-                                                <Form.Control
-                                                    type="text"
-                                                    value={couponCode}
-                                                    onChange={(e) => setCouponCode(e.target.value)}
-                                                    placeholder="Ex: DESC10"
-                                                    required
-                                                />
-                                            </Form.Group>
-                                        </Col>
-                                    </Row>
-                                    <Button type="submit" disabled={loading} variant="primary">
-                                        {loading ? "Validando..." : "Validar Voucher"}
-                                    </Button>
-                                </Form>
-                            </CardBody>
-                        </Card>
+                                    {loadingVoucher ? (
+                                        <div className="text-center py-4">
+                                            <Spinner animation="border" className="me-2" />
+                                            <span>Carregando dados do voucher...</span>
+                                        </div>
+                                    ) : !voucherData ? (
+                                        <Alert variant="warning">
+                                            <FaTicketAlt className="me-2" />
+                                            Você ainda não configurou seu voucher. Configure primeiro na página "Meu Voucher".
+                                        </Alert>
+                                    ) : (
+                                        <>
+                                            {/* Informações do Voucher */}
+                                            <Card className="bg-light border-0 mb-4">
+                                                <CardBody className="p-3">
+                                                    <div className="d-flex align-items-center justify-content-between">
+                                                        <div>
+                                                            <h6 className="fw-bold mb-1 text-primary">
+                                                                <FaTicketAlt className="me-2" />
+                                                                Seu Voucher Ativo
+                                                            </h6>
+                                                            <div className="d-flex align-items-center gap-3">
+                                                                <div>
+                                                                    <small className="text-muted d-block">Título:</small>
+                                                                    <span className="fw-bold">{voucherData.titulo}</span>
+                                                                </div>
+                                                                <div>
+                                                                    <small className="text-muted d-block">Código:</small>
+                                                                    <code className="bg-primary text-white px-2 py-1 rounded">
+                                                                        {voucherData.codigo}
+                                                                    </code>
+                                                                </div>
+                                                                <div>
+                                                                    <small className="text-muted d-block">Desconto:</small>
+                                                                    <span className="fw-bold text-success">
+                                                                        {voucherData.tipo_desconto === 'percentual'
+                                                                            ? `${voucherData.valor_desconto}%`
+                                                                            : `R$ ${voucherData.valor_desconto}`
+                                                                        }
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </CardBody>
+                                            </Card>
+
+                                            <Form onSubmit={handleVoucherSubmit}>
+                                                <Row className="g-3">
+                                                    <Col md={12}>
+                                                        <Form.Group controlId="clientId">
+                                                            <Form.Label className="fw-bold mb-2">
+                                                                <FaKeyboard className="me-2 text-primary" />
+                                                                ID da Carteirinha do Cliente
+                                                            </Form.Label>
+                                                            <Form.Control
+                                                                type="text"
+                                                                value={clientId}
+                                                                onChange={(e) => setClientId(e.target.value)}
+                                                                placeholder="Digite o ID da carteirinha"
+                                                                size="lg"
+                                                                className="border-2"
+                                                                required
+                                                            />
+                                                            <Form.Text className="text-muted">
+                                                                Encontre na carteirinha digital do cliente
+                                                            </Form.Text>
+                                                        </Form.Group>
+                                                    </Col>
+                                                </Row>
+
+                                                <div className="mt-4 d-grid">
+                                                    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                                                        <Button
+                                                            type="submit"
+                                                            disabled={loading || !clientId}
+                                                            variant="primary"
+                                                            size="lg"
+                                                            className="fw-bold py-3"
+                                                        >
+                                                            {loading ? (
+                                                                <>
+                                                                    <span className="spinner-border spinner-border-sm me-2" />
+                                                                    Validando voucher...
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <FaQrcode className="me-2" />
+                                                                    Validar Voucher
+                                                                </>
+                                                            )}
+                                                        </Button>
+                                                    </motion.div>
+                                                </div>
+                                            </Form>
+                                        </>
+                                    )}
+
+                                    {voucherData && (
+                                        <div className="mt-4 p-3 border rounded bg-light">
+                                            <h6 className="fw-bold text-dark mb-2">
+                                                💡 Como validar vouchers
+                                            </h6>
+                                            <div className="text-muted">
+                                                <div className="mb-1"><strong>1.</strong> Peça ao cliente para mostrar a carteirinha digital</div>
+                                                <div className="mb-1"><strong>2.</strong> Digite o ID da carteirinha no campo acima</div>
+                                                <div className="mb-1"><strong>3.</strong> Seu código de voucher já está configurado automaticamente</div>
+                                                <div><strong>4.</strong> Clique em validar e confirme o desconto de <span className="fw-bold text-primary">
+                                                    {voucherData.tipo_desconto === 'percentual'
+                                                        ? `${voucherData.valor_desconto}%`
+                                                        : `R$ ${voucherData.valor_desconto}`
+                                                    }</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </CardBody>
+                            </Card>
+                        </motion.div>
                     </Tab.Pane>
 
                     {/* Tab de Pedidos */}

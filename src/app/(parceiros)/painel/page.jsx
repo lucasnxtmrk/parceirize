@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { Row, Col, Card, CardTitle, CardBody } from 'react-bootstrap';
-import { 
-    FaUsers, FaMoneyBillWave, FaShoppingBag, FaTicketAlt, 
+import {
+    FaUsers, FaMoneyBillWave, FaShoppingBag, FaTicketAlt,
     FaChartLine, FaPercentage, FaUserFriends, FaClock,
-    FaPlus, FaFileExport, FaEye, FaTrophy
+    FaPlus, FaFileExport, FaEye
 } from 'react-icons/fa';
 import ComponentContainerCard from '@/components/ComponentContainerCard';
 import { CardLoading } from '@/components/ui/Loading';
@@ -17,7 +17,6 @@ import {
     DailySalesChart,
     HourlySalesChart,
     TopProductsBarChart,
-    MonthlyGoalGauge,
     ParceiroKPICard
 } from './components/ParceiroModernCharts';
 
@@ -281,26 +280,22 @@ const DashboardPage = () => {
                         />
                     </Col>
                     <Col xl={3} lg={6} md={6}>
-                        <MonthlyGoalGauge 
-                            current={stats?.receitaMes || 0} 
-                            target={stats?.metaMensal || 1000} 
+                        <ParceiroKPICard
+                            title="Solicitações Pendentes"
+                            value={stats?.solicitacoesPendentes || 0}
+                            subtitle="Vouchers aguardando aprovação"
+                            icon={FaClock}
+                            color="#f59e0b"
                         />
                     </Col>
                     <Col xl={3} lg={6} md={6}>
-                        <Card className="h-100 border-0 shadow-sm bg-gradient" 
-                              style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
-                            <CardBody className="text-white text-center d-flex flex-column justify-content-center">
-                                <FaTrophy size={36} className="mb-3 mx-auto" style={{ color: '#fbbf24' }} />
-                                <h5 className="mb-2">🏆 Destaque</h5>
-                                <p className="small mb-0">
-                                    {topProdutos && topProdutos.length > 0 ? (
-                                        <>Produto top: <strong>{topProdutos[0].nome.substring(0, 15)}...</strong></>
-                                    ) : (
-                                        <>Cadastre produtos para começar!</>
-                                    )}
-                                </p>
-                            </CardBody>
-                        </Card>
+                        <ParceiroKPICard
+                            title="Vouchers Aprovados"
+                            value={stats?.vouchersAprovados || 0}
+                            subtitle="Total de vouchers liberados"
+                            icon={FaTicketAlt}
+                            color="#10b981"
+                        />
                     </Col>
                 </Row>
             </div>

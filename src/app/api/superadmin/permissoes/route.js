@@ -203,13 +203,13 @@ export async function GET(request) {
 
     // Calcular uso das permissões baseado nos logs
     const permissionUsageQuery = `
-      SELECT 
-        CASE 
+      SELECT
+        CASE
           WHEN acao ILIKE '%sistema%' OR acao ILIKE '%provedor%' THEN 'system:manage'
           WHEN acao ILIKE '%dashboard%' OR acao ILIKE '%painel%' THEN 'dashboard:view'
           WHEN acao ILIKE '%cliente%' AND acao NOT ILIKE '%carteirinha%' THEN 'customers:manage'
-          WHEN acao ILIKE '%parceiro%' AND usuario_tipo = 'admin' THEN 'partners:manage'
-          WHEN acao ILIKE '%voucher%' AND usuario_tipo = 'admin' THEN 'vouchers:manage'
+          WHEN acao ILIKE '%parceiro%' AND usuario_tipo = 'provedor' THEN 'partners:manage'
+          WHEN acao ILIKE '%voucher%' AND usuario_tipo = 'provedor' THEN 'vouchers:manage'
           WHEN acao ILIKE '%produto%' THEN 'products:manage'
           WHEN acao ILIKE '%cupom%' THEN 'coupons:manage'
           WHEN acao ILIKE '%venda%' OR acao ILIKE '%relat%' THEN 'sales:view'
@@ -219,14 +219,14 @@ export async function GET(request) {
           WHEN acao ILIKE '%perfil%' THEN 'profile:manage'
           WHEN acao ILIKE '%login%' OR acao ILIKE '%acesso%' THEN 'auth:login'
           ELSE 'other'
-        END as permission,
+        END as mapped_permission,
         usuario_tipo,
         COUNT(*) as usage_count,
         COUNT(DISTINCT usuario_id) as unique_users
       FROM tenant_logs
       WHERE created_at >= NOW() - INTERVAL '7 days'
-      GROUP BY permission, usuario_tipo
-      HAVING permission != 'other'
+      GROUP BY mapped_permission, usuario_tipo
+      HAVING mapped_permission != 'other'
       ORDER BY usage_count DESC
     `
 
@@ -234,16 +234,16 @@ export async function GET(request) {
 
     // Processar dados de uso
     const permissionUsage = usageResult.rows.reduce((acc, row) => {
-      if (!acc[row.permission]) {
-        acc[row.permission] = {
+      if (!acc[row.mapped_permission]) {
+        acc[row.mapped_permission] = {
           totalUsage: 0,
           byRole: {},
           uniqueUsers: 0
         }
       }
-      acc[row.permission].totalUsage += parseInt(row.usage_count)
-      acc[row.permission].byRole[row.usuario_tipo] = parseInt(row.usage_count)
-      acc[row.permission].uniqueUsers += parseInt(row.unique_users)
+      acc[row.mapped_permission].totalUsage += parseInt(row.usage_count)
+      acc[row.mapped_permission].byRole[row.usuario_tipo] = parseInt(row.usage_count)
+      acc[row.mapped_permission].uniqueUsers += parseInt(row.unique_users)
       return acc
     }, {})
 

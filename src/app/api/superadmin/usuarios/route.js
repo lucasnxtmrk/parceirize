@@ -47,13 +47,13 @@ export async function GET(request) {
         UNION ALL
         
         -- Clientes
-        SELECT 
+        SELECT
           c.id,
           'cliente' as user_type,
           c.nome,
           c.email,
           c.ativo as status,
-          c.created_at,
+          c.data_criacao as created_at,
           c.tenant_id,
           NULL as plano_id,
           NULL as plano_nome,
@@ -62,17 +62,17 @@ export async function GET(request) {
           NULL as total_parceiros,
           'customer' as role
         FROM clientes c
-        
+
         UNION ALL
-        
+
         -- Parceiros
-        SELECT 
+        SELECT
           pa.id,
           'parceiro' as user_type,
-          pa.nome,
+          pa.nome_empresa as nome,
           pa.email,
           pa.ativo as status,
-          pa.created_at,
+          pa.data_criacao as created_at,
           pa.tenant_id,
           NULL as plano_id,
           NULL as plano_nome,
@@ -157,8 +157,8 @@ export async function GET(request) {
         
         -- Novos usuários este mês
         (SELECT COUNT(*) FROM provedores WHERE created_at >= date_trunc('month', NOW())) as new_admins_month,
-        (SELECT COUNT(*) FROM clientes WHERE created_at >= date_trunc('month', NOW())) as new_clientes_month,
-        (SELECT COUNT(*) FROM parceiros WHERE created_at >= date_trunc('month', NOW())) as new_parceiros_month,
+        (SELECT COUNT(*) FROM clientes WHERE data_criacao >= date_trunc('month', NOW())) as new_clientes_month,
+        (SELECT COUNT(*) FROM parceiros WHERE data_criacao >= date_trunc('month', NOW())) as new_parceiros_month,
         
         -- Usuários ativos (com atividade nos últimos 7 dias)
         (SELECT COUNT(DISTINCT CONCAT(tl.usuario_tipo, '_', tl.usuario_id))

@@ -97,157 +97,213 @@ export default function CarrinhoFlutuante() {
       </div>
 
       {/* Offcanvas do Carrinho */}
-      <Offcanvas show={show} onHide={() => setShow(false)} placement="end" style={{ width: "400px" }}>
-        <Offcanvas.Header closeButton>
-          <Offcanvas.Title>
-            <FaShoppingCart className="me-2" />
-            Meu Carrinho ({totalItens})
+      <Offcanvas show={show} onHide={() => setShow(false)} placement="end" style={{ width: "450px" }}>
+        <Offcanvas.Header closeButton className="border-0 pb-0">
+          <Offcanvas.Title className="d-flex align-items-center">
+            <div className="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
+              <FaShoppingCart className="text-primary" size={20} />
+            </div>
+            <div>
+              <h5 className="mb-0">Meu Carrinho</h5>
+              <small className="text-muted">{totalItens} {totalItens === 1 ? 'item' : 'itens'}</small>
+            </div>
           </Offcanvas.Title>
         </Offcanvas.Header>
-        <Offcanvas.Body>
-          {alert.show && (
-            <Alert variant={alert.variant} className="mb-3">
-              {alert.message}
-            </Alert>
-          )}
-
+        <Offcanvas.Body className="px-3">
           {!carrinho.itens || carrinho.itens.length === 0 ? (
             <div className="text-center py-5">
-              <FaShoppingCart size={48} className="text-muted mb-3" />
-              <p className="text-muted">Seu carrinho está vazio</p>
-              <Button variant="outline-primary" onClick={() => setShow(false)}>
-                Continuar Comprando
+              <div className="bg-light bg-opacity-50 rounded-circle p-4 d-inline-flex mb-4">
+                <FaShoppingCart size={48} className="text-muted" />
+              </div>
+              <h5 className="text-muted mb-3">Seu carrinho está vazio</h5>
+              <p className="text-muted mb-4">Adicione produtos aos seus favoritos e eles aparecerão aqui!</p>
+              <Button
+                variant="primary"
+                className="px-4 py-2"
+                onClick={() => setShow(false)}
+              >
+                Descobrir Produtos
               </Button>
             </div>
           ) : (
             <>
               {/* Lista de Itens */}
-              <ListGroup variant="flush" className="mb-3">
-                {carrinho.itens.map((item) => (
-                  <ListGroup.Item key={item.produto_id} className="px-0">
-                    <div className="d-flex align-items-start">
-                      {item.produto_imagem && (
-                        <img
-                          src={item.produto_imagem}
-                          alt={item.produto_nome}
-                          className="me-3 rounded"
-                          style={{ width: "50px", height: "50px", objectFit: "cover" }}
-                        />
-                      )}
-                      <div className="flex-grow-1">
-                        <h6 className="mb-1">{item.produto_nome}</h6>
-                        <small className="text-muted">{item.parceiro_nome}</small>
-                        {item.desconto > 0 && (
-                          <div className="small text-success">
-                            <span className="badge bg-success me-1">{item.desconto}% OFF</span>
-                            Economize {formatPrice(item.economia)}
-                          </div>
-                        )}
-                        <div className="d-flex justify-content-between align-items-center mt-2">
-                          <div className="d-flex align-items-center gap-1">
-                            <Button
-                              variant="outline-secondary"
-                              size="sm"
-                              style={{ width: "24px", height: "24px", padding: 0 }}
-                              onClick={() => atualizarQuantidade(item.produto_id, item.quantidade - 1)}
-                              disabled={loading}
-                            >
-                              <FaMinus size={10} />
-                            </Button>
-                            <span className="mx-2 fw-bold" style={{ minWidth: "20px", textAlign: "center" }}>
-                              {item.quantidade}
-                            </span>
-                            <Button
-                              variant="outline-secondary"
-                              size="sm"
-                              style={{ width: "24px", height: "24px", padding: 0 }}
-                              onClick={() => atualizarQuantidade(item.produto_id, item.quantidade + 1)}
-                              disabled={loading}
-                            >
-                              <FaPlus size={10} />
-                            </Button>
-                          </div>
-                          <div className="text-end">
-                            <div className="fw-bold text-primary">
-                              {formatPrice(item.subtotal)}
+              <div className="mb-4" style={{ maxHeight: "400px", overflowY: "auto" }}>
+                {carrinho.itens.map((item, index) => (
+                  <motion.div
+                    key={item.produto_id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: -300 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <Card className="mb-3 border-0 bg-light">
+                      <Card.Body className="p-3">
+                        <div className="d-flex align-items-start">
+                          {item.produto_imagem ? (
+                            <div className="position-relative me-3">
+                              <img
+                                src={item.produto_imagem}
+                                alt={item.produto_nome}
+                                className="rounded-3"
+                                style={{ width: "60px", height: "60px", objectFit: "cover" }}
+                              />
+                              {item.desconto > 0 && (
+                                <Badge
+                                  bg="success"
+                                  className="position-absolute top-0 start-100 translate-middle"
+                                  style={{ fontSize: "0.65rem" }}
+                                >
+                                  -{item.desconto}%
+                                </Badge>
+                              )}
                             </div>
-                            <Button
-                              variant="link"
-                              size="sm"
-                              className="text-danger p-0"
-                              onClick={() => removerItem(item.produto_id)}
-                              disabled={loading}
-                            >
-                              <FaTrash size={12} />
-                            </Button>
+                          ) : (
+                            <div className="bg-secondary bg-opacity-25 rounded-3 d-flex align-items-center justify-content-center me-3" style={{ width: "60px", height: "60px" }}>
+                              <FaShoppingCart className="text-muted" size={20} />
+                            </div>
+                          )}
+
+                          <div className="flex-grow-1">
+                            <div className="d-flex justify-content-between align-items-start mb-2">
+                              <div>
+                                <h6 className="mb-1 fw-bold">{item.produto_nome}</h6>
+                                <small className="text-muted d-flex align-items-center">
+                                  <span className="badge bg-secondary bg-opacity-25 text-dark me-1" style={{ fontSize: "0.6rem" }}>
+                                    {item.parceiro_nome}
+                                  </span>
+                                </small>
+                              </div>
+                              <Button
+                                variant="link"
+                                size="sm"
+                                className="text-muted p-1"
+                                onClick={() => removerItem(item.produto_id)}
+                                disabled={loading}
+                                title="Remover item"
+                              >
+                                <FaTrash size={12} />
+                              </Button>
+                            </div>
+
+                            {item.desconto > 0 && (
+                              <div className="mb-2">
+                                <small className="text-success fw-bold">
+                                  💰 Economia de {formatPrice(item.economia)}
+                                </small>
+                              </div>
+                            )}
+
+                            <div className="d-flex justify-content-between align-items-center">
+                              <div className="d-flex align-items-center bg-white rounded-2 border p-1">
+                                <Button
+                                  variant="link"
+                                  size="sm"
+                                  className="text-muted p-1"
+                                  style={{ width: "32px", height: "32px" }}
+                                  onClick={() => atualizarQuantidade(item.produto_id, item.quantidade - 1)}
+                                  disabled={loading}
+                                >
+                                  <FaMinus size={12} />
+                                </Button>
+                                <span className="mx-3 fw-bold text-dark" style={{ minWidth: "24px", textAlign: "center", fontSize: "14px" }}>
+                                  {item.quantidade}
+                                </span>
+                                <Button
+                                  variant="link"
+                                  size="sm"
+                                  className="text-dark p-1"
+                                  style={{ width: "32px", height: "32px" }}
+                                  onClick={() => atualizarQuantidade(item.produto_id, item.quantidade + 1)}
+                                  disabled={loading}
+                                >
+                                  <FaPlus size={12} />
+                                </Button>
+                              </div>
+
+                              <div className="text-end">
+                                {item.desconto > 0 && (
+                                  <small className="text-muted text-decoration-line-through d-block">
+                                    {formatPrice(item.subtotal_original)}
+                                  </small>
+                                )}
+                                <div className="fw-bold text-primary fs-6">
+                                  {formatPrice(item.subtotal)}
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  </ListGroup.Item>
+                      </Card.Body>
+                    </Card>
+                  </motion.div>
                 ))}
-              </ListGroup>
+              </div>
 
               {/* Total */}
-              <div className="border-top pt-3 mb-3">
+              <div className="bg-white rounded-3 p-4 mb-3 shadow-sm border">
                 {carrinho.economia_total > 0 && (
                   <>
-                    <Row className="small text-muted">
-                      <Col>Subtotal:</Col>
-                      <Col className="text-end text-decoration-line-through">
+                    <div className="d-flex justify-content-between mb-2">
+                      <span className="text-muted">Subtotal:</span>
+                      <span className="text-muted text-decoration-line-through">
                         {formatPrice(carrinho.total_original)}
-                      </Col>
-                    </Row>
-                    <Row className="small text-success">
-                      <Col>Economia:</Col>
-                      <Col className="text-end">
+                      </span>
+                    </div>
+                    <div className="d-flex justify-content-between mb-3">
+                      <span className="text-success fw-bold">💰 Economia:</span>
+                      <span className="text-success fw-bold">
                         -{formatPrice(carrinho.economia_total)}
-                      </Col>
-                    </Row>
-                    <hr className="my-2" />
+                      </span>
+                    </div>
+                    <hr className="my-3" />
                   </>
                 )}
-                <Row>
-                  <Col>
-                    <strong>Total:</strong>
-                  </Col>
-                  <Col className="text-end">
-                    <strong className="h5 text-primary">
+                <div className="d-flex justify-content-between align-items-center">
+                  <div>
+                    <h6 className="mb-0">Total:</h6>
+                    <small className="text-muted">{totalItens} {totalItens === 1 ? 'item' : 'itens'}</small>
+                  </div>
+                  <div className="text-end">
+                    <h4 className="mb-0 text-primary fw-bold">
                       {formatPrice(carrinho.total)}
-                    </strong>
+                    </h4>
                     {carrinho.economia_total > 0 && (
-                      <div className="small text-success">
-                        Você economiza {formatPrice(carrinho.economia_total)}!
-                      </div>
+                      <small className="text-success fw-bold">
+                        Economia total: {formatPrice(carrinho.economia_total)}
+                      </small>
                     )}
-                  </Col>
-                </Row>
+                  </div>
+                </div>
               </div>
 
               {/* Ações */}
               <div className="d-grid gap-2">
-                {qrCode && (
-                  <Button 
-                    variant="outline-primary" 
-                    size="sm"
-                    onClick={handleShowQrCode}
-                    className="mb-2"
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="w-100 py-3 fw-bold"
+                    onClick={handleFinalizarPedido}
+                    disabled={loading || totalItens === 0}
                   >
-                    <FaEye className="me-2" />
-                    Ver QR Code do Carrinho
+                    {loading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" />
+                        Finalizando pedido...
+                      </>
+                    ) : (
+                      <>
+                        <FaQrcode className="me-2" />
+                        Finalizar Pedido
+                      </>
+                    )}
                   </Button>
-                )}
-                <Button 
-                  variant="success" 
-                  size="lg"
-                  onClick={handleFinalizarPedido}
-                  disabled={loading || totalItens === 0}
-                >
-                  <FaQrcode className="me-2" />
-                  {loading ? "Finalizando..." : "Finalizar Pedido"}
-                </Button>
-                <Button 
-                  variant="outline-secondary"
+                </motion.div>
+
+                <Button
+                  variant="primary"
+                  className="py-2 w-100"
                   onClick={() => setShow(false)}
                 >
                   Continuar Comprando
@@ -294,8 +350,11 @@ export default function CarrinhoFlutuante() {
             <LoadingSkeleton variant="card" height="250px" />
           )}
         </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowQrModal(false)}>
+        <Modal.Footer className="border-0">
+          <Button
+            variant="secondary"
+            onClick={() => setShowQrModal(false)}
+          >
             Fechar
           </Button>
         </Modal.Footer>

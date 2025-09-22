@@ -11,14 +11,30 @@ const PropertiesFilter = ({ onFilterChange, parceiros, filteredParceiros }) => {
   const [selectedNichos, setSelectedNichos] = useState([]);
   const [search, setSearch] = useState("");
   const [hasDiscount, setHasDiscount] = useState(false);
+  const [selectedEstado, setSelectedEstado] = useState("");
+  const [selectedCidade, setSelectedCidade] = useState("");
+  const [hasProducts, setHasProducts] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+
+  // Obter listas únicas de estados e cidades
+  const estados = [...new Set(parceiros?.filter(p => p.estado).map(p => p.estado))].sort();
+  const cidadesDisponiveis = selectedEstado
+    ? [...new Set(parceiros?.filter(p => p.estado === selectedEstado && p.cidade).map(p => p.cidade))].sort()
+    : [...new Set(parceiros?.filter(p => p.cidade).map(p => p.cidade))].sort();
 
   // Memoizar o callback de filtro para evitar chamadas desnecessárias
   const handleFilter = useCallback(() => {
     if (onFilterChange) {
-      onFilterChange({ nichos: selectedNichos, search, hasDiscount });
+      onFilterChange({
+        nichos: selectedNichos,
+        search,
+        hasDiscount,
+        estado: selectedEstado,
+        cidade: selectedCidade,
+        hasProducts
+      });
     }
-  }, [selectedNichos, search, hasDiscount, onFilterChange]);
+  }, [selectedNichos, search, hasDiscount, selectedEstado, selectedCidade, hasProducts, onFilterChange]);
 
   useEffect(() => {
     handleFilter();
@@ -34,9 +50,12 @@ const PropertiesFilter = ({ onFilterChange, parceiros, filteredParceiros }) => {
     setSelectedNichos([]);
     setSearch("");
     setHasDiscount(false);
+    setSelectedEstado("");
+    setSelectedCidade("");
+    setHasProducts(false);
   };
 
-  const hasActiveFilters = selectedNichos.length > 0 || search.trim() !== "" || hasDiscount;
+  const hasActiveFilters = selectedNichos.length > 0 || search.trim() !== "" || hasDiscount || selectedEstado || selectedCidade || hasProducts;
   
   // Stats compactos
   const totalProdutos = filteredParceiros?.reduce((acc, p) => acc + (p.total_produtos || 0), 0) || 0;
@@ -106,8 +125,8 @@ const PropertiesFilter = ({ onFilterChange, parceiros, filteredParceiros }) => {
                 transition={{ duration: 0.2 }}
               >
                 <Row className="g-3">
-                  {/* Campo de busca compacto */}
-                  <Col md={4}>
+                  {/* Primeira linha - Busca e Localização */}
+                  <Col md={3}>
                     <Form.Control
                       type="text"
                       placeholder="Buscar loja..."
@@ -117,32 +136,75 @@ const PropertiesFilter = ({ onFilterChange, parceiros, filteredParceiros }) => {
                       style={{ borderRadius: '4px' }}
                     />
                   </Col>
-                  
-                  {/* Filtro de desconto */}
-                  <Col md={3}>
-                    <Form.Check
-                      type="checkbox"
-                      id="hasDiscount"
-                      label="Com desconto"
-                      checked={hasDiscount}
-                      onChange={(e) => setHasDiscount(e.target.checked)}
-                      className="small"
-                    />
+
+                  <Col md={2}>
+                    <Form.Select
+                      size="sm"
+                      value={selectedEstado}
+                      onChange={(e) => {
+                        setSelectedEstado(e.target.value);
+                        setSelectedCidade(""); // Limpar cidade quando mudar estado
+                      }}
+                      style={{ borderRadius: '4px' }}
+                    >
+                      <option value="">Todos os estados</option>
+                      {estados.map(estado => (
+                        <option key={estado} value={estado}>{estado}</option>
+                      ))}
+                    </Form.Select>
                   </Col>
-                  
-                  {/* Categorias compactas */}
+
+                  <Col md={2}>
+                    <Form.Select
+                      size="sm"
+                      value={selectedCidade}
+                      onChange={(e) => setSelectedCidade(e.target.value)}
+                      style={{ borderRadius: '4px' }}
+                      disabled={!selectedEstado}
+                    >
+                      <option value="">Todas as cidades</option>
+                      {cidadesDisponiveis.map(cidade => (
+                        <option key={cidade} value={cidade}>{cidade}</option>
+                      ))}
+                    </Form.Select>
+                  </Col>
+
+                  {/* Checkboxes */}
                   <Col md={5}>
+                    <div className="d-flex gap-3 align-items-center">
+                      <Form.Check
+                        type="checkbox"
+                        id="hasDiscount"
+                        label="Com desconto"
+                        checked={hasDiscount}
+                        onChange={(e) => setHasDiscount(e.target.checked)}
+                        className="small"
+                      />
+                      <Form.Check
+                        type="checkbox"
+                        id="hasProducts"
+                        label="Com produtos"
+                        checked={hasProducts}
+                        onChange={(e) => setHasProducts(e.target.checked)}
+                        className="small"
+                      />
+                    </div>
+                  </Col>
+
+                  {/* Segunda linha - Categorias */}
+                  <Col xs={12}>
                     <div className="d-flex flex-wrap gap-1">
-                      {Nichos.slice(0, 6).map((nicho) => {
+                      <small className="text-muted align-self-center me-2">Categorias:</small>
+                      {Nichos.slice(0, 8).map((nicho) => {
                         const isSelected = selectedNichos.includes(nicho.id);
                         return (
                           <button
                             key={nicho.id}
                             onClick={() => handleNichoToggle(nicho.id)}
                             className={`btn btn-sm ${
-                              isSelected ? 'btn-dark' : 'btn-outline-secondary'
+                              isSelected ? 'btn-primary' : 'btn-outline-secondary'
                             }`}
-                            style={{ 
+                            style={{
                               borderRadius: '4px',
                               fontSize: '0.75rem',
                               padding: '2px 8px'
@@ -160,12 +222,21 @@ const PropertiesFilter = ({ onFilterChange, parceiros, filteredParceiros }) => {
                 {hasActiveFilters && (
                   <div className="pt-2 mt-2 border-top">
                     <div className="d-flex flex-wrap gap-1 align-items-center">
-                      <small className="text-muted">Ativos:</small>
+                      <small className="text-muted">Filtros ativos:</small>
                       {search && (
                         <Badge bg="secondary" className="small">{search}</Badge>
                       )}
+                      {selectedEstado && (
+                        <Badge bg="secondary" className="small">{selectedEstado}</Badge>
+                      )}
+                      {selectedCidade && (
+                        <Badge bg="secondary" className="small">{selectedCidade}</Badge>
+                      )}
                       {hasDiscount && (
                         <Badge bg="secondary" className="small">Com desconto</Badge>
+                      )}
+                      {hasProducts && (
+                        <Badge bg="secondary" className="small">Com produtos</Badge>
                       )}
                       {selectedNichos.map((nichoId) => {
                         const nicho = Nichos.find(n => n.id === nichoId);

@@ -39,17 +39,28 @@ export const useCarrinho = () => {
 
       if (response.ok) {
         await fetchCarrinho();
-        
+
         // Notificação com animação
         notifications.notifyCartUpdate(produto, 'add');
-        
+
         // Gerar QR Code atualizado
         await generateQRCode();
-        
+
         return { success: true, message: `${produto.nome} adicionado ao carrinho!` };
       }
-      
+
       const errorData = await response.json();
+
+      // Tratar erro específico de parceiro diferente
+      if (errorData.error === "PARCEIRO_DIFERENTE") {
+        return {
+          success: false,
+          error: "PARCEIRO_DIFERENTE",
+          message: errorData.message,
+          parceiro_atual: errorData.parceiro_atual
+        };
+      }
+
       throw new Error(errorData.error || "Erro ao adicionar ao carrinho");
     } catch (error) {
       notifications.showError(error.message);
@@ -198,14 +209,34 @@ export const useCarrinho = () => {
   const removerItemComNotificacao = useCallback(async (produtoId) => {
     const produto = carrinho.find(item => item.produto_id === produtoId);
     const result = await removerItem(produtoId);
-    
+
     if (result.success && produto) {
       notifications.notifyCartUpdate(produto, 'remove');
       await generateQRCode();
     }
-    
+
     return result;
   }, [removerItem, carrinho, notifications, generateQRCode]);
+
+  const limparCarrinho = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/carrinho?limpar_tudo=true", {
+        method: "DELETE"
+      });
+
+      if (response.ok) {
+        await fetchCarrinho();
+        return { success: true, message: "Carrinho limpo com sucesso" };
+      }
+
+      throw new Error("Erro ao limpar carrinho");
+    } catch (error) {
+      return { success: false, message: error.message };
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchCarrinho]);
 
   const totalItens = carrinho.reduce((total, item) => total + item.quantidade, 0);
   const totalPreco = carrinho.reduce((total, item) => total + item.subtotal, 0);
@@ -220,6 +251,7 @@ export const useCarrinho = () => {
     adicionarItem,
     atualizarQuantidade: atualizarQuantidadeComNotificacao,
     removerItem: removerItemComNotificacao,
+    limparCarrinho,
     finalizarPedido,
     getQuantidadeItem,
     generateQRCode

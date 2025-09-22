@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Row, Col, Card, Button, Badge, Alert, Form, Spinner, CardTitle } from "react-bootstrap";
-import { FaShoppingCart, FaFilter } from "react-icons/fa";
+import { Row, Col, Card, Button, Badge, Alert, Form, Spinner, CardTitle, Modal } from "react-bootstrap";
+import { FaShoppingCart, FaFilter, FaTrash, FaExclamationTriangle } from "react-icons/fa";
 import ComponentContainerCard from "@/components/ComponentContainerCard";
 import ProductCard from "@/components/shared/ProductCard";
 
@@ -13,6 +13,11 @@ export default function ProdutosPage() {
   const [filtroNicho, setFiltroNicho] = useState("");
   const [nichos, setNichos] = useState([]);
   const [alert, setAlert] = useState({ show: false, message: "", variant: "" });
+
+  // Estados para modal de confirmação de parceiro diferente
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const [produtoConflito, setProdutoConflito] = useState(null);
+  const [parceiroAtual, setParceiroAtual] = useState("");
 
   const fetchProdutosCallback = useCallback(async (nicho = "") => {
     try {
@@ -96,10 +101,41 @@ export default function ProdutosPage() {
         fetchCarrinho();
       } else {
         const errorData = await response.json();
+
+        // Tratar erro específico de parceiro diferente
+        if (errorData.error === "PARCEIRO_DIFERENTE") {
+          setProdutoConflito(produto);
+          setParceiroAtual(errorData.parceiro_atual);
+          setShowConflictModal(true);
+          return;
+        }
+
         showAlert(errorData.error || "Erro ao adicionar ao carrinho", "danger");
       }
     } catch (error) {
       showAlert("Erro ao adicionar ao carrinho", "danger");
+    }
+  };
+
+  const limparCarrinhoEAdicionar = async () => {
+    try {
+      // Primeiro limpar o carrinho
+      const clearResponse = await fetch("/api/carrinho?limpar_tudo=true", {
+        method: "DELETE"
+      });
+
+      if (clearResponse.ok) {
+        // Depois adicionar o novo produto
+        await adicionarAoCarrinho(produtoConflito);
+      } else {
+        showAlert("Erro ao limpar carrinho", "danger");
+      }
+    } catch (error) {
+      showAlert("Erro ao limpar carrinho", "danger");
+    } finally {
+      setShowConflictModal(false);
+      setProdutoConflito(null);
+      setParceiroAtual("");
     }
   };
 
@@ -206,7 +242,7 @@ export default function ProdutosPage() {
                 >
                   <option value="">Todas as categorias</option>
                   {nichos.map((nicho) => (
-                    <option key={nicho.nicho} value={nicho.nicho}>
+                    <option key={nicho.original} value={nicho.original}>
                       {nicho.nicho} ({nicho.count})
                     </option>
                   ))}
@@ -249,6 +285,45 @@ export default function ProdutosPage() {
           ))}
         </Row>
       )}
+
+      {/* Modal de Confirmação - Parceiro Diferente */}
+      <Modal show={showConflictModal} onHide={() => setShowConflictModal(false)} centered>
+        <Modal.Header closeButton className="border-0 pb-0">
+          <Modal.Title className="d-flex align-items-center gap-2">
+            <FaExclamationTriangle className="text-warning" />
+            Produtos de Parceiros Diferentes
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="pt-2">
+          <div className="text-center mb-3">
+            <p className="mb-3">
+              Seu carrinho já contém produtos de <strong>{parceiroAtual}</strong>.
+            </p>
+            <p className="mb-3">
+              Para adicionar <strong>{produtoConflito?.nome}</strong> ao carrinho, você precisa limpar os produtos atuais primeiro.
+            </p>
+            <div className="alert alert-info">
+              <small>
+                <FaShoppingCart className="me-2" />
+                Isso garante que todos os produtos sejam validados pelo mesmo parceiro.
+              </small>
+            </div>
+          </div>
+        </Modal.Body>
+        <Modal.Footer className="border-0 pt-0">
+          <Button variant="secondary" onClick={() => setShowConflictModal(false)}>
+            Cancelar
+          </Button>
+          <Button
+            variant="warning"
+            onClick={limparCarrinhoEAdicionar}
+            className="d-flex align-items-center gap-2"
+          >
+            <FaTrash />
+            Limpar e Adicionar
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </ComponentContainerCard>
   );
 }

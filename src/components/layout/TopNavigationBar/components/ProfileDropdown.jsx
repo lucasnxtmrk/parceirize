@@ -1,9 +1,24 @@
+'use client';
 import avatar1 from '@/assets/images/users/avatar-1.jpg';
 import IconifyIcon from '@/components/wrappers/IconifyIcon';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Dropdown, DropdownHeader, DropdownItem, DropdownMenu, DropdownToggle } from 'react-bootstrap';
+import { signOut, useSession } from 'next-auth/react';
+
 const ProfileDropdown = () => {
+  const { data: session } = useSession();
+
+  const handleLogout = () => {
+    const userRole = session?.user?.role?.toLowerCase();
+    let callbackUrl = '/auth/login-parceiro'; // default
+
+    if (userRole === 'cliente') {
+      callbackUrl = '/auth/login-cliente';
+    }
+
+    signOut({ redirect: true, callbackUrl });
+  };
   return <Dropdown className="topbar-item" drop="down">
       <DropdownToggle as={'a'} type="button" className="topbar-button content-none" id="page-header-user-dropdown " data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
         <span className="d-flex align-items-center">
@@ -31,7 +46,7 @@ const ProfileDropdown = () => {
           <span className="align-middle">Lock screen</span>
         </DropdownItem>
         <div className="dropdown-divider my-1" />
-        <DropdownItem as={Link} className=" text-danger" href="/auth/login">
+        <DropdownItem className="text-danger" onClick={handleLogout} style={{ cursor: 'pointer' }}>
           <IconifyIcon icon="solar:logout-3-broken" className="align-middle me-2 fs-18" />
           <span className="align-middle">Logout</span>
         </DropdownItem>

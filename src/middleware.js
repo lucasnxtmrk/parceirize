@@ -54,7 +54,12 @@ export async function middleware(req) {
   // ==========================================
   if (!session) {
     console.log(`🔒 Sem sessão para ${path}, redirecionando para login`);
-    return NextResponse.redirect(new URL('/auth/login', nextUrl.origin));
+    // Redireciona para o login específico baseado na rota acessada
+    if (path.startsWith('/carteirinha') || path.startsWith('/cliente')) {
+      return NextResponse.redirect(new URL('/auth/login-cliente', nextUrl.origin));
+    } else {
+      return NextResponse.redirect(new URL('/auth/login-parceiro', nextUrl.origin));
+    }
   }
 
   const role = session.user.role?.toLowerCase();
@@ -88,7 +93,7 @@ export async function middleware(req) {
       case 'parceiro':
         return NextResponse.redirect(new URL('/painel', nextUrl.origin));
       default:
-        return NextResponse.redirect(new URL('/auth/login', nextUrl.origin));
+        return NextResponse.redirect(new URL('/auth/login-parceiro', nextUrl.origin));
     }
   }
 

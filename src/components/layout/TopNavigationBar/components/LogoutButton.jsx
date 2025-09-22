@@ -1,16 +1,29 @@
 "use client";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { Button } from "react-bootstrap";
 
 const LogoutButton = () => {
+  const { data: session } = useSession();
+
+  const handleLogout = () => {
+    const userRole = session?.user?.role?.toLowerCase();
+    let callbackUrl = '/auth/login-parceiro'; // default
+
+    if (userRole === 'cliente') {
+      callbackUrl = '/auth/login-cliente';
+    }
+
+    signOut({ redirect: true, callbackUrl });
+  };
+
   return (
-    <Button 
-      variant="outline-secondary" 
+    <Button
+      variant="outline-secondary"
       size="sm"
-      onClick={() => signOut({ redirect: true, callbackUrl: "/auth/login" })}
+      onClick={handleLogout}
       style={{
-        borderColor: '#e2e8f0',
-        color: '#64748b',
+        borderColor: '#cbd5e1', // Melhor contraste para border
+        color: '#475569', // Gray-600 com melhor contraste
         backgroundColor: 'transparent',
         borderRadius: '8px',
         padding: '0.375rem 0.75rem',

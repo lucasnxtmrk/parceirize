@@ -27,8 +27,8 @@ const useSignIn = () => {
   } = useForm({
     resolver: yupResolver(loginFormSchema),
     defaultValues: {
-      email: 'user@demo.com',
-      password: '123456'
+      email: '',
+      password: ''
     }
   });
   const login = handleSubmit(async values => {
@@ -39,9 +39,9 @@ const useSignIn = () => {
       password: values?.password
     }).then(res => {
       if (res?.ok) {
-        push(queryParams['redirectTo'] ?? '/dashboards/analytics');
+        push(queryParams['redirectTo'] ?? '/dashboard');
         showNotification({
-          message: 'Successfully logged in. Redirecting....',
+          message: 'Login realizado com sucesso!',
           variant: 'success'
         });
       } else {

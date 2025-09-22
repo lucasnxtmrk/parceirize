@@ -17,77 +17,107 @@ export const options = {
         password: { label: 'Senha', type: 'password' }
       },
       async authorize(credentials) {
-        const { email, password } = credentials;
-      
+        const { email, password, cpf } = credentials;
+
         try {
-          console.log("📡 Consultando banco de dados para:", email);
-          
-          const query = `
-            SELECT id,
-                   nome,
-                   sobrenome,
-                   email,
-                   id_carteirinha,
-                   data_ultimo_voucher,
-                   ativo,
-                   tenant_id,
-                   senha AS "password",
-                   'cliente' AS role
-            FROM clientes
-            WHERE email = $1 AND ativo = true
+          let query;
+          let queryParams;
 
-            UNION ALL
+          // Se CPF foi fornecido, buscar apenas clientes
+          if (cpf) {
+            const cpfLimpo = cpf.replace(/\D/g, '');
+            const cpfComMascara = cpfLimpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+            query = `
+              SELECT id,
+                     nome,
+                     sobrenome,
+                     email,
+                     cpf_cnpj,
+                     id_carteirinha,
+                     data_ultimo_voucher,
+                     ativo,
+                     tenant_id,
+                     senha AS "password",
+                     'cliente' AS role
+              FROM clientes
+              WHERE (
+                cpf_cnpj = $1 OR
+                cpf_cnpj = $2 OR
+                REPLACE(REPLACE(REPLACE(cpf_cnpj, '.', ''), '-', ''), ' ', '') = $1
+              ) AND ativo = true
+            `;
+            queryParams = [cpfLimpo, cpfComMascara];
+          } else {
+            // Busca por email para parceiros, provedores e superadmins
+            query = `
+              SELECT id,
+                     nome,
+                     sobrenome,
+                     email,
+                     NULL AS cpf_cnpj,
+                     id_carteirinha,
+                     data_ultimo_voucher,
+                     ativo,
+                     tenant_id,
+                     senha AS "password",
+                     'cliente' AS role
+              FROM clientes
+              WHERE email = $1 AND ativo = true
 
-            SELECT id,
-                   nome_empresa AS nome,
-                   NULL AS sobrenome,
-                   email,
-                   NULL AS id_carteirinha,
-                   NULL AS data_ultimo_voucher,
-                   true AS ativo,
-                   tenant_id,
-                   senha AS "password",
-                   'parceiro' AS role
-            FROM parceiros
-            WHERE email = $1
+              UNION ALL
 
-            UNION ALL
+              SELECT id,
+                     nome_empresa AS nome,
+                     NULL AS sobrenome,
+                     email,
+                     NULL AS cpf_cnpj,
+                     NULL AS id_carteirinha,
+                     NULL AS data_ultimo_voucher,
+                     true AS ativo,
+                     tenant_id,
+                     senha AS "password",
+                     'parceiro' AS role
+              FROM parceiros
+              WHERE email = $1
 
-            SELECT id,
-                   nome_empresa AS nome,
-                   NULL AS sobrenome,
-                   email,
-                   NULL AS id_carteirinha,
-                   NULL AS data_ultimo_voucher,
-                   ativo,
-                   tenant_id,
-                   senha AS "password",
-                   'provedor' AS role
-            FROM provedores
-            WHERE email = $1 AND ativo = true
+              UNION ALL
 
-            UNION ALL
+              SELECT id,
+                     nome_empresa AS nome,
+                     NULL AS sobrenome,
+                     email,
+                     NULL AS cpf_cnpj,
+                     NULL AS id_carteirinha,
+                     NULL AS data_ultimo_voucher,
+                     ativo,
+                     tenant_id,
+                     senha AS "password",
+                     'provedor' AS role
+              FROM provedores
+              WHERE email = $1 AND ativo = true
 
-            SELECT id,
-                   nome AS nome,
-                   NULL AS sobrenome,
-                   email,
-                   NULL AS id_carteirinha,
-                   NULL AS data_ultimo_voucher,
-                   ativo,
-                   NULL AS tenant_id,
-                   senha AS "password",
-                   'superadmin' AS role
-            FROM superadmins
-            WHERE email = $1 AND ativo = true
-          `;
+              UNION ALL
 
-          const result = await pool.query(query, [email]);
+              SELECT id,
+                     nome AS nome,
+                     NULL AS sobrenome,
+                     email,
+                     NULL AS cpf_cnpj,
+                     NULL AS id_carteirinha,
+                     NULL AS data_ultimo_voucher,
+                     ativo,
+                     NULL AS tenant_id,
+                     senha AS "password",
+                     'superadmin' AS role
+              FROM superadmins
+              WHERE email = $1 AND ativo = true
+            `;
+            queryParams = [email];
+          }
 
-          console.log("🔍 Usuário encontrado:", result.rows.length > 0 ? "Sim" : "Não");
+          const result = await pool.query(query, queryParams);
 
           if (result.rows.length === 0) {
-            console.log("❌ Usuário não encontrado!");
             throw new Error("Usuário não encontrado.");
           }
 
@@ -98,20 +128,17 @@ export const options = {
             throw new Error('Conta inativa. Entre em contato com o suporte.');
           }
 
-          // Comparação simples de senha (substitua por hash em produção)
           const senhaCorreta = await bcrypt.compare(password, userRecord.password);
           if (!senhaCorreta) {
-          console.log("❌ Senha incorreta (bcrypt)");
-          throw new Error("Senha incorreta.");
+            throw new Error("Senha incorreta.");
           }
-
-          console.log("✅ Login bem-sucedido para:", userRecord.email, "- Role:", userRecord.role);
 
           return {
             id: userRecord.id,
             nome: userRecord.nome,
             sobrenome: userRecord.sobrenome,
             email: userRecord.email,
+            cpf_cnpj: userRecord.cpf_cnpj,
             id_carteirinha: userRecord.id_carteirinha,
             data_ultimo_voucher: userRecord.data_ultimo_voucher,
             role: userRecord.role,
@@ -119,7 +146,6 @@ export const options = {
             tenant_id: userRecord.tenant_id
           };
         } catch (err) {
-          console.error("⚠️ Erro na autenticação:", err.message);
           throw new Error(err.message);
         }
       }
@@ -127,7 +153,7 @@ export const options = {
   ],
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
-    signIn: '/auth/login'
+    signIn: '/auth/login-parceiro'
   },
   callbacks: {
     // Adiciona o usuário ao token JWT
@@ -143,14 +169,12 @@ export const options = {
       return session;
     },
     // Redireciona de acordo com a role - simplificado
-    async redirect({ url, baseUrl }) {
-      console.log("🔄 Redirecionando... URL original:", url);
-      
+    async redirect({ url, baseUrl, token }) {
       // Se não for a página de login, permite o redirecionamento normal
       if (!url.includes('/auth/login')) {
         return url.startsWith('/') ? `${baseUrl}${url}` : url;
       }
-      
+
       // Para login, redireciona para home e deixa o middleware decidir
       return `${baseUrl}/`;
     }

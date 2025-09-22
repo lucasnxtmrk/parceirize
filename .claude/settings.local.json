@@ -35,7 +35,8 @@
       "Bash(set DATABASE_URL=postgresql://postgres:Delus9798-@localhost:5432/protege)",
       "Bash(dir srcappapivouchers)",
       "Bash(dir:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(del \"C:\\TRABALHO\\NEXTMARK\\SISTEMAS\\parceirize\\src\\app\\api\\debug\\check-clientes\\route.js\")"
     ],
     "deny": [],
     "ask": []

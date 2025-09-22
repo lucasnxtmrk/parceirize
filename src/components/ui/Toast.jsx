@@ -78,11 +78,11 @@ const Toast = ({
             <IconifyIcon icon={toastIcons[type]} width={14} />
           </div>
           <strong className="me-auto text-dark">{title}</strong>
-          <small className="text-muted">agora</small>
+          <small style={{ color: "#64748b" }}>agora</small>
         </BootstrapToast.Header>
         
         {message && (
-          <BootstrapToast.Body className="pt-0 text-muted small">
+          <BootstrapToast.Body className="pt-0 small" style={{ color: "#64748b" }}>
             {message}
           </BootstrapToast.Body>
         )}

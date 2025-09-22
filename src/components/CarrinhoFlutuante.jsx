@@ -101,11 +101,11 @@ export default function CarrinhoFlutuante() {
         <Offcanvas.Header closeButton className="border-0 pb-0">
           <Offcanvas.Title className="d-flex align-items-center">
             <div className="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
-              <FaShoppingCart className="text-primary" size={20} />
+              <FaShoppingCart className="text-white" size={20} />
             </div>
             <div>
               <h5 className="mb-0">Meu Carrinho</h5>
-              <small className="text-muted">{totalItens} {totalItens === 1 ? 'item' : 'itens'}</small>
+              <small style={{ color: "#64748b" }}>{totalItens} {totalItens === 1 ? 'item' : 'itens'}</small>
             </div>
           </Offcanvas.Title>
         </Offcanvas.Header>
@@ -113,10 +113,10 @@ export default function CarrinhoFlutuante() {
           {!carrinho.itens || carrinho.itens.length === 0 ? (
             <div className="text-center py-5">
               <div className="bg-light bg-opacity-50 rounded-circle p-4 d-inline-flex mb-4">
-                <FaShoppingCart size={48} className="text-muted" />
+                <FaShoppingCart size={48} style={{ color: "#94a3b8" }} />
               </div>
-              <h5 className="text-muted mb-3">Seu carrinho está vazio</h5>
-              <p className="text-muted mb-4">Adicione produtos aos seus favoritos e eles aparecerão aqui!</p>
+              <h5 className="mb-3" style={{ color: "#475569" }}>Seu carrinho está vazio</h5>
+              <p className="mb-4" style={{ color: "#64748b" }}>Adicione produtos aos seus favoritos e eles aparecerão aqui!</p>
               <Button
                 variant="primary"
                 className="px-4 py-2"
@@ -160,7 +160,7 @@ export default function CarrinhoFlutuante() {
                             </div>
                           ) : (
                             <div className="bg-secondary bg-opacity-25 rounded-3 d-flex align-items-center justify-content-center me-3" style={{ width: "60px", height: "60px" }}>
-                              <FaShoppingCart className="text-muted" size={20} />
+                              <FaShoppingCart className="text-primary" size={20} />
                             </div>
                           )}
 
@@ -168,8 +168,11 @@ export default function CarrinhoFlutuante() {
                             <div className="d-flex justify-content-between align-items-start mb-2">
                               <div>
                                 <h6 className="mb-1 fw-bold">{item.produto_nome}</h6>
-                                <small className="text-muted d-flex align-items-center">
-                                  <span className="badge bg-secondary bg-opacity-25 text-dark me-1" style={{ fontSize: "0.6rem" }}>
+                                <small className="d-flex align-items-center">
+                                  <span className="badge text-white me-1" style={{
+                                    fontSize: "0.6rem",
+                                    backgroundColor: "#1B1236" // Primary dark com bom contraste
+                                  }}>
                                     {item.parceiro_nome}
                                   </span>
                                 </small>
@@ -177,7 +180,8 @@ export default function CarrinhoFlutuante() {
                               <Button
                                 variant="link"
                                 size="sm"
-                                className="text-muted p-1"
+                                className="p-1"
+                                style={{ color: "#ef4444" }} // Danger color com bom contraste
                                 onClick={() => removerItem(item.produto_id)}
                                 disabled={loading}
                                 title="Remover item"
@@ -199,21 +203,34 @@ export default function CarrinhoFlutuante() {
                                 <Button
                                   variant="link"
                                   size="sm"
-                                  className="text-muted p-1"
-                                  style={{ width: "32px", height: "32px" }}
+                                  className="p-1"
+                                  style={{
+                                    width: "32px",
+                                    height: "32px",
+                                    color: "#475569" // Gray-600 com melhor contraste
+                                  }}
                                   onClick={() => atualizarQuantidade(item.produto_id, item.quantidade - 1)}
                                   disabled={loading}
                                 >
                                   <FaMinus size={12} />
                                 </Button>
-                                <span className="mx-3 fw-bold text-dark" style={{ minWidth: "24px", textAlign: "center", fontSize: "14px" }}>
+                                <span className="mx-3 fw-bold" style={{
+                                  minWidth: "24px",
+                                  textAlign: "center",
+                                  fontSize: "14px",
+                                  color: "#1e293b" // Gray-800 para melhor legibilidade
+                                }}>
                                   {item.quantidade}
                                 </span>
                                 <Button
                                   variant="link"
                                   size="sm"
-                                  className="text-dark p-1"
-                                  style={{ width: "32px", height: "32px" }}
+                                  className="p-1"
+                                  style={{
+                                    width: "32px",
+                                    height: "32px",
+                                    color: "#1B1236" // Primary dark
+                                  }}
                                   onClick={() => atualizarQuantidade(item.produto_id, item.quantidade + 1)}
                                   disabled={loading}
                                 >
@@ -223,11 +240,15 @@ export default function CarrinhoFlutuante() {
 
                               <div className="text-end">
                                 {item.desconto > 0 && (
-                                  <small className="text-muted text-decoration-line-through d-block">
+                                  <small className="text-decoration-line-through d-block" style={{
+                                    color: "#64748b" // Gray-500 com melhor legibilidade
+                                  }}>
                                     {formatPrice(item.subtotal_original)}
                                   </small>
                                 )}
-                                <div className="fw-bold text-primary fs-6">
+                                <div className="fw-bold fs-6" style={{
+                                  color: "#1B1236" // Primary dark para melhor contraste
+                                }}>
                                   {formatPrice(item.subtotal)}
                                 </div>
                               </div>
@@ -245,8 +266,8 @@ export default function CarrinhoFlutuante() {
                 {carrinho.economia_total > 0 && (
                   <>
                     <div className="d-flex justify-content-between mb-2">
-                      <span className="text-muted">Subtotal:</span>
-                      <span className="text-muted text-decoration-line-through">
+                      <span style={{ color: "#475569" }}>Subtotal:</span>
+                      <span className="text-decoration-line-through" style={{ color: "#64748b" }}>
                         {formatPrice(carrinho.total_original)}
                       </span>
                     </div>
@@ -261,15 +282,15 @@ export default function CarrinhoFlutuante() {
                 )}
                 <div className="d-flex justify-content-between align-items-center">
                   <div>
-                    <h6 className="mb-0">Total:</h6>
-                    <small className="text-muted">{totalItens} {totalItens === 1 ? 'item' : 'itens'}</small>
+                    <h6 className="mb-0" style={{ color: "#1e293b" }}>Total:</h6>
+                    <small style={{ color: "#475569" }}>{totalItens} {totalItens === 1 ? 'item' : 'itens'}</small>
                   </div>
                   <div className="text-end">
-                    <h4 className="mb-0 text-primary fw-bold">
+                    <h4 className="mb-0 fw-bold" style={{ color: "#1B1236" }}>
                       {formatPrice(carrinho.total)}
                     </h4>
                     {carrinho.economia_total > 0 && (
-                      <small className="text-success fw-bold">
+                      <small className="fw-bold" style={{ color: "#22c55e" }}>
                         Economia total: {formatPrice(carrinho.economia_total)}
                       </small>
                     )}
@@ -337,10 +358,10 @@ export default function CarrinhoFlutuante() {
                 className="mb-3"
                 style={{ maxWidth: "250px" }}
               />
-              <p className="text-muted small">
+              <p className="small" style={{ color: "#64748b" }}>
                 Escaneie este QR Code para visualizar ou compartilhar seu carrinho
               </p>
-              <div className="small text-primary">
+              <div className="small" style={{ color: "#1B1236" }}>
                 <strong>Total: {formatPrice(totalPreco)}</strong>
                 <br />
                 {totalItens} {totalItens === 1 ? 'item' : 'itens'}

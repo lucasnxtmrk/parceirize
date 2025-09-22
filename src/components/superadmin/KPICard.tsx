@@ -35,7 +35,7 @@ export function KPICard({
         <CardContent className="p-4">
           <div className="flex items-start justify-between">
             <div className="space-y-2 flex-1">
-              <p className="text-sm font-medium text-muted-foreground leading-none">
+              <p className="text-sm font-medium leading-none" style={{ color: "#64748b" }}>
                 {title}
               </p>
               <div className="space-y-1">
@@ -59,7 +59,7 @@ export function KPICard({
                       {trend.isPositive ? '+' : ''}{trend.value}%
                     </span>
                     {trend.period && (
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs" style={{ color: "#64748b" }}>
                         vs. {trend.period}
                       </span>
                     )}

@@ -132,13 +132,13 @@ const ProductCard = forwardRef(({
       return (
         <div className="mb-2">
           <div className="d-flex align-items-baseline gap-2">
-            <span className="text-muted small">A partir de</span>
+            <span className="small" style={{ color: "#64748b" }}>A partir de</span>
             <span className="h6 mb-0 fw-bold text-success">
               {priceRange.min}
             </span>
           </div>
           {priceRange.max && priceRange.max !== priceRange.min && (
-            <div className="text-muted small">
+            <div className="small" style={{ color: "#64748b" }}>
               Até {priceRange.max}
             </div>
           )}
@@ -154,7 +154,7 @@ const ProductCard = forwardRef(({
               {price}
             </span>
             {originalPrice && (
-              <span className="text-muted text-decoration-line-through small">
+              <span className="text-decoration-line-through small" style={{ color: "#64748b" }}>
                 {originalPrice}
               </span>
             )}
@@ -289,7 +289,8 @@ const ProductCard = forwardRef(({
           {/* Descrição */}
           {description && (
             <div className="mb-2">
-              <p className="text-muted small mb-0" style={{ 
+              <p className="small mb-0" style={{
+                color: "#64748b",
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',

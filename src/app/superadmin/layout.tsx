@@ -193,7 +193,7 @@ export default function SuperAdminLayout({
 
   const handleLogout = async () => {
     const { signOut } = await import('next-auth/react')
-    await signOut({ callbackUrl: '/' })
+    await signOut({ callbackUrl: '/auth/login-parceiro' })
   }
 
   const toggleMenu = (key: string) => {

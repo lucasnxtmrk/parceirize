@@ -84,7 +84,7 @@ export const options = {
 
           const result = await pool.query(query, [email]);
 
-          console.log("🔍 Resultado da Query:", result.rows);
+          console.log("🔍 Usuário encontrado:", result.rows.length > 0 ? "Sim" : "Não");
 
           if (result.rows.length === 0) {
             console.log("❌ Usuário não encontrado!");
@@ -105,7 +105,7 @@ export const options = {
           throw new Error("Senha incorreta.");
           }
 
-          console.log("✅ Login bem-sucedido:", userRecord);
+          console.log("✅ Login bem-sucedido para:", userRecord.email, "- Role:", userRecord.role);
 
           return {
             id: userRecord.id,

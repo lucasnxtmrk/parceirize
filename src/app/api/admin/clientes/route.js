@@ -1,7 +1,8 @@
 import { Pool } from "pg";
 import { getServerSession } from "next-auth";
 import { options } from "@/app/api/auth/[...nextauth]/options";
-import { withTenantIsolation, getTenantContext, logTenantAction, validatePlanLimits } from "@/lib/tenant-helper";
+import { withTenantIsolation, getTenantContext, logTenantAction, validatePlanLimits, validateId, validateEmail, sanitizeString } from "@/lib/tenant-helper";
+import { withValidation, withRateLimit, combineMiddlewares } from "@/lib/validation-middleware";
 import bcrypt from "bcryptjs";
 
 const pool = new Pool({
@@ -72,34 +73,42 @@ export const GET = withTenantIsolation(async (request, { tenant }) => {
   }
 });
 
-// ✅ CRIAR NOVO CLIENTE (POST)
-export async function POST(req) {
+// ✅ CRIAR NOVO CLIENTE (POST) COM VALIDAÇÃO
+export const POST = combineMiddlewares(
+  withRateLimit,
+  withValidation('cliente'),
+  withTenantIsolation
+)(async (request, { validatedData, tenant }) => {
   try {
-    const session = await getServerSession(options);
-    if (!session || !['provedor', 'superadmin'].includes(session.user.role)) {
+    if (!['provedor', 'superadmin'].includes(tenant.role)) {
       return new Response(JSON.stringify({ error: "Acesso negado" }), { status: 403 });
     }
 
-    const { nome, sobrenome, email, senha } = await req.json();
-    if (!nome || !sobrenome || !email || !senha) {
-      return new Response(JSON.stringify({ error: "Todos os campos são obrigatórios" }), { status: 400 });
-    }
+    const { nome, sobrenome, email, senha } = validatedData;
 
     console.log("📡 Criando novo cliente:", email);
 
     // Verificar limite do plano antes de criar
-    if (session.user.role === 'provedor') {
+    if (tenant.role === 'provedor') {
       try {
-        await validatePlanLimits(session.user.tenant_id, 'clientes');
+        await validatePlanLimits(tenant.tenant_id, 'clientes');
       } catch (error) {
         return new Response(JSON.stringify({ error: error.message }), { status: 403 });
       }
     }
 
-    // Verifica se o e-mail já está cadastrado
-    const emailCheck = await pool.query("SELECT id FROM clientes WHERE email = $1", [email]);
+    // Verificar se o e-mail já está cadastrado (com tenant isolation)
+    let emailCheckQuery = "SELECT id FROM clientes WHERE email = $1";
+    let emailCheckParams = [email];
+
+    if (!tenant.isGlobalAccess) {
+      emailCheckQuery += " AND tenant_id = $2";
+      emailCheckParams.push(tenant.tenant_id);
+    }
+
+    const emailCheck = await pool.query(emailCheckQuery, emailCheckParams);
     if (emailCheck.rows.length > 0) {
-      return new Response(JSON.stringify({ error: "E-mail já cadastrado." }), { status: 409 });
+      return new Response(JSON.stringify({ error: "E-mail já cadastrado neste provedor." }), { status: 409 });
     }
 
     // Gera ID de carteirinha único
@@ -108,12 +117,20 @@ export async function POST(req) {
     // Criptografa a senha antes de salvar
     const senhaHash = await bcrypt.hash(senha, 10);
 
-    const tenant_id = session.user.tenant_id;
     const result = await pool.query(
-      `INSERT INTO clientes (nome, sobrenome, email, senha, id_carteirinha, tipo_cliente, ativo, tenant_id, data_criacao) 
-       VALUES ($1, $2, $3, $4, $5, 'cliente', TRUE, $6, NOW()) 
+      `INSERT INTO clientes (nome, sobrenome, email, senha, id_carteirinha, tipo_cliente, ativo, tenant_id, data_criacao)
+       VALUES ($1, $2, $3, $4, $5, 'cliente', TRUE, $6, NOW())
        RETURNING id, nome, sobrenome, email, id_carteirinha, tipo_cliente, ativo`,
-      [nome, sobrenome, email, senhaHash, idCarteirinha, tenant_id]
+      [nome, sobrenome, email, senhaHash, idCarteirinha, tenant.tenant_id]
+    );
+
+    // Log de auditoria
+    await logTenantAction(
+      tenant.tenant_id,
+      tenant.user.id,
+      tenant.role,
+      'cliente_criado',
+      { cliente_email: email, cliente_id: result.rows[0].id }
     );
 
     return new Response(JSON.stringify({ success: true, cliente: result.rows[0] }), {
@@ -122,10 +139,10 @@ export async function POST(req) {
     });
 
   } catch (error) {
-    console.error("❌ Erro ao criar cliente:", error);
+    console.error("❌ Erro ao criar cliente:", error.message);
     return new Response(JSON.stringify({ error: "Erro interno ao criar cliente." }), { status: 500 });
   }
-}
+});
 
 // ✅ ATUALIZAR CLIENTE (PUT)
 export async function PUT(req) {

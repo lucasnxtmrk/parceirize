@@ -2,7 +2,7 @@
 import { Pool } from "pg";
 import { getServerSession } from "next-auth";
 import { options } from "@/app/api/auth/[...nextauth]/options";
-import { withTenantIsolation, getTenantContext, logTenantAction, validatePlanLimits } from "@/lib/tenant-helper";
+import { withTenantIsolation, getTenantContext, logTenantAction, validatePlanLimits, validateId } from "@/lib/tenant-helper";
 import bcrypt from "bcryptjs"; 
 import fs from "fs";
 import path from "path";
@@ -265,46 +265,100 @@ if (senhaHash) {
 }
 
 
-// ✅ DELETE - REMOVER PARCEIRO
-export async function DELETE(req) {
+// ✅ DELETE - REMOVER PARCEIRO COM ISOLAMENTO TENANT
+export const DELETE = withTenantIsolation(async (request, { tenant }) => {
   try {
-    const session = await getServerSession(options);
-    if (!session || !["provedor", "superadmin"].includes(session.user.role)) {
+    if (!["provedor", "superadmin"].includes(tenant.role)) {
       return new Response(JSON.stringify({ error: "Acesso negado" }), { status: 403 });
     }
 
-    const { searchParams } = new URL(req.url);
-    const parceiroId = searchParams.get("id");
+    const { searchParams } = new URL(request.url);
+    const parceiroIdParam = searchParams.get("id");
 
-    if (!parceiroId) {
+    if (!parceiroIdParam) {
       return new Response(JSON.stringify({ error: "ID do parceiro não fornecido" }), { status: 400 });
     }
 
-    // 1️⃣ Buscar todos os vouchers do parceiro
-    const vouchers = await pool.query(
-      "SELECT id FROM vouchers WHERE parceiro_id = $1",
-      [parceiroId]
-    );
+    const parceiroId = validateId(parceiroIdParam, 'Parceiro ID');
 
-    // 2️⃣ Remover todos os registros em voucher_utilizados relacionados
-    for (const voucher of vouchers.rows) {
-      await pool.query(
-        "DELETE FROM voucher_utilizados WHERE voucher_id = $1",
-        [voucher.id]
-      );
+    // 1️⃣ Verificar se o parceiro pertence ao tenant (se não for superadmin)
+    let parceiroCheckQuery = "SELECT id, tenant_id FROM parceiros WHERE id = $1";
+    let parceiroCheckParams = [parceiroId];
+
+    if (!tenant.isGlobalAccess) {
+      parceiroCheckQuery += " AND tenant_id = $2";
+      parceiroCheckParams.push(tenant.tenant_id);
     }
 
-    // 3️⃣ Remover os vouchers do parceiro
-    await pool.query("DELETE FROM vouchers WHERE parceiro_id = $1", [parceiroId]);
+    const parceiroCheck = await pool.query(parceiroCheckQuery, parceiroCheckParams);
 
-    // 4️⃣ Remover o parceiro
-    const result = await pool.query("DELETE FROM parceiros WHERE id = $1 RETURNING id", [parceiroId]);
+    if (parceiroCheck.rows.length === 0) {
+      return new Response(JSON.stringify({ error: "Parceiro não encontrado ou sem permissão" }), { status: 404 });
+    }
+
+    const parceiro = parceiroCheck.rows[0];
+
+    // 2️⃣ Buscar todos os vouchers do parceiro COM tenant_id
+    const vouchersQuery = `
+      SELECT v.id FROM vouchers v
+      INNER JOIN parceiros p ON v.parceiro_id = p.id
+      WHERE v.parceiro_id = $1 ${!tenant.isGlobalAccess ? 'AND p.tenant_id = $2' : ''}
+    `;
+    const vouchersParams = !tenant.isGlobalAccess
+      ? [parceiroId, tenant.tenant_id]
+      : [parceiroId];
+
+    const vouchers = await pool.query(vouchersQuery, vouchersParams);
+
+    // 3️⃣ Remover voucher_utilizados COM filtro de tenant
+    if (vouchers.rows.length > 0) {
+      const voucherIds = vouchers.rows.map(v => v.id);
+      const deleteUtilizadosQuery = `
+        DELETE FROM voucher_utilizados
+        WHERE voucher_id = ANY($1) ${!tenant.isGlobalAccess ? 'AND tenant_id = $2' : ''}
+      `;
+      const deleteUtilizadosParams = !tenant.isGlobalAccess
+        ? [voucherIds, tenant.tenant_id]
+        : [voucherIds];
+
+      await pool.query(deleteUtilizadosQuery, deleteUtilizadosParams);
+    }
+
+    // 4️⃣ Remover vouchers COM filtro de tenant
+    const deleteVouchersQuery = `
+      DELETE FROM vouchers
+      WHERE parceiro_id = $1 ${!tenant.isGlobalAccess ? 'AND tenant_id = $2' : ''}
+    `;
+    const deleteVouchersParams = !tenant.isGlobalAccess
+      ? [parceiroId, tenant.tenant_id]
+      : [parceiroId];
+
+    await pool.query(deleteVouchersQuery, deleteVouchersParams);
+
+    // 5️⃣ Remover parceiro COM filtro de tenant
+    const deleteParceiroQuery = `
+      DELETE FROM parceiros
+      WHERE id = $1 ${!tenant.isGlobalAccess ? 'AND tenant_id = $2' : ''}
+      RETURNING id
+    `;
+    const deleteParceiroParams = !tenant.isGlobalAccess
+      ? [parceiroId, tenant.tenant_id]
+      : [parceiroId];
+
+    const result = await pool.query(deleteParceiroQuery, deleteParceiroParams);
 
     if (result.rows.length === 0) {
-      return new Response(JSON.stringify({ error: "Parceiro não encontrado" }), { status: 404 });
+      return new Response(JSON.stringify({ error: "Falha ao excluir parceiro" }), { status: 500 });
     }
 
-    console.log("🗑️ Parceiro e dados associados excluídos:", parceiroId);
+    // 6️⃣ Log de auditoria
+    await logTenantAction(
+      tenant.tenant_id,
+      tenant.user.id,
+      tenant.role,
+      'parceiro_excluido',
+      { parceiro_id: parceiroId }
+    );
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
@@ -312,8 +366,8 @@ export async function DELETE(req) {
     });
 
   } catch (error) {
-    console.error("❌ Erro ao excluir parceiro e dados associados:", error);
-    return new Response(JSON.stringify({ error: "Erro ao excluir parceiro", detail: error.message }), { status: 500 });
+    console.error("❌ Erro ao excluir parceiro:", error.message);
+    return new Response(JSON.stringify({ error: "Erro interno ao excluir parceiro" }), { status: 500 });
   }
-}
+});
 

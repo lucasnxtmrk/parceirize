@@ -13,7 +13,7 @@ interface KPICardProps {
   trend?: {
     value: number
     isPositive: boolean
-    period: string
+    period?: string
   }
   className?: string
 }
@@ -58,9 +58,11 @@ export function KPICard({
                     )}>
                       {trend.isPositive ? '+' : ''}{trend.value}%
                     </span>
-                    <span className="text-xs text-muted-foreground">
-                      vs. {trend.period}
-                    </span>
+                    {trend.period && (
+                      <span className="text-xs text-muted-foreground">
+                        vs. {trend.period}
+                      </span>
+                    )}
                   </div>
                 )}
               </div>

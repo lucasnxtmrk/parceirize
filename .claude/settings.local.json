@@ -34,7 +34,8 @@
       "Bash(npx next build:*)",
       "Bash(set DATABASE_URL=postgresql://postgres:Delus9798-@localhost:5432/protege)",
       "Bash(dir srcappapivouchers)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []

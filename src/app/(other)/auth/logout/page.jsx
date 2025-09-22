@@ -7,8 +7,8 @@ export default function LogoutPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Fallback para login-parceiro se chegou aqui diretamente
-    router.push('/auth/login-parceiro');
+    // Fallback para login unificado se chegou aqui diretamente
+    router.push('/auth/login');
   }, [router]);
 
   return (

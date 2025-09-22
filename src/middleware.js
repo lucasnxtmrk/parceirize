@@ -56,9 +56,13 @@ export async function middleware(req) {
     console.log(`🔒 Sem sessão para ${path}, redirecionando para login`);
     // Redireciona para o login específico baseado na rota acessada
     if (path.startsWith('/carteirinha') || path.startsWith('/cliente')) {
-      return NextResponse.redirect(new URL('/auth/login-cliente', nextUrl.origin));
+      return NextResponse.redirect(new URL('/auth/login?tab=cliente', nextUrl.origin));
+    } else if (path.startsWith('/painel')) {
+      return NextResponse.redirect(new URL('/auth/login?tab=parceiro', nextUrl.origin));
+    } else if (path.startsWith('/superadmin') || path.startsWith('/dashboard') || path.startsWith('/admin-')) {
+      return NextResponse.redirect(new URL('/auth/login-admin', nextUrl.origin));
     } else {
-      return NextResponse.redirect(new URL('/auth/login-parceiro', nextUrl.origin));
+      return NextResponse.redirect(new URL('/auth/login', nextUrl.origin));
     }
   }
 
@@ -93,7 +97,7 @@ export async function middleware(req) {
       case 'parceiro':
         return NextResponse.redirect(new URL('/painel', nextUrl.origin));
       default:
-        return NextResponse.redirect(new URL('/auth/login-parceiro', nextUrl.origin));
+        return NextResponse.redirect(new URL('/auth/login', nextUrl.origin));
     }
   }
 

@@ -7,13 +7,23 @@ const LogoutButton = () => {
 
   const handleLogout = () => {
     const userRole = session?.user?.role?.toLowerCase();
-    let callbackUrl = '/auth/login-parceiro'; // default
+    let callbackUrl = '/auth/login'; // default unificado
+    let tab = '';
 
-    if (userRole === 'cliente') {
-      callbackUrl = '/auth/login-cliente';
+    switch(userRole) {
+      case 'cliente':
+        tab = '?tab=cliente';
+        break;
+      case 'parceiro':
+        tab = '?tab=parceiro';
+        break;
+      case 'provedor':
+      case 'superadmin':
+        callbackUrl = '/auth/login-admin';
+        break;
     }
 
-    signOut({ redirect: true, callbackUrl });
+    signOut({ redirect: true, callbackUrl: callbackUrl + tab });
   };
 
   return (

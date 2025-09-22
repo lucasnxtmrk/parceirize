@@ -63,7 +63,8 @@ export async function POST(request) {
         id: cliente.id,
         nome: cliente.nome,
         sobrenome: cliente.sobrenome,
-        email: cliente.email
+        email: cliente.email,
+        cpf_cnpj: cliente.cpf_cnpj
       }
     });
 

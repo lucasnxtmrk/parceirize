@@ -153,7 +153,7 @@ export const options = {
   ],
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
-    signIn: '/auth/login-parceiro'
+    signIn: '/auth/login'
   },
   callbacks: {
     // Adiciona o usuário ao token JWT

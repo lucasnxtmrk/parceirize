@@ -267,6 +267,17 @@ export async function GET(req) {
           timestamp: new Date().toISOString()
         });
 
+        // Configurar filtros baseado no modo
+        let filtrosFinais = filtros;
+        if (modo === 'completo') {
+          filtrosFinais = {
+            apenas_ativos: true,
+            dias_atividade: 365, // 1 ano
+            data_cadastro_inicio: '',
+            data_cadastro_fim: ''
+          };
+        }
+
         console.log('🚀 Configuração de importação:', {
           senha_padrao: senha_padrao ? '***' : 'não definida',
           modo,
@@ -293,6 +304,11 @@ export async function GET(req) {
           tem_cpf_central: !!integracao.cpf_central
         });
 
+        // Validar configuração obrigatória
+        if (!integracao.token || !integracao.app_name) {
+          throw new Error('Configuração incompleta: é necessário Token + Nome da Aplicação para importar clientes');
+        }
+
         // Criar job de importação
         const jobResult = await pool.query(
           `INSERT INTO import_jobs (provedor_id, status, configuracao, mensagem_atual)
@@ -308,33 +324,20 @@ export async function GET(req) {
           mensagem: 'Job de importação criado'
         });
 
-        // Configurar filtros baseado no modo
-        let filtrosFinais = filtros;
-        if (modo === 'completo') {
-          filtrosFinais = {
-            apenas_ativos: true,
-            dias_atividade: 365, // 1 ano
-            data_cadastro_inicio: '',
-            data_cadastro_fim: ''
-          };
-        }
-
         // Preparar autenticação SGP
-        const url = `https://${integracao.subdominio}.sgp.net.br/api/consulta/clientes`;
+        const url = `https://${integracao.subdominio}.sgp.net.br/api/ura/clientes/`;
         const authBody = {
           token: integracao.token,
-          app_name: integracao.app_name,
-          cpf_central: integracao.cpf_central,
-          senha_central: integracao.senha_central,
+          app: integracao.app_name,
+          omitir_contratos: false,
           ...filtrosFinais // Incluir filtros na requisição base
         };
 
         console.log('🌐 URL SGP construída:', url);
         console.log('🔑 AuthBody:', {
           token: integracao.token ? 'DEFINIDO' : 'VAZIO',
-          app_name: integracao.app_name,
-          cpf_central: integracao.cpf_central ? 'DEFINIDO' : 'VAZIO',
-          senha_central: integracao.senha_central ? 'DEFINIDO' : 'VAZIO',
+          app: integracao.app_name,
+          omitir_contratos: false,
           filtros: filtrosFinais
         });
 

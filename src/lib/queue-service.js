@@ -131,7 +131,10 @@ class QueueService {
   // Executar a importação
   async executeImportJob(job) {
     try {
-      const config = JSON.parse(job.configuracao || '{}');
+      // PostgreSQL JSONB retorna object, não string
+      const config = typeof job.configuracao === 'string'
+        ? JSON.parse(job.configuracao)
+        : job.configuracao || {};
       console.log(`🔄 Iniciando importação para job ${job.id}...`);
 
       // Importar a lógica de importação

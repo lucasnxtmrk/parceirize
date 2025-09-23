@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/superadmin/ui/dialog'
 import { Alert, AlertDescription } from '@/components/superadmin/ui/alert'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/superadmin/ui/dropdown-menu'
-import { Building2, Filter, Download, Search, Eye, Edit, MoreHorizontal, Plus } from 'lucide-react'
+import { Building2, Filter, Download, Search, Eye, Edit, MoreHorizontal, Plus, DollarSign } from 'lucide-react'
 import Link from 'next/link'
 
 export default function ProvedoresPage() {
@@ -39,7 +39,16 @@ export default function ProvedoresPage() {
     totalPages: 0
   })
   const [showModal, setShowModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
   const [selectedProvedor, setSelectedProvedor] = useState(null)
+  const [editForm, setEditForm] = useState({
+    nome_empresa: '',
+    email: '',
+    subdominio: '',
+    ativo: true
+  })
+  const [subdomainValidation, setSubdomainValidation] = useState({ valid: true, message: '' })
+  const [validatingSubdomain, setValidatingSubdomain] = useState(false)
   const [alert, setAlert] = useState({ show: false, message: '', type: 'success' })
 
   useEffect(() => {
@@ -183,6 +192,98 @@ export default function ProvedoresPage() {
       document.body.removeChild(a)
     } catch (error) {
       console.error('Erro ao exportar provedores:', error)
+    }
+  }
+
+  const validateSubdomain = async (subdomain) => {
+    if (!subdomain || subdomain.trim() === '') {
+      setSubdomainValidation({ valid: true, message: '' })
+      return
+    }
+
+    setValidatingSubdomain(true)
+    try {
+      const response = await fetch('/api/superadmin/validate-subdomain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subdominio: subdomain.trim(),
+          provedor_id: selectedProvedor?.id
+        })
+      })
+
+      const data = await response.json()
+
+      console.log('🔍 Frontend - Validate subdomain response:', {
+        status: response.status,
+        ok: response.ok,
+        data
+      });
+
+      if (data.valid) {
+        setSubdomainValidation({
+          valid: true,
+          message: `✓ ${data.domain_preview} disponível!`
+        })
+      } else {
+        setSubdomainValidation({
+          valid: false,
+          message: data.error || 'Subdomínio inválido'
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao validar subdomínio:', error)
+      setSubdomainValidation({
+        valid: false,
+        message: 'Erro ao validar subdomínio'
+      })
+    } finally {
+      setValidatingSubdomain(false)
+    }
+  }
+
+  const openEditModal = (provedor) => {
+    setSelectedProvedor(provedor)
+    setEditForm({
+      nome_empresa: provedor.nome_empresa || '',
+      email: provedor.email || '',
+      subdominio: provedor.subdominio || '',
+      ativo: provedor.ativo
+    })
+    setSubdomainValidation({ valid: true, message: '' })
+    setShowEditModal(true)
+  }
+
+  const handleEditSubmit = async () => {
+    if (!subdomainValidation.valid && editForm.subdominio.trim() !== '') {
+      showAlert('Corrija o subdomínio antes de salvar', 'danger')
+      return
+    }
+
+    try {
+      const updateData = {
+        subdominio: editForm.subdominio.trim() || null,
+        ativo: editForm.ativo
+      }
+
+      const response = await fetch(`/api/superadmin/provedores/${selectedProvedor.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData)
+      })
+
+      if (response.ok) {
+        showAlert('Provedor atualizado com sucesso!', 'success')
+        setShowEditModal(false)
+        setSelectedProvedor(null)
+        fetchProvedores()
+      } else {
+        const error = await response.json()
+        throw new Error(error.error || 'Erro ao atualizar provedor')
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar provedor:', error)
+      showAlert(error.message || 'Erro ao atualizar provedor', 'danger')
     }
   }
 
@@ -518,6 +619,7 @@ export default function ProvedoresPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Empresa</TableHead>
+                  <TableHead>Subdomínio</TableHead>
                   <TableHead>Plano</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Vencimento</TableHead>
@@ -541,6 +643,20 @@ export default function ProvedoresPage() {
                           <div className="text-sm text-muted-foreground">{provedor.telefone}</div>
                         </div>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {provedor.subdominio ? (
+                        <div className="space-y-1">
+                          <Badge variant="outline" className="font-mono">
+                            {provedor.subdominio}
+                          </Badge>
+                          <div className="text-xs text-muted-foreground">
+                            {provedor.subdominio}.parceirize.com.br
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">Sem subdomínio</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge 
@@ -597,6 +713,10 @@ export default function ProvedoresPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openEditModal(provedor)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Editar Provedor
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => toggleProviderStatus(provedor.id, provedor.ativo)}>
                             {provedor.ativo ? 'Suspender' : 'Ativar'}
                           </DropdownMenuItem>
@@ -608,6 +728,7 @@ export default function ProvedoresPage() {
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
                             <Link href={`/superadmin/provedores/${provedor.id}`}>
+                              <Eye className="h-4 w-4 mr-2" />
                               Ver Detalhes
                             </Link>
                           </DropdownMenuItem>
@@ -634,50 +755,304 @@ export default function ProvedoresPage() {
 
       {renderPagination()}
 
-      {/* Dialog para Alterar Plano */}
-      <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Alterar Plano</DialogTitle>
-            <DialogDescription>
+      {/* Dialog para Editar Provedor */}
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <DialogContent className="!max-w-[700px] max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full flex flex-col">
+          <DialogHeader className="pb-6">
+            <DialogTitle className="flex items-center space-x-3 text-xl">
+              <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
+                <Edit className="h-5 w-5 text-primary" />
+              </div>
+              <span>Editar Provedor</span>
+            </DialogTitle>
+            <DialogDescription className="text-base">
               {selectedProvedor && (
                 <>
-                  Alterando plano do provedor: <strong>{selectedProvedor.nome_empresa}</strong>
-                  <br />
-                  Plano atual: <Badge variant="secondary">{selectedProvedor.plano_nome}</Badge>
+                  Editando dados do provedor: <strong className="text-foreground">{selectedProvedor.nome_empresa}</strong>
                 </>
               )}
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedProvedor && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Selecione o novo plano:</Label>
-                <Select
-                  onValueChange={(value) => {
-                    if (value) {
-                      updatePlano(selectedProvedor.id, value)
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um plano..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {planos.filter(p => p.id !== selectedProvedor.plano_id).map(plano => (
-                      <SelectItem key={plano.id} value={plano.id?.toString() || plano.id}>
-                        {plano.nome} - {formatCurrency(plano.preco)}/mês
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <div className="space-y-8 py-4">
+              {/* Seção Informações da Empresa */}
+              <div className="space-y-6">
+                <div className="flex items-center space-x-2 pb-2 border-b">
+                  <Building2 className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold">Informações da Empresa</h3>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="w-full space-y-3">
+                    <Label className="block text-sm font-medium">Nome da Empresa</Label>
+                    <Input
+                      value={editForm.nome_empresa}
+                      disabled
+                      className="bg-muted/50 h-11 w-full block"
+                    />
+                    <p className="text-xs text-muted-foreground block">
+                      Nome da empresa não pode ser alterado
+                    </p>
+                  </div>
+
+                  <div className="w-full space-y-3">
+                    <Label className="block text-sm font-medium">E-mail</Label>
+                    <Input
+                      value={editForm.email}
+                      disabled
+                      className="bg-muted/50 h-11 w-full block"
+                    />
+                    <p className="text-xs text-muted-foreground block">
+                      E-mail não pode ser alterado
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Seção Configurações */}
+              <div className="space-y-6">
+                <div className="flex items-center space-x-2 pb-2 border-b">
+                  <Building2 className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold">Configurações</h3>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="w-full space-y-3">
+                    <Label className="block text-sm font-medium">Subdomínio Personalizado</Label>
+                    <div className="space-y-3">
+                      <Input
+                        placeholder="meuclube"
+                        value={editForm.subdominio}
+                        onChange={(e) => {
+                          const value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')
+                          setEditForm(prev => ({ ...prev, subdominio: value }))
+                          if (value !== selectedProvedor.subdominio) {
+                            validateSubdomain(value)
+                          } else {
+                            setSubdomainValidation({ valid: true, message: '' })
+                          }
+                        }}
+                        className={`h-11 w-full block ${!subdomainValidation.valid ? 'border-red-500' : ''}`}
+                      />
+                      {validatingSubdomain && (
+                        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                          <span>Validando disponibilidade...</span>
+                        </div>
+                      )}
+                      {subdomainValidation.message && (
+                        <div className={`p-3 rounded-lg text-sm block ${
+                          subdomainValidation.valid
+                            ? 'bg-green-50 text-green-700 border border-green-200'
+                            : 'bg-red-50 text-red-700 border border-red-200'
+                        }`}>
+                          {subdomainValidation.message}
+                        </div>
+                      )}
+                      <p className="text-xs text-muted-foreground block">
+                        Deixe vazio se não quiser subdomínio personalizado
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="w-full space-y-3">
+                    <Label className="block text-sm font-medium">Status da Conta</Label>
+                    <Select
+                      value={editForm.ativo ? "true" : "false"}
+                      onValueChange={(value) => setEditForm(prev => ({ ...prev, ativo: value === "true" }))}
+                    >
+                      <SelectTrigger className="h-11 w-full block">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="true">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span>Ativo</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="false">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                            <span>Inativo</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground block">
+                      Contas inativas não podem acessar o sistema
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Preview do domínio */}
+              {editForm.subdominio && subdomainValidation.valid && (
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2 pb-2 border-b">
+                    <Building2 className="h-5 w-5 text-muted-foreground" />
+                    <h3 className="text-lg font-semibold">Prévia dos Domínios</h3>
+                  </div>
+
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Estes serão os endereços que seus usuários irão acessar:
+                    </p>
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-3 p-3 bg-white rounded-lg border">
+                        <div className="flex items-center justify-center h-8 w-8 rounded-full bg-blue-100">
+                          <Building2 className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">Painel Administrativo</p>
+                          <p className="text-sm text-blue-600 font-mono">
+                            https://{editForm.subdominio}.parceirize.com.br/dashboard
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3 p-3 bg-white rounded-lg border">
+                        <div className="flex items-center justify-center h-8 w-8 rounded-full bg-green-100">
+                          <Building2 className="h-4 w-4 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">Painel de Parceiros</p>
+                          <p className="text-sm text-green-600 font-mono">
+                            https://{editForm.subdominio}.parceirize.com.br/painel
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3 p-3 bg-white rounded-lg border">
+                        <div className="flex items-center justify-center h-8 w-8 rounded-full bg-purple-100">
+                          <Building2 className="h-4 w-4 text-purple-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">Carteirinha Digital</p>
+                          <p className="text-sm text-purple-600 font-mono">
+                            https://{editForm.subdominio}.parceirize.com.br/carteirinha
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter className="pt-6 border-t">
+            <Button variant="outline" onClick={() => setShowEditModal(false)} className="px-6">
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleEditSubmit}
+              disabled={!subdomainValidation.valid && editForm.subdominio.trim() !== ''}
+              className="px-6"
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Salvar Alterações
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog para Alterar Plano */}
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent className="!max-w-[600px] w-[95vw] sm:w-full flex flex-col">
+          <DialogHeader className="pb-6">
+            <DialogTitle className="flex items-center space-x-3 text-xl">
+              <div className="flex items-center justify-center h-10 w-10 rounded-full bg-green-100">
+                <DollarSign className="h-5 w-5 text-green-600" />
+              </div>
+              <span>Alterar Plano do Provedor</span>
+            </DialogTitle>
+            <DialogDescription className="text-base">
+              {selectedProvedor && (
+                <>
+                  Alterando plano do provedor: <strong className="text-foreground">{selectedProvedor.nome_empresa}</strong>
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedProvedor && (
+            <div className="space-y-6 py-4">
+              {/* Plano Atual */}
+              <div className="bg-muted/50 p-4 rounded-lg border">
+                <h3 className="font-semibold mb-3 flex items-center space-x-2">
+                  <Badge variant="secondary" className="text-sm">ATUAL</Badge>
+                  <span>Plano Vigente</span>
+                </h3>
+                <div className="space-y-4">
+                  <div className="w-full">
+                    <p className="text-sm text-muted-foreground block">Nome do Plano</p>
+                    <p className="font-semibold block">{selectedProvedor.plano_nome}</p>
+                  </div>
+                  <div className="w-full">
+                    <p className="text-sm text-muted-foreground block">Valor Mensal</p>
+                    <p className="font-semibold text-green-600 block">{formatCurrency(selectedProvedor.plano_preco)}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Novo Plano */}
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2 pb-2 border-b">
+                  <DollarSign className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold">Selecionar Novo Plano</h3>
+                </div>
+
+                <div className="w-full space-y-3">
+                  <Label className="block text-sm font-medium">Planos Disponíveis</Label>
+                  <Select
+                    onValueChange={(value) => {
+                      if (value) {
+                        updatePlano(selectedProvedor.id, value)
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="h-12 w-full block">
+                      <SelectValue placeholder="Selecione um novo plano..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {planos.filter(p => p.id !== selectedProvedor.plano_id).map(plano => (
+                        <SelectItem key={plano.id} value={plano.id?.toString() || plano.id}>
+                          <div className="w-full py-1">
+                            <div className="font-medium block">{plano.nome}</div>
+                            <div className="text-sm text-muted-foreground block">
+                              {formatCurrency(plano.preco)}/mês • {plano.limite_clientes ? `${plano.limite_clientes} clientes` : 'Ilimitado'}
+                            </div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground block">
+                    A alteração será aplicada imediatamente e afetará o próximo ciclo de cobrança
+                  </p>
+                </div>
+              </div>
+
+              {/* Aviso */}
+              <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                <div className="flex items-start space-x-3">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-full bg-blue-100">
+                    <Building2 className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-blue-900">Importante</p>
+                    <p className="text-sm text-blue-700">
+                      A mudança de plano será aplicada imediatamente. Os limites e recursos do novo plano
+                      entrarão em vigor após a confirmação.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowModal(false)}>
+
+          <DialogFooter className="pt-6 border-t">
+            <Button variant="outline" onClick={() => setShowModal(false)} className="px-6">
               Cancelar
             </Button>
           </DialogFooter>

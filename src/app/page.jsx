@@ -2,8 +2,8 @@ import React from 'react';
 import HomeContent from './HomeContent';
 
 export const metadata = {
-  title: 'Parceirize - Plataforma de Clubes de Desconto',
-  description: 'A plataforma completa para gestão de clubes de desconto e programas de benefícios.'
+  title: 'Parceirize - Plataforma SaaS de Clubes de Desconto',
+  description: 'Plataforma SaaS que permite criar e gerenciar clubes de desconto com domínio personalizado. Você vende, eles usam com a própria marca.'
 };
 
 const HomePage = () => {

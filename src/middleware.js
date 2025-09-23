@@ -84,7 +84,6 @@ function detectDomainType(hostname) {
   // Fallback para padrões gerais (novos subdomínios)
   const tenantPatterns = [
     /^[\w-]+\.localhost(:\d+)?$/,
-    /^[\w-]+\.parceirize\.com$/,
     /^[\w-]+\.parceirize\.com\.br$/
   ];
 

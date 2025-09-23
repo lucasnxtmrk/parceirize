@@ -4,125 +4,116 @@ import React from 'react';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
-import Link from 'next/link';
+import Image from 'next/image';
 import IconifyIcon from '@/components/wrappers/IconifyIcon';
 
 const HomeContent = () => {
+  const openWhatsApp = () => {
+    window.open('https://wa.me/5583988605313?text=Olá! Gostaria de saber mais sobre o Parceirize.', '_blank');
+  };
+
+  const styles = {
+    main: {
+      background: '#0a0a0a',
+      color: '#f8f9fa',
+      fontFamily: 'system-ui, -apple-system, sans-serif',
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center'
+    },
+    whatsappBtn: {
+      background: '#25D366',
+      border: 'none',
+      borderRadius: '8px',
+      padding: '16px 32px',
+      fontSize: '16px',
+      fontWeight: '500',
+      transition: 'all 0.2s ease'
+    },
+    title: {
+      fontSize: '2rem',
+      fontWeight: '500',
+      color: '#f8f9fa',
+      marginBottom: '24px',
+      textAlign: 'center'
+    },
+    subtitle: {
+      fontSize: '1.1rem',
+      color: '#9ca3af',
+      textAlign: 'center',
+      marginBottom: '40px',
+      lineHeight: '1.6'
+    }
+  };
+
   return (
-    <div className="min-vh-100" style={{
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-    }}>
-      <Container className="py-5">
-        <Row className="justify-content-center text-center text-white">
-          <Col lg={8}>
-            {/* Header */}
+    <div style={styles.main}>
+      <Container>
+        <Row className="justify-content-center text-center">
+          <Col lg={6} md={8}>
+
+            {/* Logo */}
             <div className="mb-5">
-              <h1 className="display-4 fw-bold mb-4">
-                Bem-vindo ao Parceirize
-              </h1>
-              <p className="lead mb-4">
-                A plataforma completa para gestão de clubes de desconto e programas de benefícios.
-                Conecte empresas, parceiros e clientes em um único ecossistema.
+              <Image
+                src="/assets/parceiros/logo-parceirize-02.png"
+                alt="Parceirize"
+                width={280}
+                height={120}
+                style={{
+                  maxWidth: '100%',
+                  height: 'auto',
+                  filter: 'brightness(0) invert(1)' // Logo branca no fundo escuro
+                }}
+                priority
+              />
+            </div>
+
+            {/* Título */}
+            <h1 style={styles.title}>
+              Plataforma SaaS de Clubes de Desconto
+            </h1>
+
+            {/* Subtítulo */}
+            <p style={styles.subtitle}>
+              Para mais informações sobre nossa plataforma multi-tenant<br />
+              e como implementar seu clube de desconto personalizado,<br />
+              entre em contato com nosso suporte especializado.
+            </p>
+
+            {/* Botão WhatsApp */}
+            <Button
+              style={styles.whatsappBtn}
+              onClick={openWhatsApp}
+              onMouseOver={(e) => {
+                e.target.style.background = '#1DA851';
+                e.target.style.transform = 'translateY(-2px)';
+              }}
+              onMouseOut={(e) => {
+                e.target.style.background = '#25D366';
+                e.target.style.transform = 'translateY(0)';
+              }}
+            >
+              <IconifyIcon icon="mdi:whatsapp" width={20} className="me-2" />
+              Falar com Suporte
+            </Button>
+
+            {/* Rodapé */}
+            <div style={{
+              marginTop: '60px',
+              paddingTop: '40px',
+              borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <p style={{
+                fontSize: '0.9rem',
+                color: '#6b7280',
+                marginBottom: '0'
+              }}>
+                © 2025 Parceirize • Desenvolvido pela{' '}
+                <span style={{ color: '#25D366', fontWeight: '500' }}>NEXTMARK</span>
               </p>
             </div>
 
-            {/* Features */}
-            <Row className="mb-5">
-              <Col md={4} className="mb-4">
-                <Card className="h-100 border-0 shadow-lg" style={{
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  backdropFilter: 'blur(10px)'
-                }}>
-                  <Card.Body className="text-center text-white">
-                    <IconifyIcon icon="heroicons:building-office" width={48} className="mb-3" />
-                    <h5>Para Empresas</h5>
-                    <p>Gerencie seu clube de desconto com ferramentas profissionais</p>
-                  </Card.Body>
-                </Card>
-              </Col>
-              <Col md={4} className="mb-4">
-                <Card className="h-100 border-0 shadow-lg" style={{
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  backdropFilter: 'blur(10px)'
-                }}>
-                  <Card.Body className="text-center text-white">
-                    <IconifyIcon icon="heroicons:building-storefront" width={48} className="mb-3" />
-                    <h5>Para Parceiros</h5>
-                    <p>Aumente suas vendas participando de clubes de desconto</p>
-                  </Card.Body>
-                </Card>
-              </Col>
-              <Col md={4} className="mb-4">
-                <Card className="h-100 border-0 shadow-lg" style={{
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  backdropFilter: 'blur(10px)'
-                }}>
-                  <Card.Body className="text-center text-white">
-                    <IconifyIcon icon="heroicons:users" width={48} className="mb-3" />
-                    <h5>Para Clientes</h5>
-                    <p>Aproveite descontos exclusivos na sua carteirinha digital</p>
-                  </Card.Body>
-                </Card>
-              </Col>
-            </Row>
-
-            {/* Login Options */}
-            <div className="mb-5">
-              <h3 className="mb-4">Acesse sua área</h3>
-              <Row className="justify-content-center">
-                <Col sm={6} md={3} className="mb-3">
-                  <Link href="/login" className="text-decoration-none">
-                    <Card className="border-0 shadow-lg h-100" style={{
-                      background: 'rgba(255, 255, 255, 0.9)',
-                      transition: 'transform 0.2s ease'
-                    }}>
-                      <Card.Body className="text-center">
-                        <IconifyIcon icon="heroicons:identification" width={32} className="mb-2 text-primary" />
-                        <h6 className="text-dark">Área do Cliente</h6>
-                        <small className="text-muted">Carteirinha digital</small>
-                      </Card.Body>
-                    </Card>
-                  </Link>
-                </Col>
-                <Col sm={6} md={3} className="mb-3">
-                  <Link href="/parceiro/login" className="text-decoration-none">
-                    <Card className="border-0 shadow-lg h-100" style={{
-                      background: 'rgba(255, 255, 255, 0.9)',
-                      transition: 'transform 0.2s ease'
-                    }}>
-                      <Card.Body className="text-center">
-                        <IconifyIcon icon="heroicons:building-storefront" width={32} className="mb-2 text-success" />
-                        <h6 className="text-dark">Área do Parceiro</h6>
-                        <small className="text-muted">Painel de vendas</small>
-                      </Card.Body>
-                    </Card>
-                  </Link>
-                </Col>
-                <Col sm={6} md={3} className="mb-3">
-                  <Link href="/admin/login" className="text-decoration-none">
-                    <Card className="border-0 shadow-lg h-100" style={{
-                      background: 'rgba(255, 255, 255, 0.9)',
-                      transition: 'transform 0.2s ease'
-                    }}>
-                      <Card.Body className="text-center">
-                        <IconifyIcon icon="heroicons:building-office" width={32} className="mb-2 text-info" />
-                        <h6 className="text-dark">Área do Provedor</h6>
-                        <small className="text-muted">Gestão empresarial</small>
-                      </Card.Body>
-                    </Card>
-                  </Link>
-                </Col>
-              </Row>
-            </div>
-
-            {/* Footer */}
-            <div className="text-center">
-              <p className="mb-0" style={{ opacity: 0.8 }}>
-                © 2024 Parceirize. Desenvolvido pela NEXTMARK.
-              </p>
-            </div>
           </Col>
         </Row>
       </Container>

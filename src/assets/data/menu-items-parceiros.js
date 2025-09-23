@@ -15,7 +15,7 @@ export const MENU_ITEMS = [
     key: 'voucher',
     label: 'Meu Voucher',
     icon: 'ri:ticket-line',
-    url: '/meu-voucher'
+    url: '/painel/meu-voucher'
   },
   {
     key: 'solicitacoes-voucher',

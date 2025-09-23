@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
+import { CookieHelper } from '@/lib/cookie-helper.js';
 
 // Lista estática de domínios conhecidos para Edge Runtime
 const KNOWN_TENANTS = {
@@ -145,7 +146,16 @@ export async function middleware(req) {
   const { nextUrl } = req;
   const path = nextUrl.pathname;
   const hostname = req.headers.get('host') || '';
-  const session = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+
+  // Usar configuração dinâmica de cookies para o getToken
+  const cookieConfig = CookieHelper.getNextAuthCookieConfig(req);
+  const cookieName = cookieConfig.sessionToken.name;
+
+  const session = await getToken({
+    req,
+    secret: process.env.NEXTAUTH_SECRET,
+    cookieName: cookieName
+  });
 
   // ==========================================
   // 1. DETECÇÃO DE TENANT (ESTÁTICA PARA EDGE RUNTIME)

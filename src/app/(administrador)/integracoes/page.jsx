@@ -12,6 +12,7 @@ export default function IntegracoesPage() {
   const [msg, setMsg] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showConfirmCompleteModal, setShowConfirmCompleteModal] = useState(false);
   const [config, setConfig] = useState(null);
   const [lastSync, setLastSync] = useState(null);
   const [cronStatus, setCronStatus] = useState({ running: false, lastRun: null, nextRun: null });
@@ -247,6 +248,11 @@ export default function IntegracoesPage() {
     setPreviewData(null);
   };
 
+  // Função para abrir modal de confirmação da importação completa
+  const openConfirmCompleteModal = () => {
+    setShowConfirmCompleteModal(true);
+  };
+
   // Função para importação completa simplificada
   const handleImportCompleto = async () => {
     const senhaSimples = '123456'; // Senha padrão para importação completa
@@ -264,6 +270,7 @@ export default function IntegracoesPage() {
 
     const success = await startImport(config);
     if (success) {
+      setShowConfirmCompleteModal(false);
       setShowImportModal(false);
     }
   };
@@ -459,7 +466,7 @@ export default function IntegracoesPage() {
                               variant="success"
                               size="sm"
                               className="d-inline-flex align-items-center justify-content-center gap-1"
-                              onClick={handleImportCompleto}
+                              onClick={openConfirmCompleteModal}
                             >
                               <i className="bi bi-lightning-charge"></i>
                               Importar Tudo
@@ -880,6 +887,90 @@ export default function IntegracoesPage() {
         <Modal.Footer className="border-0 pt-0">
           <Button variant="secondary" onClick={() => setShowImportModal(false)}>
             Cancelar
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal de Confirmação - Importar Tudo */}
+      <Modal show={showConfirmCompleteModal} onHide={() => setShowConfirmCompleteModal(false)} centered>
+        <Modal.Header closeButton className="border-0 pb-0">
+          <Modal.Title className="d-flex align-items-center gap-2">
+            <i className="bi bi-lightning-charge text-warning"></i>
+            Confirmar Importação Completa
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="pt-0">
+          <div className="alert alert-info">
+            <h6 className="alert-heading d-flex align-items-center gap-2 mb-3">
+              <i className="bi bi-info-circle"></i>
+              O que será importado:
+            </h6>
+            <ul className="mb-3">
+              <li><strong>Todos os clientes com contratos ATIVOS</strong> no SGP</li>
+              <li><strong>Que tiveram atividade nos últimos 365 dias</strong></li>
+              <li><strong>Sem filtro de data de cadastro</strong> (desde sempre)</li>
+              <li><strong>Senha padrão:</strong> 123456 (para novos clientes)</li>
+            </ul>
+            <div className="border-top pt-3">
+              <h6 className="text-primary mb-2">
+                <i className="bi bi-gear me-1"></i>
+                Configuração aplicada:
+              </h6>
+              <div className="row g-2">
+                <div className="col-6">
+                  <small className="text-muted d-block">Contratos ativos:</small>
+                  <span className="badge bg-success">Sim</span>
+                </div>
+                <div className="col-6">
+                  <small className="text-muted d-block">Período atividade:</small>
+                  <span className="badge bg-info">365 dias</span>
+                </div>
+                <div className="col-6">
+                  <small className="text-muted d-block">Data início:</small>
+                  <span className="badge bg-secondary">Sem limite</span>
+                </div>
+                <div className="col-6">
+                  <small className="text-muted d-block">Data fim:</small>
+                  <span className="badge bg-secondary">Sem limite</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="alert alert-warning">
+            <i className="bi bi-exclamation-triangle me-2"></i>
+            <strong>Atenção:</strong> Esta importação pode levar alguns minutos dependendo da quantidade de clientes.
+            Você pode acompanhar o progresso na tela principal.
+          </div>
+
+          {error && (
+            <div className="alert alert-danger">
+              <i className="bi bi-exclamation-circle me-2"></i>
+              {error}
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer className="border-0 pt-0">
+          <Button variant="secondary" onClick={() => setShowConfirmCompleteModal(false)}>
+            Cancelar
+          </Button>
+          <Button
+            variant="success"
+            onClick={handleImportCompleto}
+            disabled={isImporting}
+            className="d-inline-flex align-items-center gap-2"
+          >
+            {isImporting ? (
+              <>
+                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                Iniciando...
+              </>
+            ) : (
+              <>
+                <i className="bi bi-lightning-charge"></i>
+                Confirmar Importação
+              </>
+            )}
           </Button>
         </Modal.Footer>
       </Modal>

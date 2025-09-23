@@ -267,16 +267,31 @@ export async function GET(req) {
           timestamp: new Date().toISOString()
         });
 
+        console.log('🚀 Configuração de importação:', {
+          senha_padrao: senha_padrao ? '***' : 'não definida',
+          modo,
+          filtros: filtrosFinais
+        });
+
         // Obter configurações
         const provedor = await getProvedor(session.user.email);
         if (!provedor) {
           throw new Error('Provedor não encontrado');
         }
 
+        console.log('📋 Provedor encontrado:', { id: provedor.id, email: provedor.email });
+
         const integracao = await getIntegracao(provedor.id);
         if (!integracao) {
           throw new Error('Integração SGP não configurada');
         }
+
+        console.log('🔧 Integração SGP encontrada:', {
+          subdominio: integracao.subdominio,
+          app_name: integracao.app_name,
+          tem_token: !!integracao.token,
+          tem_cpf_central: !!integracao.cpf_central
+        });
 
         // Criar job de importação
         const jobResult = await pool.query(
@@ -310,8 +325,18 @@ export async function GET(req) {
           token: integracao.token,
           app_name: integracao.app_name,
           cpf_central: integracao.cpf_central,
-          senha_central: integracao.senha_central
+          senha_central: integracao.senha_central,
+          ...filtrosFinais // Incluir filtros na requisição base
         };
+
+        console.log('🌐 URL SGP construída:', url);
+        console.log('🔑 AuthBody:', {
+          token: integracao.token ? 'DEFINIDO' : 'VAZIO',
+          app_name: integracao.app_name,
+          cpf_central: integracao.cpf_central ? 'DEFINIDO' : 'VAZIO',
+          senha_central: integracao.senha_central ? 'DEFINIDO' : 'VAZIO',
+          filtros: filtrosFinais
+        });
 
         const senhaHash = await bcrypt.hash(senha_padrao, 10);
 

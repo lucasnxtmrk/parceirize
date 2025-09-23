@@ -375,7 +375,6 @@ export default function CadastrarProvedorPage() {
                     disabled={loading}
                   />
                 </div>
-              </div>
 
               <Separator />
 

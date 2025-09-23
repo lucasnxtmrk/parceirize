@@ -21,6 +21,58 @@ export const useImportProgress = () => {
   const retryTimeoutRef = useRef(null);
   const retryCount = useRef(0);
   const maxRetries = 3;
+  const hasCheckedActiveImport = useRef(false);
+
+  // Função para verificar importações ativas
+  const checkActiveImport = useCallback(async (connectSSEFn) => {
+    try {
+      const response = await fetch('/api/admin/integracoes/sgp/status');
+      if (response.ok) {
+        const data = await response.json();
+
+        if (data.hasActiveImport && data.job) {
+          const job = data.job;
+
+          // Restaurar estado da importação ativa
+          setIsImporting(job.status === 'running');
+          setIsCompleted(job.status === 'completed');
+          setProgress({
+            fase: job.fase,
+            mensagem: job.mensagem,
+            processados: job.processados,
+            total: job.total,
+            criados: job.criados,
+            atualizados: job.atualizados,
+            erros: job.erros,
+            progresso_percent: job.progresso_percent,
+            eta_segundos: job.eta_segundos,
+            job_id: job.id
+          });
+
+          // Se estiver em execução, reconectar ao SSE
+          if (job.status === 'running' && connectSSEFn) {
+            const config = JSON.parse(job.configuracao || '{}');
+            const params = new URLSearchParams({
+              senha_padrao: '123456', // Senha padrão
+              modo: config.modo || 'completo',
+              filtros: JSON.stringify(config.filtros || {}),
+              reconnect: 'true',
+              job_id: job.id
+            });
+
+            const sseUrl = `/api/admin/integracoes/sgp/importar-stream?${params}`;
+            connectSSEFn(sseUrl);
+          }
+
+          return true;
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao verificar importação ativa:', error);
+    }
+
+    return false;
+  }, []);
 
   // Função para formatar ETA
   const formatETA = useCallback((seconds) => {
@@ -215,6 +267,14 @@ export const useImportProgress = () => {
       mensagem: 'Importação cancelada pelo usuário'
     }));
   }, [cleanup]);
+
+  // Verificar importações ativas ao inicializar
+  useEffect(() => {
+    if (!hasCheckedActiveImport.current) {
+      hasCheckedActiveImport.current = true;
+      checkActiveImport(connectSSE);
+    }
+  }, [checkActiveImport, connectSSE]);
 
   // Cleanup quando o componente é desmontado
   useEffect(() => {

@@ -43,7 +43,12 @@
       "Bash(do echo \"=== $file ===\")",
       "Bash(rg:*)",
       "Bash(done)",
-      "WebFetch(domain:coolify.io)"
+      "WebFetch(domain:coolify.io)",
+      "Bash(del \"C:\\TRABALHO\\NEXTMARK\\SISTEMAS\\parceirize\\scripts\\fix-metodo-column.sql\")",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "WebFetch(domain:mood.sgp.net.br)",
+      "Bash(del \"scripts\\update-import-jobs-queue.sql\")"
     ],
     "deny": [],
     "ask": []

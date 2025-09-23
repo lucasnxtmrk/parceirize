@@ -2,6 +2,8 @@ import { Pool } from 'pg';
 import { getServerSession } from 'next-auth';
 import { options } from '@/app/api/auth/[...nextauth]/options';
 import { validatePlanLimits } from '@/lib/tenant-helper';
+import { getQueueService } from '@/lib/queue-service';
+import '@/lib/init-queue'; // Inicializar sistema de filas
 import bcrypt from 'bcryptjs';
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -245,6 +247,169 @@ async function getIntegracao(provedorId) {
   return r.rows[0] || null;
 }
 
+// Função para aguardar job iniciar processamento
+async function waitForJobToStart(jobId, controller) {
+  const maxWait = 300000; // 5 minutos
+  const checkInterval = 2000; // 2 segundos
+  const startTime = Date.now();
+
+  return new Promise((resolve) => {
+    const checkStatus = async () => {
+      try {
+        const result = await pool.query(
+          `SELECT status, queue_position, mensagem_atual FROM import_jobs WHERE id = $1`,
+          [jobId]
+        );
+
+        if (result.rows.length === 0) {
+          resolve(false);
+          return;
+        }
+
+        const job = result.rows[0];
+
+        if (job.status === 'running') {
+          sendSSE(controller, {
+            tipo: 'progresso',
+            fase: 'processando',
+            mensagem: 'Importação iniciada!'
+          });
+          resolve(true);
+          return;
+        }
+
+        if (job.status === 'failed') {
+          sendSSE(controller, {
+            tipo: 'erro',
+            mensagem: job.mensagem_atual || 'Job falhou na fila'
+          });
+          resolve(false);
+          return;
+        }
+
+        // Verificar timeout
+        if (Date.now() - startTime > maxWait) {
+          sendSSE(controller, {
+            tipo: 'erro',
+            mensagem: 'Timeout: Job não iniciou no tempo esperado'
+          });
+          resolve(false);
+          return;
+        }
+
+        // Continuar aguardando
+        setTimeout(checkStatus, checkInterval);
+
+      } catch (error) {
+        console.error('Erro ao verificar status do job:', error);
+        resolve(false);
+      }
+    };
+
+    checkStatus();
+  });
+}
+
+// Função para monitorar progresso do job
+async function monitorJobProgress(jobId, controller) {
+  const maxMonitor = 1800000; // 30 minutos
+  const checkInterval = 1000; // 1 segundo
+  const startTime = Date.now();
+
+  return new Promise((resolve) => {
+    const checkProgress = async () => {
+      try {
+        const result = await pool.query(
+          `SELECT
+            status,
+            total_estimado,
+            processados,
+            criados,
+            atualizados,
+            erros,
+            progresso_percent,
+            eta_segundos,
+            mensagem_atual,
+            resultados
+          FROM import_jobs WHERE id = $1`,
+          [jobId]
+        );
+
+        if (result.rows.length === 0) {
+          sendSSE(controller, {
+            tipo: 'erro',
+            mensagem: 'Job não encontrado'
+          });
+          resolve(false);
+          return;
+        }
+
+        const job = result.rows[0];
+
+        // Enviar progresso atual
+        sendSSE(controller, {
+          tipo: 'progresso',
+          fase: job.status === 'running' ? 'processando' : job.status,
+          mensagem: job.mensagem_atual,
+          total: job.total_estimado || 0,
+          processados: job.processados || 0,
+          criados: job.criados || 0,
+          atualizados: job.atualizados || 0,
+          erros: job.erros || 0,
+          progresso_percent: job.progresso_percent || 0,
+          eta_segundos: job.eta_segundos
+        });
+
+        // Verificar se completou
+        if (job.status === 'completed') {
+          const resultados = job.resultados ? JSON.parse(job.resultados) : {};
+          sendSSE(controller, {
+            tipo: 'concluido',
+            mensagem: 'Importação concluída com sucesso!',
+            ...resultados,
+            job_id: jobId
+          });
+          resolve(true);
+          return;
+        }
+
+        // Verificar se falhou
+        if (job.status === 'failed') {
+          sendSSE(controller, {
+            tipo: 'erro',
+            mensagem: job.mensagem_atual || 'Importação falhou'
+          });
+          resolve(false);
+          return;
+        }
+
+        // Verificar timeout
+        if (Date.now() - startTime > maxMonitor) {
+          sendSSE(controller, {
+            tipo: 'erro',
+            mensagem: 'Timeout: Monitoramento excedeu tempo limite'
+          });
+          resolve(false);
+          return;
+        }
+
+        // Continuar monitorando
+        setTimeout(checkProgress, checkInterval);
+
+      } catch (error) {
+        console.error('Erro ao monitorar progresso:', error);
+        sendSSE(controller, {
+          tipo: 'erro',
+          mensagem: 'Erro ao monitorar progresso: ' + error.message
+        });
+        resolve(false);
+      }
+    };
+
+    checkProgress();
+  });
+}
+
 export async function GET(req) {
   const session = await getServerSession(options);
   if (!session || !['provedor', 'superadmin'].includes(session.user.role)) {
@@ -309,114 +474,43 @@ export async function GET(req) {
           throw new Error('Configuração incompleta: é necessário Token + Nome da Aplicação para importar clientes');
         }
 
-        // Criar job de importação
-        const jobResult = await pool.query(
-          `INSERT INTO import_jobs (provedor_id, status, configuracao, mensagem_atual)
-           VALUES ($1, 'running', $2, 'Iniciando importação...')
-           RETURNING id`,
-          [provedor.id, JSON.stringify({ filtros, modo })]
-        );
-        const jobId = jobResult.rows[0].id;
+        // Adicionar job à fila
+        const queueService = getQueueService();
+        const jobConfig = {
+          senha_padrao,
+          filtros: filtrosFinais,
+          modo,
+          integracao_id: integracao.id,
+          provedor_email: session.user.email
+        };
+
+        const jobId = await queueService.enqueueJob(provedor.id, jobConfig);
 
         sendSSE(controller, {
           tipo: 'job_criado',
           job_id: jobId,
-          mensagem: 'Job de importação criado'
+          mensagem: 'Job adicionado à fila de processamento'
         });
 
-        // Preparar autenticação SGP
-        const url = `https://${integracao.subdominio}.sgp.net.br/api/ura/clientes/`;
-        const authBody = {
-          token: integracao.token,
-          app: integracao.app_name,
-          omitir_contratos: false,
-          ...filtrosFinais // Incluir filtros na requisição base
-        };
+        // Verificar posição na fila
+        const queuePosition = await queueService.getQueuePosition(provedor.id);
+        if (queuePosition && queuePosition > 0) {
+          sendSSE(controller, {
+            tipo: 'progresso',
+            fase: 'na_fila',
+            mensagem: `Na fila de processamento (posição ${queuePosition})`,
+            queue_position: queuePosition
+          });
 
-        console.log('🌐 URL SGP construída:', url);
-        console.log('🔑 AuthBody:', {
-          token: integracao.token ? 'DEFINIDO' : 'VAZIO',
-          app: integracao.app_name,
-          omitir_contratos: false,
-          filtros: filtrosFinais
-        });
+          // Aguardar até o job iniciar
+          const jobStarted = await waitForJobToStart(jobId, controller);
+          if (!jobStarted) {
+            return; // Job falhou ou timeout
+          }
+        }
 
-        const senhaHash = await bcrypt.hash(senha_padrao, 10);
-
-        // Buscar clientes com progresso
-        sendSSE(controller, {
-          tipo: 'progresso',
-          fase: 'buscando',
-          mensagem: 'Buscando clientes do SGP...'
-        });
-
-        const clientesSGP = await buscarClientesSGPComProgresso(url, authBody, (progress) => {
-          pool.query(
-            'UPDATE import_jobs SET mensagem_atual = $1, updated_at = NOW() WHERE id = $2',
-            [progress.mensagem, jobId]
-          );
-          sendSSE(controller, { tipo: 'progresso', ...progress });
-        });
-
-        // Atualizar job com total estimado
-        await pool.query(
-          'UPDATE import_jobs SET total_estimado = $1, mensagem_atual = $2 WHERE id = $3',
-          [clientesSGP.length, `${clientesSGP.length} clientes encontrados, iniciando processamento...`, jobId]
-        );
-
-        sendSSE(controller, {
-          tipo: 'progresso',
-          fase: 'preparando',
-          mensagem: `${clientesSGP.length} clientes encontrados, iniciando processamento...`,
-          total: clientesSGP.length
-        });
-
-        // Processar clientes em chunks
-        const config = { senhaHash, integracao, session };
-        const resultado = await processarClientesEmChunks(clientesSGP, config, async (progress) => {
-          // Atualizar job no banco
-          await pool.query(
-            `UPDATE import_jobs SET
-              processados = $1,
-              criados = $2,
-              atualizados = $3,
-              erros = $4,
-              progresso_percent = $5,
-              eta_segundos = $6,
-              mensagem_atual = $7
-             WHERE id = $8`,
-            [
-              progress.processados,
-              progress.criados,
-              progress.atualizados,
-              progress.erros,
-              progress.progresso_percent,
-              progress.eta_segundos,
-              progress.mensagem,
-              jobId
-            ]
-          );
-
-          sendSSE(controller, { tipo: 'progresso', ...progress });
-        });
-
-        // Finalizar job
-        await pool.query(
-          `UPDATE import_jobs SET
-            status = 'completed',
-            finalizado_em = NOW(),
-            resultados = $1,
-            mensagem_atual = 'Importação concluída com sucesso'
-           WHERE id = $2`,
-          [JSON.stringify(resultado), jobId]
-        );
-
-        sendSSE(controller, {
-          tipo: 'concluido',
-          mensagem: 'Importação concluída com sucesso!',
-          ...resultado,
-          job_id: jobId
-        });
+        // Monitorar progresso do job via polling
+        await monitorJobProgress(jobId, controller);
 
       } catch (error) {
         console.error('Erro na importação:', error);

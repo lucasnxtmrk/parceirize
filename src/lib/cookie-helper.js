@@ -16,9 +16,9 @@ export class CookieHelper {
       return undefined;
     }
 
-    // Para subdomínios do parceirize.com, usar domínio wildcard
-    if (hostname.includes('.parceirize.com')) {
-      return '.parceirize.com';
+    // Para subdomínios do parceirize.com.br, usar domínio wildcard
+    if (hostname.includes('.parceirize.com.br')) {
+      return '.parceirize.com.br';
     }
 
     // Para domínios personalizados, usar o domínio específico
@@ -135,7 +135,7 @@ export class CookieHelper {
                     (hostname.includes('localhost') ? 'http' : 'https');
 
     const isLocalhost = hostname.includes('localhost') || hostname.includes('127.0.0.1');
-    const isSubdomain = hostname.includes('.parceirize.com');
+    const isSubdomain = hostname.includes('.parceirize.com.br');
     const isCustomDomain = !isLocalhost && !isSubdomain;
 
     return {
@@ -182,7 +182,7 @@ export class CookieHelper {
 
     // Se estiver em subdomínio, também limpar para domínio principal
     if (domainInfo.isSubdomain) {
-      this.clearDomainCookies(response, '.parceirize.com');
+      this.clearDomainCookies(response, '.parceirize.com.br');
     }
   }
 }

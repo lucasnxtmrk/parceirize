@@ -96,24 +96,22 @@ export class DomainHelper {
    */
   static async getProviderBySubdomain(subdomain) {
     try {
-      const domain = `${subdomain}.parceirize.com`;
-
+      // Buscar diretamente na tabela provedores pelo campo subdominio
       const result = await pool.query(`
         SELECT
           p.id as provedor_id,
           p.tenant_id,
           p.nome_empresa,
           p.email,
-          dp.dominio,
-          dp.tipo,
-          dp.verificado
+          p.subdominio,
+          'subdominio' as tipo,
+          true as verificado
         FROM provedores p
-        INNER JOIN dominios_personalizados dp ON p.id = dp.provedor_id
-        WHERE dp.dominio = $1
-          AND dp.ativo = true
-          AND dp.verificado = true
+        WHERE LOWER(p.subdominio) = $1
           AND p.ativo = true
-      `, [domain]);
+          AND p.subdominio IS NOT NULL
+          AND p.subdominio != ''
+      `, [subdomain.toLowerCase()]);
 
       return result.rows[0] || null;
     } catch (error) {
@@ -168,8 +166,8 @@ export class DomainHelper {
     const subdomain = parts[0];
     const domain = parts.slice(1).join('.');
 
-    // Verificar se é um subdomínio válido do parceirize.com
-    if (domain === 'parceirize.com' && subdomain !== 'www' && subdomain !== 'admin') {
+    // Verificar se é um subdomínio válido do parceirize.com.br
+    if (domain === 'parceirize.com.br' && subdomain !== 'www' && subdomain !== 'admin') {
       return subdomain;
     }
 

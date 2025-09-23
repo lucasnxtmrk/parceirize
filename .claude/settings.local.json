@@ -42,7 +42,8 @@
       "Bash(for file in src/app/api/parceiro/dashboard.js src/app/api/parceiro/produtos.js src/app/api/parceiro/perfil.js)",
       "Bash(do echo \"=== $file ===\")",
       "Bash(rg:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "WebFetch(domain:coolify.io)"
     ],
     "deny": [],
     "ask": []

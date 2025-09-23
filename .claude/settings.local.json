@@ -36,7 +36,13 @@
       "Bash(dir srcappapivouchers)",
       "Bash(dir:*)",
       "Bash(npx tsc:*)",
-      "Bash(del \"C:\\TRABALHO\\NEXTMARK\\SISTEMAS\\parceirize\\src\\app\\api\\debug\\check-clientes\\route.js\")"
+      "Bash(del \"C:\\TRABALHO\\NEXTMARK\\SISTEMAS\\parceirize\\src\\app\\api\\debug\\check-clientes\\route.js\")",
+      "Bash(findstr:*)",
+      "Bash(del \"C:\\TRABALHO\\NEXTMARK\\SISTEMAS\\parceirize\\src\\app\\(other)\\auth\\login\\components\\LoginWrapper.jsx\")",
+      "Bash(for file in src/app/api/parceiro/dashboard.js src/app/api/parceiro/produtos.js src/app/api/parceiro/perfil.js)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(rg:*)",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []

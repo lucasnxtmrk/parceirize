@@ -1,23 +1,20 @@
 import { Pool } from "pg";
-import { getServerSession } from "next-auth";
-import { options } from "@/app/api/auth/[...nextauth]/options";
+import { withTenantIsolation } from "@/lib/tenant-helper";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-export async function GET(req) {
+// ✅ GET - DASHBOARD DO PARCEIRO COM ISOLAMENTO MULTI-TENANT
+export const GET = withTenantIsolation(async (request, { tenant }) => {
   try {
-    const session = await getServerSession(options);
-    
-    if (!session || session.user.role !== 'parceiro') {
-      return new Response(JSON.stringify({ error: "Não autorizado" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+    if (!['parceiro'].includes(tenant.role)) {
+      return new Response(JSON.stringify({ error: "Acesso negado" }), { status: 403 });
     }
 
-    const parceiroId = session.user.id;
+    console.log("📊 Dashboard para parceiro:", tenant.user.id, "no tenant:", tenant.tenant_id);
+
+    const parceiroId = tenant.user.id;
 
     // Buscar estatísticas principais
     const statsQuery = `
@@ -150,7 +147,7 @@ export async function GET(req) {
       FROM cliente_stats cs, desconto_stats ds, vendas_stats vs, produto_stats ps, vendas_hoje vh, voucher_stats vcs
     `;
 
-    const statsResult = await pool.query(statsQuery, [parceiroId]);
+    const statsResult = await pool.query(statsQuery, [parceiroId, tenant.tenant_id]);
     const stats = statsResult.rows[0];
 
     // Buscar dados para gráfico de vendas (últimos 30 dias)
@@ -166,7 +163,7 @@ export async function GET(req) {
       ORDER BY data
     `;
 
-    const chartResult = await pool.query(chartQuery, [parceiroId]);
+    const chartResult = await pool.query(chartQuery, [parceiroId, tenant.tenant_id]);
     
     // Preencher dias sem vendas
     const chartData = {
@@ -206,7 +203,7 @@ export async function GET(req) {
       LIMIT 5
     `;
 
-    const topProductsResult = await pool.query(topProductsQuery, [parceiroId]);
+    const topProductsResult = await pool.query(topProductsQuery, [parceiroId, tenant.tenant_id]);
 
     // Buscar vendas recentes
     const recentSalesQuery = `
@@ -230,7 +227,7 @@ export async function GET(req) {
       LIMIT 10
     `;
 
-    const recentSalesResult = await pool.query(recentSalesQuery, [parceiroId]);
+    const recentSalesResult = await pool.query(recentSalesQuery, [parceiroId, tenant.tenant_id]);
 
     return new Response(JSON.stringify({
       stats: {
@@ -282,4 +279,4 @@ export async function GET(req) {
       headers: { "Content-Type": "application/json" },
     });
   }
-}
+});

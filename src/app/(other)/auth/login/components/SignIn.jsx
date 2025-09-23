@@ -13,8 +13,16 @@ import useSignIn from './useSignIn';
 
 const SignIn = () => {
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'cliente');
+  const [activeTab, setActiveTab] = useState('cliente');
   const [focusedField, setFocusedField] = useState('');
+
+  // Usar useEffect para evitar hydration mismatch
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['cliente', 'parceiro'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     document.body.style.background = 'linear-gradient(135deg, #1B1236 0%, #2D1B69 50%, #1B1236 100%)';
@@ -523,15 +531,22 @@ const SignIn = () => {
                       className="text-center border-0 py-3"
                       style={{
                         background: activeTab === 'cliente' ? 'linear-gradient(135deg, #DE488C 0%, #1B1236 100%)' : 'transparent',
-                        color: activeTab === 'cliente' ? '#ffffff' : '#6B7280',
+                        color: activeTab === 'cliente' ? '#ffffff !important' : '#6B7280',
                         borderRadius: '12px',
                         transition: 'all 0.3s ease',
                         fontWeight: '600',
                         fontSize: '0.875rem'
                       }}
                     >
-                      <IconifyIcon icon="heroicons:user" width={16} className="me-2" />
-                      Cliente
+                      <IconifyIcon
+                        icon="heroicons:user"
+                        width={16}
+                        className="me-2"
+                        style={{ color: activeTab === 'cliente' ? '#ffffff' : '#6B7280' }}
+                      />
+                      <span style={{ color: activeTab === 'cliente' ? '#ffffff' : '#6B7280' }}>
+                        Cliente
+                      </span>
                     </Nav.Link>
                   </Nav.Item>
                   <Nav.Item className="flex-fill ms-2">
@@ -541,15 +556,22 @@ const SignIn = () => {
                       className="text-center border-0 py-3"
                       style={{
                         background: activeTab === 'parceiro' ? 'linear-gradient(135deg, #DE488C 0%, #1B1236 100%)' : 'transparent',
-                        color: activeTab === 'parceiro' ? '#ffffff' : '#6B7280',
+                        color: activeTab === 'parceiro' ? '#ffffff !important' : '#6B7280',
                         borderRadius: '12px',
                         transition: 'all 0.3s ease',
                         fontWeight: '600',
                         fontSize: '0.875rem'
                       }}
                     >
-                      <IconifyIcon icon="heroicons:building-office" width={16} className="me-2" />
-                      Parceiro
+                      <IconifyIcon
+                        icon="heroicons:building-office"
+                        width={16}
+                        className="me-2"
+                        style={{ color: activeTab === 'parceiro' ? '#ffffff' : '#6B7280' }}
+                      />
+                      <span style={{ color: activeTab === 'parceiro' ? '#ffffff' : '#6B7280' }}>
+                        Parceiro
+                      </span>
                     </Nav.Link>
                   </Nav.Item>
                 </Nav>
@@ -573,6 +595,7 @@ const SignIn = () => {
 
               </CardBody>
             </Card>
+
 
             {/* Footer */}
             <div className="text-center mt-4">

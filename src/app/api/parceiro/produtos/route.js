@@ -1,41 +1,37 @@
 import { Pool } from "pg";
-import { getServerSession } from "next-auth";
-import { options } from "@/app/api/auth/[...nextauth]/options";
+import { withTenantIsolation } from "@/lib/tenant-helper";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-export async function GET(req) {
+// ✅ GET - PRODUTOS DO PARCEIRO COM ISOLAMENTO MULTI-TENANT
+export const GET = withTenantIsolation(async (request, { tenant }) => {
   try {
-    const session = await getServerSession(options);
-    
-    if (!session || session.user.role !== 'parceiro') {
-      return new Response(JSON.stringify({ error: "Não autorizado" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+    if (!['parceiro'].includes(tenant.role)) {
+      return new Response(JSON.stringify({ error: "Acesso negado" }), { status: 403 });
     }
 
-    const parceiroId = session.user.id;
+    const parceiroId = tenant.user.id;
 
     const query = `
-      SELECT 
-        id,
-        nome,
-        descricao,
-        preco,
-        desconto,
-        ativo,
-        imagem_url,
-        created_at,
-        updated_at
-      FROM produtos
-      WHERE parceiro_id = $1
-      ORDER BY created_at DESC
+      SELECT
+        p.id,
+        p.nome,
+        p.descricao,
+        p.preco,
+        p.desconto,
+        p.ativo,
+        p.imagem_url,
+        p.created_at,
+        p.updated_at
+      FROM produtos p
+      INNER JOIN parceiros parc ON p.parceiro_id = parc.id
+      WHERE p.parceiro_id = $1 AND parc.tenant_id = $2
+      ORDER BY p.created_at DESC
     `;
 
-    const result = await pool.query(query, [parceiroId]);
+    const result = await pool.query(query, [parceiroId, tenant.tenant_id]);
     
     return new Response(JSON.stringify(result.rows), {
       status: 200,
@@ -48,7 +44,7 @@ export async function GET(req) {
       headers: { "Content-Type": "application/json" },
     });
   }
-}
+});
 
 export async function POST(req) {
   try {

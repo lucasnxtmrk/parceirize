@@ -1,23 +1,20 @@
 import { Pool } from "pg";
-import { getServerSession } from "next-auth";
-import { options } from "@/app/api/auth/[...nextauth]/options";
+import { withTenantIsolation } from "@/lib/tenant-helper";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-export async function GET(req) {
+// ✅ GET - BUSCAR PERFIL DO CLIENTE COM ISOLAMENTO MULTI-TENANT
+export const GET = withTenantIsolation(async (request, { tenant }) => {
   try {
-    const session = await getServerSession(options);
-
-    if (!session || session.user.role !== 'cliente') {
-      return new Response(JSON.stringify({ error: "Não autorizado" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+    if (!['cliente'].includes(tenant.role)) {
+      return new Response(JSON.stringify({ error: "Acesso negado" }), { status: 403 });
     }
 
-    const clienteId = session.user.id;
+    console.log("👤 Buscando perfil do cliente:", tenant.user.id, "no tenant:", tenant.tenant_id);
+
+    const clienteId = tenant.user.id;
 
     const query = `
       SELECT
@@ -29,10 +26,10 @@ export async function GET(req) {
         data_criacao,
         ativo
       FROM clientes
-      WHERE id = $1
+      WHERE id = $1 AND tenant_id = $2
     `;
 
-    const result = await pool.query(query, [clienteId]);
+    const result = await pool.query(query, [clienteId, tenant.tenant_id]);
 
     if (result.rows.length === 0) {
       return new Response(JSON.stringify({ error: "Cliente não encontrado" }), {
@@ -52,21 +49,17 @@ export async function GET(req) {
       headers: { "Content-Type": "application/json" },
     });
   }
-}
+});
 
-export async function PUT(req) {
+// ✅ PUT - ATUALIZAR PERFIL DO CLIENTE COM ISOLAMENTO MULTI-TENANT
+export const PUT = withTenantIsolation(async (request, { tenant }) => {
   try {
-    const session = await getServerSession(options);
-
-    if (!session || session.user.role !== 'cliente') {
-      return new Response(JSON.stringify({ error: "Não autorizado" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+    if (!['cliente'].includes(tenant.role)) {
+      return new Response(JSON.stringify({ error: "Acesso negado" }), { status: 403 });
     }
 
-    const clienteId = session.user.id;
-    const { nome, sobrenome, email } = await req.json();
+    const clienteId = tenant.user.id;
+    const { nome, sobrenome, email } = await request.json();
 
     if (!nome || !sobrenome) {
       return new Response(JSON.stringify({ error: "Nome e sobrenome são obrigatórios" }), {
@@ -75,13 +68,13 @@ export async function PUT(req) {
       });
     }
 
-    // Verificar se o email já está em uso por outro cliente
-    if (email && email !== session.user.email) {
+    // Verificar se o email já está em uso por outro cliente NO MESMO TENANT
+    if (email && email !== tenant.user.email) {
       const emailCheckQuery = `
         SELECT id FROM clientes
-        WHERE email = $1 AND id != $2
+        WHERE email = $1 AND id != $2 AND tenant_id = $3
       `;
-      const emailCheck = await pool.query(emailCheckQuery, [email, clienteId]);
+      const emailCheck = await pool.query(emailCheckQuery, [email, clienteId, tenant.tenant_id]);
 
       if (emailCheck.rows.length > 0) {
         return new Response(JSON.stringify({ error: "Este e-mail já está em uso" }), {
@@ -94,15 +87,16 @@ export async function PUT(req) {
     const updateQuery = `
       UPDATE clientes
       SET nome = $1, sobrenome = $2, email = $3
-      WHERE id = $4
+      WHERE id = $4 AND tenant_id = $5
       RETURNING id, nome, sobrenome, email, id_carteirinha, data_criacao, ativo
     `;
 
     const result = await pool.query(updateQuery, [
       nome,
       sobrenome,
-      email || session.user.email,
-      clienteId
+      email || tenant.user.email,
+      clienteId,
+      tenant.tenant_id
     ]);
 
     if (result.rows.length === 0) {
@@ -126,4 +120,4 @@ export async function PUT(req) {
       headers: { "Content-Type": "application/json" },
     });
   }
-}
+});

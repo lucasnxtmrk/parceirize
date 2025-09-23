@@ -26,12 +26,14 @@ export default function CadastrarProvedorPage() {
     email: '',
     senha: '',
     confirmar_senha: '',
-    plano_id: '',
-    subdominio: '',
-    data_vencimento: ''
+    telefone: '',
+    endereco: '',
+    cnpj: '',
+    subdominio: ''
   })
 
   const [errors, setErrors] = useState({})
+  const [subdomainStatus, setSubdomainStatus] = useState({ checking: false, valid: null, message: '' })
 
   useEffect(() => {
     if (session?.user?.role === 'superadmin') {
@@ -49,6 +51,56 @@ export default function CadastrarProvedorPage() {
       setPlanos([])
     }
   }
+
+  const validateSubdomain = async (subdomain) => {
+    if (!subdomain || subdomain.trim().length === 0) {
+      setSubdomainStatus({ checking: false, valid: null, message: '' })
+      return
+    }
+
+    setSubdomainStatus({ checking: true, valid: null, message: 'Verificando...' })
+
+    try {
+      const response = await fetch('/api/admin/validate-subdomain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subdominio: subdomain.trim().toLowerCase() })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSubdomainStatus({
+          checking: false,
+          valid: true,
+          message: `✅ ${data.message} Domínio: ${data.domain_preview}`
+        })
+      } else {
+        setSubdomainStatus({
+          checking: false,
+          valid: false,
+          message: `❌ ${data.error}`
+        })
+      }
+    } catch (error) {
+      setSubdomainStatus({
+        checking: false,
+        valid: false,
+        message: '❌ Erro ao validar subdomínio'
+      })
+    }
+  }
+
+  // Debounce para validação de subdomínio
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (formData.subdominio) {
+        validateSubdomain(formData.subdominio)
+      }
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [formData.subdominio])
 
   const validateForm = () => {
     const newErrors = {}
@@ -77,22 +129,12 @@ export default function CadastrarProvedorPage() {
       newErrors.confirmar_senha = 'Senhas não coincidem'
     }
 
-    // Plano
-    if (!formData.plano_id) {
-      newErrors.plano_id = 'Plano é obrigatório'
-    }
-
     // Subdomínio (opcional, mas se fornecido deve ser válido)
-    if (formData.subdominio && !/^[a-z0-9-]+$/.test(formData.subdominio)) {
-      newErrors.subdominio = 'Subdomínio deve conter apenas letras minúsculas, números e hífens'
-    }
-
-    // Data de vencimento (opcional, mas se fornecida deve ser futura)
-    if (formData.data_vencimento) {
-      const vencimento = new Date(formData.data_vencimento)
-      const hoje = new Date()
-      if (vencimento <= hoje) {
-        newErrors.data_vencimento = 'Data de vencimento deve ser futura'
+    if (formData.subdominio) {
+      if (subdomainStatus.valid === false) {
+        newErrors.subdominio = 'Subdomínio inválido ou não disponível'
+      } else if (subdomainStatus.checking) {
+        newErrors.subdominio = 'Aguarde a validação do subdomínio'
       }
     }
 
@@ -110,16 +152,17 @@ export default function CadastrarProvedorPage() {
     setLoading(true)
 
     try {
-      const response = await fetch('/api/superadmin/provedores', {
+      const response = await fetch('/api/admin/provedores', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nome_empresa: formData.nome_empresa,
           email: formData.email,
           senha: formData.senha,
-          plano_id: parseInt(formData.plano_id),
           subdominio: formData.subdominio || null,
-          data_vencimento: formData.data_vencimento || null
+          telefone: formData.telefone || null,
+          endereco: formData.endereco || null,
+          cnpj: formData.cnpj || null
         })
       })
 
@@ -295,68 +338,98 @@ export default function CadastrarProvedorPage() {
                 </div>
               </div>
 
-              <Separator />
-
-              {/* Configurações do Plano */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Configurações do Plano</h3>
-
-                <div className="space-y-2">
-                  <Label htmlFor="plano_id">Plano de Assinatura *</Label>
-                  <Select value={formData.plano_id || ""} onValueChange={(value) => handleInputChange('plano_id', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um plano..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {planos.map(plano => (
-                        <SelectItem key={plano.id} value={plano.id.toString()}>
-                          <div className="flex items-center justify-between w-full">
-                            <span>{plano.nome}</span>
-                            <span className="ml-2 text-sm text-muted-foreground">
-                              {formatCurrency(plano.preco)}/mês
-                            </span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.plano_id && (
-                    <p className="text-sm text-red-600">{errors.plano_id}</p>
-                  )}
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="subdominio">Subdomínio (opcional)</Label>
-                    <div className="flex items-center space-x-2">
-                      <Input
-                        id="subdominio"
-                        type="text"
-                        value={formData.subdominio}
-                        onChange={(e) => handleInputChange('subdominio', e.target.value.toLowerCase())}
-                        placeholder="empresa"
-                        disabled={loading}
-                      />
-                      <span className="text-sm text-muted-foreground">.parceirize.com</span>
-                    </div>
-                    {errors.subdominio && (
-                      <p className="text-sm text-red-600">{errors.subdominio}</p>
-                    )}
+                    <Label htmlFor="telefone">Telefone</Label>
+                    <Input
+                      id="telefone"
+                      type="tel"
+                      value={formData.telefone}
+                      onChange={(e) => handleInputChange('telefone', e.target.value)}
+                      placeholder="(11) 99999-9999"
+                      disabled={loading}
+                    />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="data_vencimento">Data de Vencimento (opcional)</Label>
+                    <Label htmlFor="cnpj">CNPJ</Label>
                     <Input
-                      id="data_vencimento"
-                      type="date"
-                      value={formData.data_vencimento}
-                      onChange={(e) => handleInputChange('data_vencimento', e.target.value)}
+                      id="cnpj"
+                      type="text"
+                      value={formData.cnpj}
+                      onChange={(e) => handleInputChange('cnpj', e.target.value)}
+                      placeholder="00.000.000/0001-00"
                       disabled={loading}
-                      min={new Date().toISOString().split('T')[0]}
                     />
-                    {errors.data_vencimento && (
-                      <p className="text-sm text-red-600">{errors.data_vencimento}</p>
-                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="endereco">Endereço</Label>
+                  <Input
+                    id="endereco"
+                    type="text"
+                    value={formData.endereco}
+                    onChange={(e) => handleInputChange('endereco', e.target.value)}
+                    placeholder="Rua, número, bairro, cidade - UF"
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Configurações de Domínio */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Configurações de Domínio</h3>
+                <p className="text-sm text-muted-foreground">
+                  Configure um subdomínio personalizado para este provedor. Será criado automaticamente um domínio como: subdominio.parceirize.com
+                </p>
+
+                <div className="space-y-2">
+                  <Label htmlFor="subdominio">Subdomínio (opcional)</Label>
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      id="subdominio"
+                      type="text"
+                      value={formData.subdominio}
+                      onChange={(e) => handleInputChange('subdominio', e.target.value.toLowerCase())}
+                      placeholder="minhaempresa"
+                      disabled={loading}
+                      className={
+                        subdomainStatus.valid === true ? 'border-green-500' :
+                        subdomainStatus.valid === false ? 'border-red-500' :
+                        ''
+                      }
+                    />
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">.parceirize.com</span>
+                  </div>
+
+                  {/* Status do subdomínio */}
+                  {subdomainStatus.message && (
+                    <div className={`text-sm p-2 rounded ${
+                      subdomainStatus.valid === true ? 'bg-green-50 text-green-700' :
+                      subdomainStatus.valid === false ? 'bg-red-50 text-red-700' :
+                      'bg-yellow-50 text-yellow-700'
+                    }`}>
+                      {subdomainStatus.checking && (
+                        <div className="flex items-center space-x-2">
+                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-yellow-600"></div>
+                          <span>{subdomainStatus.message}</span>
+                        </div>
+                      )}
+                      {!subdomainStatus.checking && subdomainStatus.message}
+                    </div>
+                  )}
+
+                  {errors.subdominio && (
+                    <p className="text-sm text-red-600">{errors.subdominio}</p>
+                  )}
+
+                  <div className="text-xs text-muted-foreground">
+                    <p>• Use apenas letras minúsculas, números e hífen</p>
+                    <p>• Não pode começar ou terminar com hífen</p>
+                    <p>• Mínimo 1 caractere, máximo 50 caracteres</p>
                   </div>
                 </div>
               </div>

@@ -1,11 +1,43 @@
 import { validateId, validateEmail, sanitizeString } from '@/lib/tenant-helper';
 
+// Função para validar CPF
+function validateCPF(cpf) {
+  // Elimina CPFs conhecidos que são inválidos
+  if (cpf === "00000000000" || cpf === "11111111111" || cpf === "22222222222" ||
+      cpf === "33333333333" || cpf === "44444444444" || cpf === "55555555555" ||
+      cpf === "66666666666" || cpf === "77777777777" || cpf === "88888888888" ||
+      cpf === "99999999999") {
+    return false;
+  }
+
+  // Valida 1º dígito
+  let add = 0;
+  for (let i = 0; i < 9; i++) {
+    add += parseInt(cpf.charAt(i)) * (10 - i);
+  }
+  let rev = 11 - (add % 11);
+  if (rev === 10 || rev === 11) rev = 0;
+  if (rev !== parseInt(cpf.charAt(9))) return false;
+
+  // Valida 2º dígito
+  add = 0;
+  for (let i = 0; i < 10; i++) {
+    add += parseInt(cpf.charAt(i)) * (11 - i);
+  }
+  rev = 11 - (add % 11);
+  if (rev === 10 || rev === 11) rev = 0;
+  if (rev !== parseInt(cpf.charAt(10))) return false;
+
+  return true;
+}
+
 // Schemas de validação para diferentes entidades
 export const ValidationSchemas = {
   cliente: {
     nome: { required: true, type: 'string', maxLength: 100 },
     sobrenome: { required: true, type: 'string', maxLength: 100 },
     email: { required: true, type: 'email' },
+    cpf_cnpj: { required: true, type: 'cpf_cnpj' },
     senha: { required: true, type: 'string', minLength: 6 },
     id: { required: false, type: 'id' }
   },
@@ -103,6 +135,22 @@ function validateField(value, fieldName, rules) {
         errors.push(`${fieldName} deve ser um valor booleano`);
       }
       break;
+
+    case 'cpf_cnpj':
+      if (typeof value !== 'string') {
+        errors.push(`${fieldName} deve ser uma string`);
+      } else {
+        // Remove máscara e valida formato
+        const cleaned = value.replace(/\D/g, '');
+        if (cleaned.length !== 11 && cleaned.length !== 14) {
+          errors.push(`${fieldName} deve ter 11 dígitos (CPF) ou 14 dígitos (CNPJ)`);
+        }
+        // Validação básica - pode ser expandida com validação de dígitos verificadores
+        if (cleaned.length === 11 && !validateCPF(cleaned)) {
+          errors.push(`${fieldName} (CPF) é inválido`);
+        }
+      }
+      break;
   }
 
   return errors;
@@ -133,6 +181,16 @@ export function validateData(data, schemaName) {
         sanitizedData[fieldName] = validateId(data[fieldName], fieldName);
       } else if (rules.type === 'boolean') {
         sanitizedData[fieldName] = data[fieldName] === true || data[fieldName] === 'true';
+      } else if (rules.type === 'cpf_cnpj') {
+        // Formatar CPF/CNPJ
+        const cleaned = data[fieldName].replace(/\D/g, '');
+        if (cleaned.length === 11) {
+          sanitizedData[fieldName] = cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+        } else if (cleaned.length === 14) {
+          sanitizedData[fieldName] = cleaned.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+        } else {
+          sanitizedData[fieldName] = data[fieldName];
+        }
       } else {
         sanitizedData[fieldName] = data[fieldName];
       }

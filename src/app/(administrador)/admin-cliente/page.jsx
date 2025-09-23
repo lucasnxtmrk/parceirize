@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Button, Table, FormCheck, CardTitle, Modal, Form, Badge, Row, Col, FormGroup, FormLabel, FormControl } from "react-bootstrap";
+import { Button, Table, FormCheck, CardTitle, Modal, Form, Badge, Row, Col, FormGroup, FormLabel, FormControl, InputGroup, Pagination, Card, Alert } from "react-bootstrap";
 import ComponentContainerCard from "@/components/ComponentContainerCard";
 import ClienteModal from "./components/ClienteModal";
 
@@ -23,6 +23,19 @@ const ClientesPage = () => {
     });
     const [transformLoading, setTransformLoading] = useState(false);
     const [transformError, setTransformError] = useState(null);
+
+    // Estados para paginação e busca
+    const [pagination, setPagination] = useState({
+        current_page: 1,
+        per_page: 10,
+        total: 0,
+        total_pages: 0,
+        has_next: false,
+        has_prev: false
+    });
+    const [search, setSearch] = useState('');
+    const [searchInput, setSearchInput] = useState('');
+    const [itemsPerPage, setItemsPerPage] = useState(10);
     
     // Estados para modal de importação SGP
     const [showImportModal, setShowImportModal] = useState(false);
@@ -42,17 +55,34 @@ const ClientesPage = () => {
     const [senhaPadrao, setSenhaPadrao] = useState('');
 
     useEffect(() => {
-        fetchClientes();
+        fetchClientes(1, itemsPerPage, '');
         fetchCategorias();
     }, []);
 
-    const fetchClientes = async () => {
+    // Removido debounce automático - busca só ao clicar no botão
+
+    // Recarregar apenas quando items per page mudar (manter atual)
+    useEffect(() => {
+        if (pagination.current_page) {
+            fetchClientes(1, itemsPerPage, search);
+        }
+    }, [itemsPerPage]);
+
+    const fetchClientes = async (page = 1, limit = itemsPerPage, searchTerm = search) => {
         try {
-            const response = await fetch("/api/admin/clientes");
+            setLoading(true);
+            const params = new URLSearchParams({
+                page: page.toString(),
+                limit: limit.toString(),
+                ...(searchTerm && { search: searchTerm })
+            });
+
+            const response = await fetch(`/api/admin/clientes?${params}`);
             if (!response.ok) throw new Error("Erro ao buscar clientes");
 
             const data = await response.json();
             setClientes(data.clientes || []);
+            setPagination(data.pagination || {});
             setLoading(false);
         } catch (err) {
             setError(err.message);
@@ -83,7 +113,7 @@ const ClientesPage = () => {
     };
 
     const handleClientCreated = () => {
-        fetchClientes();
+        fetchClientes(pagination.current_page, itemsPerPage, search);
         handleCloseModal();
     };
 
@@ -97,6 +127,30 @@ const ClientesPage = () => {
         setSelectedClientes(selectedClientes.length === clientes.length ? [] : clientes.map((c) => c.id));
     };
 
+    const handlePageChange = (page) => {
+        fetchClientes(page, itemsPerPage, search);
+        setSelectedClientes([]); // Limpar seleção ao mudar página
+    };
+
+    const handleItemsPerPageChange = (newLimit) => {
+        setItemsPerPage(Math.min(newLimit, 50)); // Máximo 50
+        setSelectedClientes([]);
+        // A busca será recarregada automaticamente pelo useEffect do itemsPerPage
+    };
+
+    const handleSearch = () => {
+        setSearch(searchInput);
+        fetchClientes(1, itemsPerPage, searchInput);
+        setSelectedClientes([]);
+    };
+
+    const handleClearSearch = () => {
+        setSearchInput('');
+        setSearch('');
+        fetchClientes(1, itemsPerPage, '');
+        setSelectedClientes([]);
+    };
+
     const handleDeleteClientes = async () => {
         try {
             const response = await fetch("/api/admin/clientes", {
@@ -108,7 +162,7 @@ const ClientesPage = () => {
             if (!response.ok) throw new Error("Erro ao excluir clientes");
 
             setShowDeleteModal(false);
-            fetchClientes();
+            fetchClientes(pagination.current_page, itemsPerPage, search);
             setSelectedClientes([]);
         } catch (err) {
             console.error("❌ Erro ao excluir clientes:", err);
@@ -159,7 +213,7 @@ const ClientesPage = () => {
             }
 
             handleCloseTransformarModal();
-            fetchClientes();
+            fetchClientes(pagination.current_page, itemsPerPage, search);
         } catch (err) {
             setTransformError(err.message);
         } finally {
@@ -251,7 +305,7 @@ const ClientesPage = () => {
 
             setImportResult(data);
             // Recarregar lista de clientes
-            fetchClientes();
+            fetchClientes(pagination.current_page, itemsPerPage, search);
         } catch (error) {
             setImportError(error.message);
         } finally {
@@ -280,12 +334,114 @@ const ClientesPage = () => {
                         Importar do SGP
                     </Button>
                     {selectedClientes.length > 0 && (
-                        <Button variant="secondary" onClick={() => setShowDeleteModal(true)}>
-                            Excluir Selecionados
+                        <Button variant="danger" onClick={() => setShowDeleteModal(true)}>
+                            <i className="bi bi-trash"></i> Excluir ({selectedClientes.length})
                         </Button>
                     )}
                 </div>
             </div>
+
+            {/* Barra de busca e controles */}
+            <Card className="mb-3">
+                <Card.Body className="py-3">
+                    <Row className="align-items-end g-3">
+                        <Col md={6}>
+                            <FormGroup className="mb-0">
+                                <FormLabel className="small text-muted mb-1">Buscar clientes</FormLabel>
+                                <div className="position-relative">
+                                    <FormControl
+                                        type="text"
+                                        placeholder="Nome, sobrenome, email, CPF/CNPJ ou ID da carteirinha..."
+                                        value={searchInput}
+                                        onChange={(e) => setSearchInput(e.target.value)}
+                                        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                                        style={{ paddingRight: searchInput ? '80px' : '45px' }}
+                                    />
+                                    {searchInput && (
+                                        <Button
+                                            size="sm"
+                                            variant="link"
+                                            onClick={handleClearSearch}
+                                            title="Limpar busca"
+                                            className="position-absolute text-danger"
+                                            style={{
+                                                right: '40px',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                border: 'none',
+                                                padding: '2px 6px',
+                                                zIndex: 10
+                                            }}
+                                        >
+                                            <i className="bi bi-x-circle-fill"></i>
+                                        </Button>
+                                    )}
+                                    <Button
+                                        size="sm"
+                                        variant="primary"
+                                        onClick={handleSearch}
+                                        title="Buscar"
+                                        className="position-absolute"
+                                        style={{
+                                            right: '5px',
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            padding: '4px 8px',
+                                            zIndex: 10
+                                        }}
+                                    >
+                                        <i className="bi bi-search"></i>
+                                    </Button>
+                                </div>
+                                {search && (
+                                    <small className="text-muted mt-1 d-block">
+                                        Buscando por: "<strong>{search}</strong>"
+                                        <Button
+                                            variant="link"
+                                            size="sm"
+                                            onClick={handleClearSearch}
+                                            className="text-danger p-0 ms-1"
+                                            style={{ fontSize: '12px', textDecoration: 'none' }}
+                                        >
+                                            Limpar
+                                        </Button>
+                                    </small>
+                                )}
+                            </FormGroup>
+                        </Col>
+
+                        <Col md={3}>
+                            <FormGroup className="mb-0">
+                                <FormLabel className="small text-muted mb-1">Itens por página</FormLabel>
+                                <FormControl
+                                    as="select"
+                                    value={itemsPerPage}
+                                    onChange={(e) => handleItemsPerPageChange(parseInt(e.target.value))}
+                                >
+                                    <option value={5}>5 por página</option>
+                                    <option value={10}>10 por página</option>
+                                    <option value={20}>20 por página</option>
+                                    <option value={30}>30 por página</option>
+                                    <option value={50}>50 por página</option>
+                                </FormControl>
+                            </FormGroup>
+                        </Col>
+
+                        <Col md={3}>
+                            <div className="text-end">
+                                <small className="text-muted">
+                                    <strong>{pagination.total || 0}</strong> cliente{(pagination.total || 0) !== 1 ? 's' : ''} encontrado{(pagination.total || 0) !== 1 ? 's' : ''}
+                                    {search && (
+                                        <>
+                                            <br />para "<em>{search}</em>"
+                                        </>
+                                    )}
+                                </small>
+                            </div>
+                        </Col>
+                    </Row>
+                </Card.Body>
+            </Card>
 
             <div className="table-responsive">
                 <Table hover align="center">
@@ -298,8 +454,9 @@ const ClientesPage = () => {
                                 />
                             </th>
                             <th scope="col">Nome</th>
-                            <th scope="col">Sobrenome</th>
                             <th scope="col">Email</th>
+                            <th scope="col">CPF/CNPJ</th>
+                            <th scope="col">ID Carteirinha</th>
                             <th scope="col">Tipo</th>
                             <th scope="col">Status</th>
                             <th scope="col">Ações</th>
@@ -314,20 +471,35 @@ const ClientesPage = () => {
                                         onChange={() => handleCheckboxChange(cliente.id)}
                                     />
                                 </td>
-                                <td>{cliente.nome}</td>
-                                <td>{cliente.sobrenome}</td>
-                                <td>{cliente.email}</td>
+                                <td>
+                                    <div>
+                                        <strong>{cliente.nome} {cliente.sobrenome}</strong>
+                                        <br />
+                                        <small className="text-muted">{cliente.email}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <small className="text-muted">{cliente.email}</small>
+                                </td>
+                                <td>
+                                    <code className="small">{cliente.cpf_cnpj || 'N/A'}</code>
+                                </td>
+                                <td>
+                                    <Badge bg="secondary" className="font-monospace text-white">
+                                        {cliente.id_carteirinha || 'N/A'}
+                                    </Badge>
+                                </td>
                                 <td>
                                     <Badge
                                         bg={cliente.tipo_cliente === 'parceiro' ? 'success' : 'primary'}
-                                        className="d-flex align-items-center gap-1 justify-content-center"
+                                        className="d-flex align-items-center gap-1 justify-content-center text-white"
                                     >
                                         <i className={`bi ${cliente.tipo_cliente === 'parceiro' ? 'bi-shop' : 'bi-person'}`}></i>
                                         {cliente.tipo_cliente === 'parceiro' ? 'Parceiro' : 'Cliente'}
                                     </Badge>
                                 </td>
                                 <td>
-                                    <Badge bg={cliente.ativo ? 'success' : 'danger'}>
+                                    <Badge bg={cliente.ativo ? 'success' : 'danger'} className="text-white">
                                         {cliente.ativo ? 'Ativo' : 'Inativo'}
                                     </Badge>
                                 </td>
@@ -338,7 +510,7 @@ const ClientesPage = () => {
                                         </Button>
                                         {cliente.tipo_cliente !== 'parceiro' ? (
                                             <Button
-                                                variant="success"
+                                                variant="primary"
                                                 size="sm"
                                                 onClick={() => handleOpenTransformarModal(cliente)}
                                                 title="Transformar em Parceiro"
@@ -348,7 +520,7 @@ const ClientesPage = () => {
                                                 <span className="d-none d-md-inline">Tornar Parceiro</span>
                                             </Button>
                                         ) : (
-                                            <Badge bg="success" className="d-flex align-items-center gap-1">
+                                            <Badge bg="success" className="d-flex align-items-center gap-1 text-white">
                                                 <i className="bi bi-check-circle"></i>
                                                 <span>Já é Parceiro</span>
                                             </Badge>
@@ -360,6 +532,54 @@ const ClientesPage = () => {
                     </tbody>
                 </Table>
             </div>
+
+            {/* Paginação */}
+            {pagination.total_pages > 1 && (
+                <div className="d-flex justify-content-between align-items-center mt-3">
+                    <small className="text-muted">
+                        Mostrando {((pagination.current_page - 1) * pagination.per_page) + 1} a {Math.min(pagination.current_page * pagination.per_page, pagination.total)} de {pagination.total} resultados
+                    </small>
+
+                    <Pagination className="mb-0">
+                        <Pagination.First
+                            onClick={() => handlePageChange(1)}
+                            disabled={!pagination.has_prev}
+                        />
+                        <Pagination.Prev
+                            onClick={() => handlePageChange(pagination.current_page - 1)}
+                            disabled={!pagination.has_prev}
+                        />
+
+                        {/* Páginas próximas */}
+                        {Array.from({ length: Math.min(5, pagination.total_pages) }, (_, i) => {
+                            const startPage = Math.max(1, pagination.current_page - 2);
+                            const pageNum = startPage + i;
+
+                            if (pageNum <= pagination.total_pages) {
+                                return (
+                                    <Pagination.Item
+                                        key={pageNum}
+                                        active={pageNum === pagination.current_page}
+                                        onClick={() => handlePageChange(pageNum)}
+                                    >
+                                        {pageNum}
+                                    </Pagination.Item>
+                                );
+                            }
+                            return null;
+                        })}
+
+                        <Pagination.Next
+                            onClick={() => handlePageChange(pagination.current_page + 1)}
+                            disabled={!pagination.has_next}
+                        />
+                        <Pagination.Last
+                            onClick={() => handlePageChange(pagination.total_pages)}
+                            disabled={!pagination.has_next}
+                        />
+                    </Pagination>
+                </div>
+            )}
 
             <ClienteModal
                 show={showModal}

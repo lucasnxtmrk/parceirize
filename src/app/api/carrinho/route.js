@@ -1,23 +1,22 @@
 import { Pool } from "pg";
 import { getServerSession } from "next-auth";
 import { options } from "@/app/api/auth/[...nextauth]/options";
+import { withTenantIsolation } from "@/lib/tenant-helper";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-export async function GET(req) {
+// ✅ GET - BUSCAR CARRINHO COM ISOLAMENTO MULTI-TENANT
+export const GET = withTenantIsolation(async (request, { tenant }) => {
   try {
-    const session = await getServerSession(options);
-    
-    if (!session || session.user.role !== 'cliente') {
-      return new Response(JSON.stringify({ error: "Não autorizado" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+    if (!['cliente'].includes(tenant.role)) {
+      return new Response(JSON.stringify({ error: "Acesso negado" }), { status: 403 });
     }
 
-    const clienteId = session.user.id;
+    console.log("🛒 Buscando carrinho para cliente:", tenant.user.id, "no tenant:", tenant.tenant_id);
+
+    const clienteId = tenant.user.id;
 
     const query = `
       SELECT
@@ -55,11 +54,11 @@ export async function GET(req) {
       FROM carrinho c
       INNER JOIN produtos p ON c.produto_id = p.id
       INNER JOIN parceiros parc ON p.parceiro_id = parc.id
-      WHERE c.cliente_id = $1
+      WHERE c.cliente_id = $1 AND parc.tenant_id = $2
       ORDER BY c.created_at DESC
     `;
 
-    const result = await pool.query(query, [clienteId]);
+    const result = await pool.query(query, [clienteId, tenant.tenant_id]);
     
     const total = result.rows.reduce((acc, item) => acc + parseFloat(item.subtotal), 0);
     const totalOriginal = result.rows.reduce((acc, item) => acc + parseFloat(item.subtotal_original), 0);
@@ -81,21 +80,19 @@ export async function GET(req) {
       headers: { "Content-Type": "application/json" },
     });
   }
-}
+});
 
-export async function POST(req) {
+// ✅ POST - ADICIONAR PRODUTO AO CARRINHO COM ISOLAMENTO MULTI-TENANT
+export const POST = withTenantIsolation(async (request, { tenant }) => {
   try {
-    const session = await getServerSession(options);
-    
-    if (!session || session.user.role !== 'cliente') {
-      return new Response(JSON.stringify({ error: "Não autorizado" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+    if (!['cliente'].includes(tenant.role)) {
+      return new Response(JSON.stringify({ error: "Acesso negado" }), { status: 403 });
     }
 
-    const clienteId = session.user.id;
-    const { produto_id, quantidade = 1 } = await req.json();
+    console.log("🛒 Adicionando produto ao carrinho para cliente:", tenant.user.id, "no tenant:", tenant.tenant_id);
+
+    const clienteId = tenant.user.id;
+    const { produto_id, quantidade = 1 } = await request.json();
 
     if (!produto_id) {
       return new Response(JSON.stringify({ error: "ID do produto é obrigatório" }), {
@@ -104,9 +101,14 @@ export async function POST(req) {
       });
     }
 
-    // Buscar preço atual do produto e parceiro
-    const produtoQuery = `SELECT preco, parceiro_id FROM produtos WHERE id = $1 AND ativo = true`;
-    const produtoResult = await pool.query(produtoQuery, [produto_id]);
+    // Buscar preço atual do produto e parceiro (COM ISOLAMENTO DE TENANT)
+    const produtoQuery = `
+      SELECT p.preco, p.parceiro_id
+      FROM produtos p
+      INNER JOIN parceiros parc ON p.parceiro_id = parc.id
+      WHERE p.id = $1 AND p.ativo = true AND parc.tenant_id = $2
+    `;
+    const produtoResult = await pool.query(produtoQuery, [produto_id, tenant.tenant_id]);
 
     if (produtoResult.rows.length === 0) {
       return new Response(JSON.stringify({ error: "Produto não encontrado ou inativo" }), {
@@ -118,15 +120,15 @@ export async function POST(req) {
     const precoUnitario = produtoResult.rows[0].preco;
     const parceiroIdNovo = produtoResult.rows[0].parceiro_id;
 
-    // Verificar se já existem produtos de outro parceiro no carrinho
+    // Verificar se já existem produtos de outro parceiro no carrinho (COM ISOLAMENTO)
     const carrinhoExistenteQuery = `
       SELECT DISTINCT p.parceiro_id, parc.nome_empresa
       FROM carrinho c
       INNER JOIN produtos p ON c.produto_id = p.id
       INNER JOIN parceiros parc ON p.parceiro_id = parc.id
-      WHERE c.cliente_id = $1 AND p.parceiro_id != $2
+      WHERE c.cliente_id = $1 AND p.parceiro_id != $2 AND parc.tenant_id = $3
     `;
-    const carrinhoExistente = await pool.query(carrinhoExistenteQuery, [clienteId, parceiroIdNovo]);
+    const carrinhoExistente = await pool.query(carrinhoExistenteQuery, [clienteId, parceiroIdNovo, tenant.tenant_id]);
 
     if (carrinhoExistente.rows.length > 0) {
       const parceiroDiferente = carrinhoExistente.rows[0];
@@ -176,21 +178,17 @@ export async function POST(req) {
       headers: { "Content-Type": "application/json" },
     });
   }
-}
+});
 
-export async function PUT(req) {
+// ✅ PUT - ATUALIZAR QUANTIDADE NO CARRINHO COM ISOLAMENTO MULTI-TENANT
+export const PUT = withTenantIsolation(async (request, { tenant }) => {
   try {
-    const session = await getServerSession(options);
-    
-    if (!session || session.user.role !== 'cliente') {
-      return new Response(JSON.stringify({ error: "Não autorizado" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+    if (!['cliente'].includes(tenant.role)) {
+      return new Response(JSON.stringify({ error: "Acesso negado" }), { status: 403 });
     }
 
-    const clienteId = session.user.id;
-    const { produto_id, quantidade } = await req.json();
+    const clienteId = tenant.user.id;
+    const { produto_id, quantidade } = await request.json();
 
     if (!produto_id || !quantidade || quantidade < 1) {
       return new Response(JSON.stringify({ error: "ID do produto e quantidade válida são obrigatórios" }), {
@@ -226,21 +224,17 @@ export async function PUT(req) {
       headers: { "Content-Type": "application/json" },
     });
   }
-}
+});
 
-export async function DELETE(req) {
+// ✅ DELETE - REMOVER PRODUTO DO CARRINHO COM ISOLAMENTO MULTI-TENANT
+export const DELETE = withTenantIsolation(async (request, { tenant }) => {
   try {
-    const session = await getServerSession(options);
-
-    if (!session || session.user.role !== 'cliente') {
-      return new Response(JSON.stringify({ error: "Não autorizado" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+    if (!['cliente'].includes(tenant.role)) {
+      return new Response(JSON.stringify({ error: "Acesso negado" }), { status: 403 });
     }
 
-    const clienteId = session.user.id;
-    const { searchParams } = new URL(req.url);
+    const clienteId = tenant.user.id;
+    const { searchParams } = new URL(request.url);
     const produtoId = searchParams.get('produto_id');
     const limparTudo = searchParams.get('limpar_tudo'); // Para limpar carrinho completo
 
@@ -291,4 +285,4 @@ export async function DELETE(req) {
       headers: { "Content-Type": "application/json" },
     });
   }
-}
+});

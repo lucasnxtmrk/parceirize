@@ -1,25 +1,38 @@
 import { Pool } from "pg";
 import { Nichos } from "@/data/nichos";
+import { withTenantIsolation } from "@/lib/tenant-helper";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-export async function GET() {
+// ✅ GET - LISTAR NICHOS COM ISOLAMENTO MULTI-TENANT
+export const GET = withTenantIsolation(async (request, { tenant }) => {
   try {
-    console.log("📡 Buscando nichos no banco de dados...");
+    console.log("📡 Buscando nichos para tenant:", tenant.tenant_id);
 
-    const query = `
+    let query = `
       SELECT nicho, COUNT(*) as count
       FROM parceiros
       WHERE nicho IS NOT NULL AND nicho != ''
+    `;
+
+    const queryParams = [];
+
+    // ✅ ISOLAMENTO DE TENANT: Apenas nichos de parceiros do tenant
+    if (!tenant.isGlobalAccess) {
+      query += ` AND tenant_id = $1`;
+      queryParams.push(tenant.tenant_id);
+    }
+
+    query += `
       GROUP BY nicho
       ORDER BY count DESC
     `;
 
-    const result = await pool.query(query);
+    const result = await pool.query(query, queryParams);
 
-    console.log("🔍 Nichos encontrados:", result.rows);
+    console.log(`🔍 Nichos encontrados para tenant ${tenant.tenant_id}:`, result.rows);
 
     // Mapear nichos para nomes legíveis
     const nichosFormatados = result.rows.map(row => {
@@ -44,4 +57,4 @@ export async function GET() {
       headers: { "Content-Type": "application/json" },
     });
   }
-}
+});

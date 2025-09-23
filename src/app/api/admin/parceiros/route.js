@@ -37,13 +37,53 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-// ✅ GET - LISTA PARCEIROS - COM ISOLAMENTO MULTI-TENANT
+// ✅ GET - LISTA PARCEIROS - COM ISOLAMENTO MULTI-TENANT, PAGINAÇÃO E BUSCA
 export const GET = withTenantIsolation(async (request, { tenant }) => {
   try {
     console.log("📡 Buscando lista de parceiros para tenant:", tenant.tenant_id);
 
-    let query = `
-      SELECT 
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page')) || 1;
+    const limit = Math.min(parseInt(searchParams.get('limit')) || 10, 50); // Máximo 50
+    const search = searchParams.get('search') || '';
+    const offset = (page - 1) * limit;
+
+    // Query base com filtro de tenant
+    let whereConditions = [];
+    let params = [];
+    let paramIndex = 1;
+
+    if (!tenant.isGlobalAccess) {
+      whereConditions.push(`p.tenant_id = $${paramIndex}`);
+      params.push(tenant.tenant_id);
+      paramIndex++;
+    }
+
+    // Adicionar filtro de busca
+    if (search) {
+      whereConditions.push(`(
+        p.nome_empresa ILIKE $${paramIndex} OR
+        p.email ILIKE $${paramIndex} OR
+        p.nicho ILIKE $${paramIndex}
+      )`);
+      params.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+
+    // Query para contar total
+    const countQuery = `
+      SELECT COUNT(DISTINCT p.id) as total
+      FROM parceiros p
+      ${whereClause}
+    `;
+    const countResult = await pool.query(countQuery, params);
+    const total = parseInt(countResult.rows[0].total);
+
+    // Query principal com paginação
+    const dataQuery = `
+      SELECT
         p.id,
         p.nome_empresa,
         p.email,
@@ -52,26 +92,29 @@ export const GET = withTenantIsolation(async (request, { tenant }) => {
         p.data_criacao,
         COUNT(DISTINCT v.id) as total_vouchers
       FROM parceiros p
-      LEFT JOIN vouchers v ON p.id = v.parceiro_id
-    `;
-    
-    let params = [];
-
-    if (!tenant.isGlobalAccess) {
-      query += " WHERE p.tenant_id = $1";
-      params.push(tenant.tenant_id);
-    }
-
-    query += `
+      LEFT JOIN vouchers v ON p.id = v.parceiro_id ${!tenant.isGlobalAccess ? 'AND v.tenant_id = p.tenant_id' : ''}
+      ${whereClause}
       GROUP BY p.id, p.nome_empresa, p.email, p.nicho, p.foto, p.data_criacao
       ORDER BY p.data_criacao DESC
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
     `;
+    params.push(limit, offset);
 
-    const result = await pool.query(query, params);
+    const result = await pool.query(dataQuery, params);
+
+    const totalPages = Math.ceil(total / limit);
 
     return new Response(JSON.stringify({
       parceiros: result.rows,
-      total: result.rows.length,
+      pagination: {
+        current_page: page,
+        per_page: limit,
+        total,
+        total_pages: totalPages,
+        has_next: page < totalPages,
+        has_prev: page > 1
+      },
+      search: search || null,
       tenant_info: {
         tenant_id: tenant.tenant_id,
         is_global: tenant.isGlobalAccess,
@@ -310,18 +353,15 @@ export const DELETE = withTenantIsolation(async (request, { tenant }) => {
 
     const vouchers = await pool.query(vouchersQuery, vouchersParams);
 
-    // 3️⃣ Remover voucher_utilizados COM filtro de tenant
+    // 3️⃣ Remover voucher_utilizados (isolamento já garantido pelos voucher_ids)
     if (vouchers.rows.length > 0) {
       const voucherIds = vouchers.rows.map(v => v.id);
       const deleteUtilizadosQuery = `
         DELETE FROM voucher_utilizados
-        WHERE voucher_id = ANY($1) ${!tenant.isGlobalAccess ? 'AND tenant_id = $2' : ''}
+        WHERE voucher_id = ANY($1)
       `;
-      const deleteUtilizadosParams = !tenant.isGlobalAccess
-        ? [voucherIds, tenant.tenant_id]
-        : [voucherIds];
 
-      await pool.query(deleteUtilizadosQuery, deleteUtilizadosParams);
+      await pool.query(deleteUtilizadosQuery, [voucherIds]);
     }
 
     // 4️⃣ Remover vouchers COM filtro de tenant

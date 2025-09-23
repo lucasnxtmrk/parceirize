@@ -72,12 +72,12 @@ export const POST = withTenantIsolation(async (request, { tenant }) => {
       }
     }
 
-    // 5️⃣ Registrar o uso do voucher COM tenant_id para auditoria
+    // 5️⃣ Registrar o uso do voucher (isolamento feito via relações)
     const registrarUsoQuery = `
-      INSERT INTO voucher_utilizados (cliente_id, voucher_id, data_utilizacao, desconto, tenant_id)
-      VALUES ($1, $2, NOW(), $3, $4)
+      INSERT INTO voucher_utilizados (cliente_id, voucher_id, data_utilizacao, desconto)
+      VALUES ($1, $2, NOW(), $3)
     `;
-    await pool.query(registrarUsoQuery, [cliente.id, voucher.voucher_id, voucher.desconto, tenant.tenant_id]);
+    await pool.query(registrarUsoQuery, [cliente.id, voucher.voucher_id, voucher.desconto]);
 
     // 6️⃣ Atualizar a data do último uso do cliente
     const atualizarClienteQuery = `

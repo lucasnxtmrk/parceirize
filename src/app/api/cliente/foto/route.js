@@ -1,6 +1,5 @@
 import { Pool } from "pg";
-import { getServerSession } from "next-auth";
-import { options } from "@/app/api/auth/[...nextauth]/options";
+import { withTenantIsolation } from "@/lib/tenant-helper";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
@@ -8,19 +7,15 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-export async function POST(req) {
+// ✅ POST - UPLOAD FOTO DO CLIENTE COM ISOLAMENTO MULTI-TENANT
+export const POST = withTenantIsolation(async (request, { tenant }) => {
   try {
-    const session = await getServerSession(options);
-
-    if (!session || session.user.role !== 'cliente') {
-      return new Response(JSON.stringify({ error: "Não autorizado" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+    if (!['cliente'].includes(tenant.role)) {
+      return new Response(JSON.stringify({ error: "Acesso negado" }), { status: 403 });
     }
 
-    const clienteId = session.user.id;
-    const formData = await req.formData();
+    const clienteId = tenant.user.id;
+    const formData = await request.formData();
     const file = formData.get('foto');
 
     if (!file) {
@@ -69,15 +64,15 @@ export async function POST(req) {
     // URL relativa da foto
     const fotoUrl = `/uploads/clientes/${fileName}`;
 
-    // Atualizar banco de dados
+    // Atualizar banco de dados COM ISOLAMENTO DE TENANT
     const updateQuery = `
       UPDATE clientes
       SET foto_url = $1
-      WHERE id = $2
+      WHERE id = $2 AND tenant_id = $3
       RETURNING foto_url
     `;
 
-    const result = await pool.query(updateQuery, [fotoUrl, clienteId]);
+    const result = await pool.query(updateQuery, [fotoUrl, clienteId, tenant.tenant_id]);
 
     if (result.rows.length === 0) {
       return new Response(JSON.stringify({ error: "Erro ao atualizar foto no banco" }), {
@@ -102,4 +97,4 @@ export async function POST(req) {
       headers: { "Content-Type": "application/json" },
     });
   }
-}
+});

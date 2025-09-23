@@ -1,6 +1,117 @@
 import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
+// Lista estática de domínios conhecidos para Edge Runtime
+const KNOWN_TENANTS = {
+  'teste.localhost:3000': {
+    tenant_id: '2da2a5f3-fea6-4112-9203-0f4b38097d77',
+    provedor_id: 2,
+    nome_empresa: 'Loja Teste Multi-Tenant'
+  },
+  'teste.localhost': {
+    tenant_id: '2da2a5f3-fea6-4112-9203-0f4b38097d77',
+    provedor_id: 2,
+    nome_empresa: 'Loja Teste Multi-Tenant'
+  },
+  'empresa1.localhost:3000': {
+    tenant_id: '2783a418-29ab-43bd-b568-88a6d4d9bf98',
+    provedor_id: 3,
+    nome_empresa: 'Empresa Teste 1'
+  },
+  'empresa1.localhost': {
+    tenant_id: '2783a418-29ab-43bd-b568-88a6d4d9bf98',
+    provedor_id: 3,
+    nome_empresa: 'Empresa Teste 1'
+  },
+  'empresa2.localhost:3000': {
+    tenant_id: '77542648-7bb7-481f-a5c2-b6c3e5308ba6',
+    provedor_id: 4,
+    nome_empresa: 'Empresa Teste 2'
+  },
+  'empresa2.localhost': {
+    tenant_id: '77542648-7bb7-481f-a5c2-b6c3e5308ba6',
+    provedor_id: 4,
+    nome_empresa: 'Empresa Teste 2'
+  },
+  'clube.localhost:3000': {
+    tenant_id: '7853095c-b20a-46cb-b42a-468fc046304c',
+    provedor_id: 5,
+    nome_empresa: 'Clube de Desconto Local'
+  },
+  'clube.localhost': {
+    tenant_id: '7853095c-b20a-46cb-b42a-468fc046304c',
+    provedor_id: 5,
+    nome_empresa: 'Clube de Desconto Local'
+  }
+};
+
+// Função simplificada para detectar tipo de domínio (sem fetch)
+function detectDomainType(hostname) {
+  if (!hostname) return { type: 'main' };
+
+  // Domínios de superadmin (sempre estáticos)
+  const adminDomains = [
+    'admin.localhost',
+    'admin.localhost:3000',
+    'admin.parceirize.com.br',
+    'admin.parceirize.com'
+  ];
+
+  if (adminDomains.includes(hostname.toLowerCase())) {
+    return {
+      isTenant: false,
+      isSuperadmin: true,
+      type: 'admin',
+      domain: hostname
+    };
+  }
+
+  // Verificar domínios tenant conhecidos
+  const tenantInfo = KNOWN_TENANTS[hostname.toLowerCase()];
+  if (tenantInfo) {
+    console.log(`✅ Middleware: Tenant encontrado para ${hostname} -> ${tenantInfo.nome_empresa}`);
+    return {
+      isTenant: true,
+      isSuperadmin: false,
+      type: 'tenant',
+      domain: hostname,
+      tenant_id: tenantInfo.tenant_id,
+      provedor_id: tenantInfo.provedor_id,
+      nome_empresa: tenantInfo.nome_empresa
+    };
+  }
+
+  // Fallback para padrões gerais (novos subdomínios)
+  const tenantPatterns = [
+    /^[\w-]+\.localhost(:\d+)?$/,
+    /^[\w-]+\.parceirize\.com$/,
+    /^[\w-]+\.parceirize\.com\.br$/
+  ];
+
+  const isTenantPattern = tenantPatterns.some(pattern =>
+    pattern.test(hostname.toLowerCase())
+  );
+
+  if (isTenantPattern) {
+    console.log(`⚠️ Middleware: Domínio ${hostname} parece ser tenant mas não está na lista conhecida`);
+    return {
+      isTenant: true,
+      isSuperadmin: false,
+      type: 'tenant',
+      domain: hostname,
+      uncached: true // Flag para indicar que não está na lista
+    };
+  }
+
+  // Domínio principal (localhost:3000)
+  return {
+    isTenant: false,
+    isSuperadmin: false,
+    type: 'main',
+    domain: hostname
+  };
+}
+
 export async function middleware(req) {
   const { nextUrl } = req;
   const path = nextUrl.pathname;
@@ -8,22 +119,41 @@ export async function middleware(req) {
   const session = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
   // ==========================================
-  // 1. DETECÇÃO DE TENANT (SUBDOMÍNIO)
+  // 1. DETECÇÃO DE TENANT (ESTÁTICA PARA EDGE RUNTIME)
   // ==========================================
-  let tenantInfo = null;
-  
-  // Verifica se é subdomínio (empresa.parceirize.com)
-  const subdomain = hostname.split('.')[0];
-  const isSubdomain = hostname.includes('.') && 
-                      subdomain !== 'www' && 
-                      subdomain !== 'parceirize' &&
-                      subdomain !== 'localhost';
+  const baseUrl = `${nextUrl.protocol}//${hostname}`;
+  const tenantInfo = detectDomainType(hostname);
 
-  if (isSubdomain) {
-    tenantInfo = {
-      subdomain,
-      isTenant: true
-    };
+  console.log(`🔍 Middleware - Hostname: ${hostname}, Type: ${tenantInfo.type}, isTenant: ${tenantInfo.isTenant}`);
+
+  // ==========================================
+  // REDIRECIONAMENTOS POR TIPO DE DOMÍNIO (PRIORIDADE)
+  // ==========================================
+
+  // DOMÍNIO PRINCIPAL (localhost:3000) - Redirecionar tudo para home
+  if (tenantInfo?.type === 'main') {
+    // Rotas permitidas no domínio principal
+    const allowedMainPaths = ['/', '/not-authorized'];
+    const mainPublicAssets = ['/_next/', '/api/auth/', '/favicon.ico', '/.well-known/', '/robots.txt', '/sitemap.xml'];
+    const isPublicAsset = mainPublicAssets.some(p => path.startsWith(p));
+
+    // Se não for rota permitida nem asset público, redirecionar para home
+    if (!allowedMainPaths.includes(path) && !isPublicAsset) {
+      console.log(`🔄 Domínio principal: redirecionando ${path} para /`);
+      return NextResponse.redirect(new URL('/', baseUrl));
+    }
+  }
+
+  // DOMÍNIOS DE TENANT - Redirecionar /login para /auth/login
+  if (tenantInfo?.isTenant && path === '/login') {
+    console.log(`🔄 Domínio tenant: redirecionando /login para /auth/login`);
+    return NextResponse.redirect(new URL('/auth/login', baseUrl));
+  }
+
+  // DOMÍNIO ADMIN - Redirecionar /login para /auth/login
+  if (tenantInfo?.type === 'admin' && path === '/login') {
+    console.log(`🔄 Domínio admin: redirecionando /login para /auth/login`);
+    return NextResponse.redirect(new URL('/auth/login', baseUrl));
   }
 
   // ==========================================
@@ -34,18 +164,38 @@ export async function middleware(req) {
     '/auth/',
     '/_next/',
     '/api/auth/',
-    '/favicon.ico'
+    '/api/domain/', // APIs de domínio personalizadas
+    '/favicon.ico',
+    '/.well-known/', // Para verificação de domínio
+    '/robots.txt',
+    '/sitemap.xml'
   ];
-  
-  const isPublicPath = publicPaths.some(publicPath => path.startsWith(publicPath));
+
+  // Permitir acesso público à landing page no domínio principal
+  const isMainDomainHomePage = (tenantInfo?.type === 'main' && path === '/');
+
+  const isTenantLoginRoute = tenantInfo?.type === 'tenant' &&
+    (path === '/auth/login' || path.startsWith('/auth/login/') ||
+     path === '/parceiro/login' || path === '/admin/login');
+
+  const isPublicPath = publicPaths.some(publicPath => path.startsWith(publicPath)) ||
+                      isTenantLoginRoute ||
+                      isMainDomainHomePage;
+
   if (isPublicPath) {
     const response = NextResponse.next();
-    
-    // Adiciona tenant info nos headers se for subdomínio
-    if (tenantInfo?.isTenant) {
-      response.headers.set('x-tenant-subdomain', tenantInfo.subdomain);
+
+    // Adicionar headers de tenant se detectado
+    if (tenantInfo?.type === 'tenant') {
+      response.headers.set('x-tenant-domain', tenantInfo.domain);
+      response.headers.set('x-tenant-type', tenantInfo.type);
+
+      // Adicionar tenant_id do middleware se disponível (para APIs)
+      if (tenantInfo.tenant_id) {
+        response.headers.set('x-tenant-id', tenantInfo.tenant_id);
+      }
     }
-    
+
     return response;
   }
 
@@ -54,71 +204,120 @@ export async function middleware(req) {
   // ==========================================
   if (!session) {
     console.log(`🔒 Sem sessão para ${path}, redirecionando para login`);
-    // Redireciona para o login específico baseado na rota acessada
-    if (path.startsWith('/carteirinha') || path.startsWith('/cliente')) {
-      return NextResponse.redirect(new URL('/auth/login?tab=cliente', nextUrl.origin));
-    } else if (path.startsWith('/painel')) {
-      return NextResponse.redirect(new URL('/auth/login?tab=parceiro', nextUrl.origin));
-    } else if (path.startsWith('/superadmin') || path.startsWith('/dashboard') || path.startsWith('/admin-')) {
-      return NextResponse.redirect(new URL('/auth/login-admin', nextUrl.origin));
-    } else {
-      return NextResponse.redirect(new URL('/auth/login', nextUrl.origin));
+
+    // DOMÍNIO PRINCIPAL - sempre redireciona para home
+    if (tenantInfo?.type === 'main') {
+      console.log(`🏠 Domínio principal sem sessão: redirecionando para /`);
+      return NextResponse.redirect(new URL('/', baseUrl));
     }
+
+    // DOMÍNIO DE SUPERADMIN - redireciona para login admin
+    if (tenantInfo?.type === 'admin') {
+      console.log(`👑 Domínio admin sem sessão: redirecionando para /auth/login`);
+      return NextResponse.redirect(new URL('/auth/login', baseUrl));
+    }
+
+    // DOMÍNIOS DE TENANT - redirecionamento baseado na rota
+    if (tenantInfo?.type === 'tenant') {
+      if (path.startsWith('/painel')) {
+        console.log(`👥 Rota parceiro sem sessão: redirecionando para /parceiro/login`);
+        return NextResponse.redirect(new URL('/parceiro/login', baseUrl));
+      } else if (path.startsWith('/dashboard') || path.startsWith('/admin-')) {
+        console.log(`🏢 Rota admin sem sessão: redirecionando para /admin/login`);
+        return NextResponse.redirect(new URL('/admin/login', baseUrl));
+      } else {
+        console.log(`🎫 Rota cliente sem sessão: redirecionando para /auth/login`);
+        return NextResponse.redirect(new URL('/auth/login', baseUrl));
+      }
+    }
+
+    // Fallback: redirecionar para home
+    console.log(`❓ Domínio desconhecido sem sessão: redirecionando para /`);
+    return NextResponse.redirect(new URL('/', baseUrl));
   }
 
   const role = session.user.role?.toLowerCase();
-  const tenantId = session.user.tenant_id;
-  console.log(`🎭 Middleware - Path: ${path}, Role: ${role}, TenantId: ${tenantId}`);
+  const sessionTenantId = session.user.tenant_id;
+  console.log(`🎭 Middleware - Path: ${path}, Role: ${role}, Domain: ${hostname}, Type: ${tenantInfo?.type}`);
 
   // ==========================================
-  // 4. VALIDAÇÃO DE TENANT PARA SUBDOMÍNIO
+  // 4. VALIDAÇÃO DE DOMÍNIO DE SUPERADMIN
   // ==========================================
-  if (tenantInfo?.isTenant) {
-    // Se acessando via subdomínio, deve ter tenant_id na sessão
-    if (!tenantId) {
-      return NextResponse.redirect(new URL('/not-authorized', nextUrl.origin));
+  if (tenantInfo?.type === 'admin') {
+    // DOMÍNIO DE SUPERADMIN - ACESSO RESTRITO
+    if (role !== 'superadmin') {
+      console.log(`❌ Usuário não-superadmin (${role}) tentando acessar domínio de admin: ${hostname}`);
+      return NextResponse.redirect(new URL('/not-authorized?reason=admin_domain_restricted', nextUrl.origin));
     }
-    
-    // TODO: Validar se o tenant_id corresponde ao subdomínio
-    // (implementar consulta ao banco se necessário)
+    console.log(`👑 Superadmin acessando domínio administrativo: ${hostname}`);
   }
 
   // ==========================================
-  // 5. REDIRECIONAMENTOS POR ROLE
+  // 5. VALIDAÇÃO DE TENANT PARA DOMÍNIO
   // ==========================================
-  if (path === '/') {
+  else if (tenantInfo?.type === 'tenant') {
+    // Para domínios de tenant, aplicar validações básicas
+
+    // Superadmin NÃO pode acessar domínios de tenant (isolamento de segurança)
+    if (role === 'superadmin') {
+      console.log(`❌ Superadmin tentando acessar domínio de tenant: ${hostname}`);
+      return NextResponse.redirect(new URL('/not-authorized?reason=superadmin_restricted', nextUrl.origin));
+    }
+
+    // Para outros usuários, verificar se têm tenant_id (validação será feita no NextAuth)
+    if (sessionTenantId) {
+      console.log(`✅ Usuário com tenant ${sessionTenantId} acessando domínio ${hostname}`);
+    } else {
+      console.log(`⚠️ Usuário sem tenant acessando domínio ${hostname} - validação será feita no login`);
+    }
+  }
+
+  // ==========================================
+  // 6. REDIRECIONAMENTOS POR ROLE E DOMÍNIO (apenas para usuários logados)
+  // ==========================================
+  if (path === '/' && session) {
+    const baseUrl = `${nextUrl.protocol}//${hostname}`;
+
+    // Domínio principal (landing page) - permitir acesso mesmo logado
+    if (tenantInfo?.type === 'main') {
+      return NextResponse.next();
+    }
+
+    // Domínios específicos - redirecionamento baseado na role
     switch (role) {
       case 'superadmin':
-        return NextResponse.redirect(new URL('/superadmin/dashboard', nextUrl.origin));
+        if (tenantInfo?.type === 'admin') {
+          return NextResponse.redirect(new URL('/superadmin/dashboard', baseUrl));
+        } else {
+          // Superadmin tentando acessar domínio de provedor
+          return NextResponse.redirect(new URL('/not-authorized?reason=superadmin_restricted', baseUrl));
+        }
       case 'provedor':
-        return NextResponse.redirect(new URL('/dashboard', nextUrl.origin));
+        return NextResponse.redirect(new URL('/dashboard', baseUrl));
       case 'cliente':
-        return NextResponse.redirect(new URL('/carteirinha', nextUrl.origin));
+        return NextResponse.redirect(new URL('/carteirinha', baseUrl));
       case 'parceiro':
-        return NextResponse.redirect(new URL('/painel', nextUrl.origin));
+        return NextResponse.redirect(new URL('/painel', baseUrl));
       default:
-        return NextResponse.redirect(new URL('/auth/login', nextUrl.origin));
+        return NextResponse.redirect(new URL('/auth/login', baseUrl));
     }
   }
 
   // ==========================================
-  // 6. PROTEÇÃO DE ROTAS POR ROLE
+  // 7. PROTEÇÃO DE ROTAS POR ROLE
   // ==========================================
-  
+
   // Superadmin - acesso total
   if (path.startsWith('/superadmin') && role !== 'superadmin') {
     return NextResponse.redirect(new URL('/not-authorized', nextUrl.origin));
   }
 
-  // Provedor - acesso às rotas de gestão 
-  // Rotas dentro do grupo (administrador) são acessadas diretamente
+  // Provedor - acesso às rotas de gestão
   const provedorRoutes = ['/dashboard', '/admin-cliente', '/admin-parceiro', '/admin-relatorios', '/integracoes', '/importar-clientes', '/admin-configuracoes'];
   const isProvedorRoute = provedorRoutes.some(route => path.startsWith(route));
-  
+
   console.log(`🛡️  Verificando rota provedor: ${path} -> isProvedorRoute: ${isProvedorRoute}, role: "${role}"`);
-  console.log(`🔍 Tipo da role: ${typeof role}, Includes test: ${['superadmin', 'provedor'].includes(role)}`);
-  console.log(`🔍 Roles permitidas: ['superadmin', 'provedor']`);
-  
+
   if (isProvedorRoute && !['superadmin', 'provedor'].includes(role)) {
     console.log(`❌ ACESSO NEGADO para role "${role}" na rota provedor ${path}`);
     return NextResponse.redirect(new URL('/not-authorized', nextUrl.origin));
@@ -126,7 +325,7 @@ export async function middleware(req) {
     console.log(`✅ ACESSO PERMITIDO para role "${role}" na rota provedor ${path}`);
   }
 
-  // Clientes - acesso às suas rotas específicas  
+  // Clientes - acesso às suas rotas específicas
   if (path.startsWith('/carteirinha') && role !== 'cliente') {
     return NextResponse.redirect(new URL('/not-authorized', nextUrl.origin));
   }
@@ -137,28 +336,42 @@ export async function middleware(req) {
   }
 
   // ==========================================
-  // 7. ADICIONAR TENANT INFO AOS HEADERS
+  // 8. ADICIONAR TENANT INFO AOS HEADERS
   // ==========================================
   console.log(`✅ Middleware passou todas as verificações para ${path} com role ${role}`);
-  
+
   const response = NextResponse.next();
-  
-  if (tenantInfo?.isTenant) {
-    response.headers.set('x-tenant-subdomain', tenantInfo.subdomain);
+
+  // Headers de tenant do domínio
+  if (tenantInfo?.type === 'tenant') {
+    response.headers.set('x-tenant-domain', tenantInfo.domain);
+    response.headers.set('x-tenant-type', tenantInfo.type);
+
+    // Adicionar tenant_id do middleware se disponível
+    if (tenantInfo.tenant_id) {
+      response.headers.set('x-tenant-id', tenantInfo.tenant_id);
+    }
   }
-  
-  if (tenantId) {
-    response.headers.set('x-tenant-id', tenantId);
+
+  // Headers de sessão
+  if (sessionTenantId) {
+    response.headers.set('x-session-tenant-id', sessionTenantId);
   }
-  
+
   response.headers.set('x-user-role', role);
-  
+  response.headers.set('x-hostname', hostname);
+
   return response;
 }
 
 export const config = {
   matcher: [
     '/',                         // Redirecionamento inteligente da home
+    '/login',                    // Rota de login que precisa redirecionamento
+    '/auth/login',               // Login funcional
+    '/auth/:path*',              // Todas as rotas de auth
+    '/admin/login',              // Login do admin
+    '/parceiro/login',           // Login do parceiro
     '/dashboard',                // Dashboard do provedor (página principal)
     '/dashboard/:path*',         // Dashboard do provedor (subpáginas)
     '/admin-cliente',            // Gestão de clientes (página principal)
@@ -179,4 +392,3 @@ export const config = {
     '/api/:path*',               // Adiciona tenant info nas APIs
   ],
 };
-

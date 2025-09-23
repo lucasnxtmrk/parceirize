@@ -33,30 +33,73 @@ async function generateUniqueCarteirinhaId() {
   return uniqueId;
 }
 
-// ✅ BUSCAR LISTA DE CLIENTES (GET) - COM ISOLAMENTO MULTI-TENANT
+// ✅ BUSCAR LISTA DE CLIENTES (GET) - COM ISOLAMENTO MULTI-TENANT, PAGINAÇÃO E BUSCA
 export const GET = withTenantIsolation(async (request, { tenant }) => {
   try {
     console.log("📡 Buscando lista de clientes para tenant:", tenant.tenant_id);
 
-    // Query com filtro de tenant (SuperAdmin vê todos, Provedor vê apenas os seus)
-    let query = `
-      SELECT id, nome, sobrenome, email, id_carteirinha, tipo_cliente, ativo, data_criacao
-      FROM clientes 
-    `;
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page')) || 1;
+    const limit = Math.min(parseInt(searchParams.get('limit')) || 10, 50); // Máximo 50
+    const search = searchParams.get('search') || '';
+    const offset = (page - 1) * limit;
+
+    // Query base com filtro de tenant
+    let whereConditions = [];
     let params = [];
+    let paramIndex = 1;
 
     if (!tenant.isGlobalAccess) {
-      query += " WHERE tenant_id = $1";
+      whereConditions.push(`tenant_id = $${paramIndex}`);
       params.push(tenant.tenant_id);
+      paramIndex++;
     }
 
-    query += " ORDER BY data_criacao DESC";
+    // Adicionar filtro de busca
+    if (search) {
+      whereConditions.push(`(
+        nome ILIKE $${paramIndex} OR
+        sobrenome ILIKE $${paramIndex} OR
+        email ILIKE $${paramIndex} OR
+        cpf_cnpj ILIKE $${paramIndex} OR
+        id_carteirinha ILIKE $${paramIndex}
+      )`);
+      params.push(`%${search}%`);
+      paramIndex++;
+    }
 
-    const result = await pool.query(query, params);
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+
+    // Query para contar total
+    const countQuery = `SELECT COUNT(*) as total FROM clientes ${whereClause}`;
+    const countResult = await pool.query(countQuery, params);
+    const total = parseInt(countResult.rows[0].total);
+
+    // Query principal com paginação
+    const dataQuery = `
+      SELECT id, nome, sobrenome, email, cpf_cnpj, id_carteirinha, tipo_cliente, ativo, data_criacao
+      FROM clientes
+      ${whereClause}
+      ORDER BY data_criacao DESC
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `;
+    params.push(limit, offset);
+
+    const result = await pool.query(dataQuery, params);
+
+    const totalPages = Math.ceil(total / limit);
 
     return new Response(JSON.stringify({
       clientes: result.rows,
-      total: result.rows.length,
+      pagination: {
+        current_page: page,
+        per_page: limit,
+        total,
+        total_pages: totalPages,
+        has_next: page < totalPages,
+        has_prev: page > 1
+      },
+      search: search || null,
       tenant_info: {
         tenant_id: tenant.tenant_id,
         is_global: tenant.isGlobalAccess,
@@ -76,7 +119,7 @@ export const GET = withTenantIsolation(async (request, { tenant }) => {
 // ✅ CRIAR NOVO CLIENTE (POST) COM VALIDAÇÃO
 export const POST = combineMiddlewares(
   withRateLimit,
-  withValidation('cliente'),
+  (handler) => withValidation(handler, 'cliente'),
   withTenantIsolation
 )(async (request, { validatedData, tenant }) => {
   try {
@@ -84,7 +127,7 @@ export const POST = combineMiddlewares(
       return new Response(JSON.stringify({ error: "Acesso negado" }), { status: 403 });
     }
 
-    const { nome, sobrenome, email, senha } = validatedData;
+    const { nome, sobrenome, email, cpf_cnpj, senha } = validatedData;
 
     console.log("📡 Criando novo cliente:", email);
 
@@ -111,6 +154,20 @@ export const POST = combineMiddlewares(
       return new Response(JSON.stringify({ error: "E-mail já cadastrado neste provedor." }), { status: 409 });
     }
 
+    // Verificar se o CPF/CNPJ já está cadastrado (com tenant isolation)
+    let cpfCheckQuery = "SELECT id FROM clientes WHERE cpf_cnpj = $1";
+    let cpfCheckParams = [cpf_cnpj];
+
+    if (!tenant.isGlobalAccess) {
+      cpfCheckQuery += " AND tenant_id = $2";
+      cpfCheckParams.push(tenant.tenant_id);
+    }
+
+    const cpfCheck = await pool.query(cpfCheckQuery, cpfCheckParams);
+    if (cpfCheck.rows.length > 0) {
+      return new Response(JSON.stringify({ error: "CPF/CNPJ já cadastrado neste provedor." }), { status: 409 });
+    }
+
     // Gera ID de carteirinha único
     const idCarteirinha = await generateUniqueCarteirinhaId();
 
@@ -118,10 +175,10 @@ export const POST = combineMiddlewares(
     const senhaHash = await bcrypt.hash(senha, 10);
 
     const result = await pool.query(
-      `INSERT INTO clientes (nome, sobrenome, email, senha, id_carteirinha, tipo_cliente, ativo, tenant_id, data_criacao)
-       VALUES ($1, $2, $3, $4, $5, 'cliente', TRUE, $6, NOW())
-       RETURNING id, nome, sobrenome, email, id_carteirinha, tipo_cliente, ativo`,
-      [nome, sobrenome, email, senhaHash, idCarteirinha, tenant.tenant_id]
+      `INSERT INTO clientes (nome, sobrenome, email, cpf_cnpj, senha, id_carteirinha, tipo_cliente, ativo, tenant_id, data_criacao)
+       VALUES ($1, $2, $3, $4, $5, $6, 'cliente', TRUE, $7, NOW())
+       RETURNING id, nome, sobrenome, email, cpf_cnpj, id_carteirinha, tipo_cliente, ativo`,
+      [nome, sobrenome, email, cpf_cnpj, senhaHash, idCarteirinha, tenant.tenant_id]
     );
 
     // Log de auditoria
@@ -199,8 +256,14 @@ export async function DELETE(req) {
 
     const tenant_id = session.user.tenant_id;
 
-    // 1️⃣ Excluir todos os registros da tabela voucher_utilizados relacionados aos clientes (com tenant_id)
-    await pool.query("DELETE FROM voucher_utilizados WHERE cliente_id = ANY($1) AND tenant_id = $2", [ids, tenant_id]);
+    // 1️⃣ Excluir todos os registros da tabela voucher_utilizados relacionados aos clientes (com isolamento via clientes)
+    await pool.query(`
+      DELETE FROM voucher_utilizados
+      WHERE cliente_id = ANY($1)
+      AND cliente_id IN (
+        SELECT id FROM clientes WHERE tenant_id = $2
+      )
+    `, [ids, tenant_id]);
 
     // 2️⃣ Agora pode excluir os clientes (com tenant_id para segurança)
     const result = await pool.query("DELETE FROM clientes WHERE id = ANY($1) AND tenant_id = $2", [ids, tenant_id]);

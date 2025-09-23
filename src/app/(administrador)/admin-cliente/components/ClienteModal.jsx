@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Button, Modal, Form, FormControl, FormGroup, FormLabel, Alert, InputGroup, Row, Col, Badge, Spinner, Card } from "react-bootstrap";
 import { useForm, Controller } from "react-hook-form";
-import { FaUser, FaEnvelope, FaLock, FaIdCard, FaInfoCircle, FaCheckCircle, FaExclamationTriangle, FaCopy, FaUserPlus, FaEdit, FaMapMarkerAlt } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaLock, FaIdCard, FaInfoCircle, FaCheckCircle, FaExclamationTriangle, FaCopy, FaUserPlus, FaEdit, FaMapMarkerAlt, FaAddressCard } from "react-icons/fa";
 import { geocodeByCep, formatCep, cleanCep, isValidCep } from "@/lib/geocoding";
 
 // 🔹 Função para gerar ID de carteirinha aleatório (6 caracteres alfanuméricos)
@@ -42,6 +42,7 @@ const ClienteModal = ({ show, handleClose, onClientCreated, cliente }) => {
             nome: "",
             sobrenome: "",
             email: "",
+            cpf_cnpj: "",
             senha: "",
             confirmarSenha: "",
             id_carteirinha: "",
@@ -77,6 +78,7 @@ const ClienteModal = ({ show, handleClose, onClientCreated, cliente }) => {
                 setValue("nome", cliente.nome);
                 setValue("sobrenome", cliente.sobrenome);
                 setValue("email", cliente.email);
+                setValue("cpf_cnpj", cliente.cpf_cnpj || "");
                 setValue("id_carteirinha", cliente.id_carteirinha || "N/A");
                 setValue("cep", cliente.cep || "");
                 setValue("endereco", cliente.endereco || "");
@@ -281,16 +283,16 @@ const ClienteModal = ({ show, handleClose, onClientCreated, cliente }) => {
                         </Row>
 
                         <Row className="mt-3">
-                            <Col md={12}>
+                            <Col md={6}>
                                 <FormGroup>
                                     <FormLabel>
                                         <FaEnvelope className="me-1" />
                                         E-mail *
                                     </FormLabel>
-                                    <Controller 
-                                        name="email" 
+                                    <Controller
+                                        name="email"
                                         control={control}
-                                        rules={{ 
+                                        rules={{
                                             required: "E-mail é obrigatório",
                                             pattern: {
                                                 value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
@@ -299,8 +301,8 @@ const ClienteModal = ({ show, handleClose, onClientCreated, cliente }) => {
                                         }}
                                         render={({ field }) => (
                                             <>
-                                                <FormControl 
-                                                    type="email" 
+                                                <FormControl
+                                                    type="email"
                                                     {...field}
                                                     isInvalid={errors.email}
                                                     placeholder="joao.silva@email.com"
@@ -308,6 +310,56 @@ const ClienteModal = ({ show, handleClose, onClientCreated, cliente }) => {
                                                 {errors.email && (
                                                     <Form.Control.Feedback type="invalid">
                                                         {errors.email.message}
+                                                    </Form.Control.Feedback>
+                                                )}
+                                            </>
+                                        )}
+                                    />
+                                </FormGroup>
+                            </Col>
+
+                            <Col md={6}>
+                                <FormGroup>
+                                    <FormLabel>
+                                        <FaAddressCard className="me-1" />
+                                        CPF/CNPJ *
+                                    </FormLabel>
+                                    <Controller
+                                        name="cpf_cnpj"
+                                        control={control}
+                                        rules={{
+                                            required: "CPF ou CNPJ é obrigatório",
+                                            validate: value => {
+                                                const cleaned = value.replace(/\D/g, '');
+                                                if (cleaned.length !== 11 && cleaned.length !== 14) {
+                                                    return "CPF deve ter 11 dígitos ou CNPJ deve ter 14 dígitos";
+                                                }
+                                                return true;
+                                            }
+                                        }}
+                                        render={({ field }) => (
+                                            <>
+                                                <FormControl
+                                                    type="text"
+                                                    {...field}
+                                                    onChange={(e) => {
+                                                        let value = e.target.value.replace(/\D/g, '');
+                                                        if (value.length <= 11) {
+                                                            // CPF format: 000.000.000-00
+                                                            value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+                                                        } else if (value.length <= 14) {
+                                                            // CNPJ format: 00.000.000/0000-00
+                                                            value = value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+                                                        }
+                                                        field.onChange(value);
+                                                    }}
+                                                    isInvalid={errors.cpf_cnpj}
+                                                    placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                                                    maxLength={18}
+                                                />
+                                                {errors.cpf_cnpj && (
+                                                    <Form.Control.Feedback type="invalid">
+                                                        {errors.cpf_cnpj.message}
                                                     </Form.Control.Feedback>
                                                 )}
                                             </>

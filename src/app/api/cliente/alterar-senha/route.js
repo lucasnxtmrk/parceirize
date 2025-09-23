@@ -1,25 +1,20 @@
 import { Pool } from "pg";
-import { getServerSession } from "next-auth";
-import { options } from "@/app/api/auth/[...nextauth]/options";
+import { withTenantIsolation } from "@/lib/tenant-helper";
 import bcrypt from "bcryptjs";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-export async function PUT(req) {
+// ✅ PUT - ALTERAR SENHA COM ISOLAMENTO MULTI-TENANT
+export const PUT = withTenantIsolation(async (request, { tenant }) => {
   try {
-    const session = await getServerSession(options);
-
-    if (!session || session.user.role !== 'cliente') {
-      return new Response(JSON.stringify({ error: "Não autorizado" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+    if (!['cliente'].includes(tenant.role)) {
+      return new Response(JSON.stringify({ error: "Acesso negado" }), { status: 403 });
     }
 
-    const clienteId = session.user.id;
-    const { senhaAtual, novaSenha } = await req.json();
+    const clienteId = tenant.user.id;
+    const { senhaAtual, novaSenha } = await request.json();
 
     if (!senhaAtual || !novaSenha) {
       return new Response(JSON.stringify({ error: "Senha atual e nova senha são obrigatórias" }), {
@@ -35,9 +30,9 @@ export async function PUT(req) {
       });
     }
 
-    // Buscar senha atual do cliente
-    const clienteQuery = `SELECT senha FROM clientes WHERE id = $1`;
-    const clienteResult = await pool.query(clienteQuery, [clienteId]);
+    // Buscar senha atual do cliente COM ISOLAMENTO DE TENANT
+    const clienteQuery = `SELECT senha FROM clientes WHERE id = $1 AND tenant_id = $2`;
+    const clienteResult = await pool.query(clienteQuery, [clienteId, tenant.tenant_id]);
 
     if (clienteResult.rows.length === 0) {
       return new Response(JSON.stringify({ error: "Cliente não encontrado" }), {
@@ -59,14 +54,14 @@ export async function PUT(req) {
     // Gerar hash da nova senha
     const novaSenhaHash = await bcrypt.hash(novaSenha, 12);
 
-    // Atualizar senha no banco
+    // Atualizar senha no banco COM ISOLAMENTO DE TENANT
     const updateQuery = `
       UPDATE clientes
       SET senha = $1
-      WHERE id = $2
+      WHERE id = $2 AND tenant_id = $3
     `;
 
-    await pool.query(updateQuery, [novaSenhaHash, clienteId]);
+    await pool.query(updateQuery, [novaSenhaHash, clienteId, tenant.tenant_id]);
 
     return new Response(JSON.stringify({
       success: true,
@@ -83,4 +78,4 @@ export async function PUT(req) {
       headers: { "Content-Type": "application/json" },
     });
   }
-}
+});

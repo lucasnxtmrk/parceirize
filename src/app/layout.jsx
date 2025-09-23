@@ -4,6 +4,7 @@ import { Figtree } from 'next/font/google';
 import Image from 'next/image';
 import NextTopLoader from 'nextjs-toploader';
 import '@/assets/scss/app.scss';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 import { DEFAULT_PAGE_TITLE } from '@/context/constants';
 const figtree = Figtree({
   subsets: ['latin'],

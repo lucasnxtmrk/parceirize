@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { options } from '../../auth/[...nextauth]/options';
 import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
+import { DomainHelper } from '@/lib/domain-helper.js';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -159,23 +160,51 @@ export async function POST(request) {
 
     const novoProvedor = result.rows[0];
 
+    // 🆕 CRIAR SUBDOMÍNIO AUTOMATICAMENTE SE FORNECIDO
+    let dominioInfo = null;
+    if (subdominio) {
+      try {
+        const dominioCompleto = `${subdominio}.parceirize.com`;
+        console.log(`🌐 Criando subdomínio automático: ${dominioCompleto}`);
+
+        dominioInfo = await DomainHelper.registerDomain(
+          novoProvedor.id,
+          dominioCompleto,
+          'subdominio'
+        );
+
+        console.log(`✅ Subdomínio criado com sucesso: ${dominioCompleto}`);
+      } catch (domainError) {
+        console.error('❌ Erro ao criar subdomínio automático:', domainError);
+        // Não falhar a criação do provedor por erro de domínio
+        // O provedor pode criar o domínio manualmente depois
+      }
+    }
+
     // Log da ação
     await pool.query(
-      `INSERT INTO tenant_logs (tenant_id, usuario_tipo, usuario_id, acao, detalhes) 
+      `INSERT INTO tenant_logs (tenant_id, usuario_tipo, usuario_id, acao, detalhes)
        VALUES ($1, 'superadmin', $2, 'provedor_criado', $3)`,
       [
         novoProvedor.tenant_id,
         session.user.id,
-        JSON.stringify({ 
+        JSON.stringify({
           provedor_id: novoProvedor.id,
-          nome_empresa: novoProvedor.nome_empresa 
+          nome_empresa: novoProvedor.nome_empresa,
+          subdominio_criado: dominioInfo ? true : false,
+          dominio_url: dominioInfo ? dominioInfo.dominio : null
         })
       ]
     );
 
     return NextResponse.json({
       message: 'Provedor criado com sucesso',
-      provedor: novoProvedor
+      provedor: novoProvedor,
+      dominio: dominioInfo ? {
+        url: dominioInfo.dominio,
+        status: 'criado_automaticamente',
+        verificado: dominioInfo.verificado
+      } : null
     }, { status: 201 });
 
   } catch (error) {

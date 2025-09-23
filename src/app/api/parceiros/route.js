@@ -1,13 +1,17 @@
 import { Pool } from "pg";
 import { normalizeApiData } from "@/utils/formatters";
+import { withTenantIsolation } from "@/lib/tenant-helper";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-export async function GET(req) {
+// ✅ GET - LISTAR PARCEIROS PARA CLIENTES COM ISOLAMENTO MULTI-TENANT
+export const GET = withTenantIsolation(async (request, { tenant }) => {
   try {
-    const { searchParams } = new URL(req.url);
+    console.log("📡 Buscando parceiros para clientes no tenant:", tenant.tenant_id);
+
+    const { searchParams } = new URL(request.url);
     const nicho = searchParams.get('nicho');
     const search = searchParams.get('search');
 
@@ -30,9 +34,16 @@ export async function GET(req) {
       LEFT JOIN produtos pr ON p.id = pr.parceiro_id AND pr.ativo = true
       WHERE 1=1
     `;
-    
+
     const queryParams = [];
     let paramIndex = 1;
+
+    // ✅ ISOLAMENTO DE TENANT: Apenas parceiros do tenant atual
+    if (!tenant.isGlobalAccess) {
+      query += ` AND p.tenant_id = $${paramIndex}`;
+      queryParams.push(tenant.tenant_id);
+      paramIndex++;
+    }
 
     if (nicho) {
       query += ` AND p.nicho = $${paramIndex}`;
@@ -53,7 +64,9 @@ export async function GET(req) {
 
     const result = await pool.query(query, queryParams);
     const normalizedData = normalizeApiData(result.rows);
-    
+
+    console.log(`📈 Encontrados ${result.rows.length} parceiros para o tenant ${tenant.tenant_id}`);
+
     return new Response(JSON.stringify(normalizedData), {
       status: 200,
       headers: { "Content-Type": "application/json" },
@@ -65,4 +78,4 @@ export async function GET(req) {
       headers: { "Content-Type": "application/json" },
     });
   }
-}
+});

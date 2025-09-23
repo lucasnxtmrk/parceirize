@@ -42,6 +42,27 @@ const KNOWN_TENANTS = {
     tenant_id: '7853095c-b20a-46cb-b42a-468fc046304c',
     provedor_id: 5,
     nome_empresa: 'Clube de Desconto Local'
+  },
+  // Domínios de produção
+  'empresa1.parceirize.com.br': {
+    tenant_id: '2783a418-29ab-43bd-b568-88a6d4d9bf98',
+    provedor_id: 3,
+    nome_empresa: 'Empresa Teste 1'
+  },
+  'empresa2.parceirize.com.br': {
+    tenant_id: '77542648-7bb7-481f-a5c2-b6c3e5308ba6',
+    provedor_id: 4,
+    nome_empresa: 'Empresa Teste 2'
+  },
+  'teste.parceirize.com.br': {
+    tenant_id: '2da2a5f3-fea6-4112-9203-0f4b38097d77',
+    provedor_id: 2,
+    nome_empresa: 'Loja Teste Multi-Tenant'
+  },
+  'clube.parceirize.com.br': {
+    tenant_id: '7853095c-b20a-46cb-b42a-468fc046304c',
+    provedor_id: 5,
+    nome_empresa: 'Clube de Desconto Local'
   }
 };
 
@@ -92,13 +113,22 @@ function detectDomainType(hostname) {
   );
 
   if (isTenantPattern) {
-    console.log(`⚠️ Middleware: Domínio ${hostname} parece ser tenant mas não está na lista conhecida`);
+    // Extrair subdomínio para domínios dinâmicos
+    const subdomainMatch = hostname.match(/^([^.]+)\./);
+    const subdomain = subdomainMatch ? subdomainMatch[1] : null;
+
+    console.log(`🔄 Middleware: Domínio ${hostname} detectado como tenant dinâmico (subdomínio: ${subdomain})`);
+
+    // Para subdomínios não conhecidos, permitir mas marcar como não validado
+    // A validação será feita nas páginas que precisam de dados do tenant
     return {
       isTenant: true,
       isSuperadmin: false,
       type: 'tenant',
       domain: hostname,
-      uncached: true // Flag para indicar que não está na lista
+      subdomain: subdomain,
+      uncached: true, // Flag para indicar que não está na lista
+      needsValidation: true // Flag para validação posterior
     };
   }
 
@@ -189,9 +219,19 @@ export async function middleware(req) {
       response.headers.set('x-tenant-domain', tenantInfo.domain);
       response.headers.set('x-tenant-type', tenantInfo.type);
 
+      // Adicionar subdomínio para validação dinâmica
+      if (tenantInfo.subdomain) {
+        response.headers.set('x-tenant-subdomain', tenantInfo.subdomain);
+      }
+
       // Adicionar tenant_id do middleware se disponível (para APIs)
       if (tenantInfo.tenant_id) {
         response.headers.set('x-tenant-id', tenantInfo.tenant_id);
+      }
+
+      // Flag se precisa de validação
+      if (tenantInfo.needsValidation) {
+        response.headers.set('x-tenant-needs-validation', 'true');
       }
     }
 
@@ -346,9 +386,19 @@ export async function middleware(req) {
     response.headers.set('x-tenant-domain', tenantInfo.domain);
     response.headers.set('x-tenant-type', tenantInfo.type);
 
+    // Adicionar subdomínio para validação dinâmica
+    if (tenantInfo.subdomain) {
+      response.headers.set('x-tenant-subdomain', tenantInfo.subdomain);
+    }
+
     // Adicionar tenant_id do middleware se disponível
     if (tenantInfo.tenant_id) {
       response.headers.set('x-tenant-id', tenantInfo.tenant_id);
+    }
+
+    // Flag se precisa de validação
+    if (tenantInfo.needsValidation) {
+      response.headers.set('x-tenant-needs-validation', 'true');
     }
   }
 

@@ -25,7 +25,10 @@ export class SGPSyncService {
    */
   async getIntegracao(provedorId) {
     const result = await pool.query(
-      `SELECT * FROM integracoes WHERE provedor_id = $1 AND tipo = 'SGP'`,
+      `SELECT i.*, p.tenant_id
+       FROM integracoes i
+       JOIN provedores p ON i.provedor_id = p.id
+       WHERE i.provedor_id = $1 AND i.tipo = 'SGP'`,
       [provedorId]
     );
     return result.rows[0] || null;
@@ -373,7 +376,7 @@ export class SGPSyncService {
         if (!clienteExistente && incluir_novos_clientes) {
           // Verificar limite do plano antes de criar
           try {
-            await validatePlanLimits(integracao.provedor_id, 'clientes');
+            await validatePlanLimits(integracao.tenant_id, 'clientes');
           } catch (limitError) {
             limitesAtingidos++;
             errosDetalhados.push(`Limite do plano atingido: ${limitError.message}`);

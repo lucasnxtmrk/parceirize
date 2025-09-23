@@ -6,6 +6,18 @@ class QueueService {
     this.workerId = `worker_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     this.isProcessing = false;
     this.processInterval = null;
+    this.autoStarted = false;
+
+    console.log(`🔧 QueueService criado com worker ID: ${this.workerId}`);
+  }
+
+  // Auto-iniciar processamento se ainda não foi iniciado
+  ensureProcessingStarted() {
+    if (!this.autoStarted) {
+      console.log('🚀 Auto-iniciando processamento da fila...');
+      this.startProcessing();
+      this.autoStarted = true;
+    }
   }
 
   // Adicionar job à fila
@@ -45,8 +57,8 @@ class QueueService {
 
       console.log(`📋 Job ${jobResult.rows[0].id} adicionado à fila na posição ${queuePosition}`);
 
-      // Iniciar processamento se não estiver rodando
-      this.startProcessing();
+      // Garantir que o processamento esteja rodando
+      this.ensureProcessingStarted();
 
       return jobResult.rows[0].id;
     } catch (error) {

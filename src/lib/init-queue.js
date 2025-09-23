@@ -2,16 +2,23 @@ import { getQueueService } from './queue-service.js';
 
 let queueInitialized = false;
 
+console.log('📦 Módulo init-queue carregado, window:', typeof window);
+
 export function initializeQueue() {
-  if (queueInitialized) return;
+  if (queueInitialized) {
+    console.log('⚠️ Sistema de filas já inicializado');
+    return;
+  }
 
   try {
     console.log('🚀 Inicializando sistema de filas...');
 
     const queueService = getQueueService();
+    console.log('📋 QueueService criado:', !!queueService);
 
     // Iniciar processamento da fila
     queueService.startProcessing();
+    console.log('⚙️ Processamento da fila iniciado');
 
     // Limpeza de jobs antigos a cada hora
     setInterval(() => {

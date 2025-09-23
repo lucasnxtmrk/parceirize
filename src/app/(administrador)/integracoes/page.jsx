@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import ComponentContainerCard from '@/components/ComponentContainerCard';
 import { Button, Col, Form, FormControl, FormGroup, FormLabel, Row, Modal, Card, Container, Badge } from 'react-bootstrap';
+import ImportProgressBar from '@/components/ImportProgressBar';
+import { useImportProgress } from '@/hooks/useImportProgress';
 
 export default function IntegracoesPage() {
   const [loading, setLoading] = useState(true);
@@ -19,6 +21,17 @@ export default function IntegracoesPage() {
   const [importLoading, setImportLoading] = useState(false);
   const [previewData, setPreviewData] = useState(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+
+  // Hook para progresso da importação
+  const {
+    isImporting,
+    progress,
+    error: importError,
+    isCompleted,
+    startImport,
+    stopImport,
+    reset: resetImport
+  } = useImportProgress();
 
   const [subdominio, setSubdominio] = useState('');
   const [token, setToken] = useState('');
@@ -234,6 +247,48 @@ export default function IntegracoesPage() {
     setPreviewData(null);
   };
 
+  // Função para importação completa simplificada
+  const handleImportCompleto = async () => {
+    const senhaSimples = '123456'; // Senha padrão para importação completa
+
+    const config = {
+      senha_padrao: senhaSimples,
+      modo: 'completo',
+      filtros: {
+        apenas_ativos: true,
+        dias_atividade: 365,
+        data_cadastro_inicio: '',
+        data_cadastro_fim: ''
+      }
+    };
+
+    const success = await startImport(config);
+    if (success) {
+      setShowImportModal(false);
+    }
+  };
+
+  // Função para importação com filtros personalizados
+  const handleImportComFiltros = async () => {
+    if (!senhaPadrao || senhaPadrao.length < 6) {
+      setError('Senha padrão deve ter pelo menos 6 caracteres');
+      return;
+    }
+
+    const config = {
+      senha_padrao: senhaPadrao,
+      modo: 'filtrado',
+      filtros
+    };
+
+    const success = await startImport(config);
+    if (success) {
+      setShowImportModal(false);
+      setPreviewData(null);
+      setSenhaPadrao('');
+    }
+  };
+
   return (
     <ComponentContainerCard id="integracoes" title="Integrações" description="Configure integrações disponíveis para importar clientes.">
       {loading && (
@@ -319,71 +374,123 @@ export default function IntegracoesPage() {
 
           <Row className="g-4">
             {/* Card SGP */}
-            <Col xs={12} sm={6} md={4} lg={3}>
+            <Col xs={12} sm={6} md={8} lg={9}>
               <Card
                 className="h-100 shadow-sm border-0 integration-card"
                 style={{ transition: 'all 0.2s' }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-4px)';
-                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-                }}
               >
-                <Card.Body className="text-center p-4">
-                  <div className="display-4 text-primary mb-3">
-                    <i className="bi bi-router"></i>
-                  </div>
-                  <h5 className="mb-2">SGP</h5>
-                  <p className="text-muted small mb-3">Sistema de Gestão de Provedores</p>
-                  
-                  {config ? (
-                    <Badge bg="success" className="mb-2">
-                      <i className="bi bi-check-circle me-1"></i>
-                      Configurado
-                    </Badge>
-                  ) : (
-                    <Badge bg="secondary" className="mb-2">
-                      <i className="bi bi-gear me-1"></i>
-                      Não configurado
-                    </Badge>
-                  )}
-                  
-                  {config && (
-                    <div className="mt-2">
-                      <small className="text-muted d-block">
-                        Última sincronização:
-                      </small>
-                      <small className="text-primary">
-                        {formatLastSync(lastSync)}
-                      </small>
-                    </div>
-                  )}
-                  
-                  <div className="mt-3 d-flex gap-2 justify-content-center">
-                    <Button
-                      variant={config ? "outline-primary" : "primary"}
-                      size="sm"
-                      className="d-inline-flex align-items-center gap-1"
-                      onClick={(e) => { e.stopPropagation(); openModal(); }}
-                    >
-                      <i className={`bi ${config ? 'bi-pencil' : 'bi-plus-circle'}`}></i>
-                      {config ? 'Editar' : 'Configurar'}
-                    </Button>
-                    {config && (
-                      <Button
-                        variant="success"
-                        size="sm"
-                        className="d-inline-flex align-items-center gap-1"
-                        onClick={(e) => { e.stopPropagation(); openImportModal(); }}
-                      >
-                        <i className="bi bi-download"></i>
-                        Importar
-                      </Button>
-                    )}
-                  </div>
+                <Card.Body className="p-4">
+                  <Row className="align-items-center">
+                    <Col xs={12} md={3} className="text-center text-md-start">
+                      <div className="d-flex align-items-center justify-content-center justify-content-md-start">
+                        <div className="display-4 text-primary me-3">
+                          <i className="bi bi-router"></i>
+                        </div>
+                        <div>
+                          <h5 className="mb-1">SGP</h5>
+                          <p className="text-muted small mb-0">Sistema de Gestão de Provedores</p>
+                          {config ? (
+                            <Badge bg="success" className="mt-1">
+                              <i className="bi bi-check-circle me-1"></i>
+                              Configurado
+                            </Badge>
+                          ) : (
+                            <Badge bg="secondary" className="mt-1">
+                              <i className="bi bi-gear me-1"></i>
+                              Não configurado
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </Col>
+
+                    <Col xs={12} md={6}>
+                      {/* Barra de Progresso da Importação */}
+                      {isImporting && (
+                        <ImportProgressBar
+                          progress={progress}
+                          isImporting={isImporting}
+                          isCompleted={isCompleted}
+                          error={importError}
+                          onCancel={stopImport}
+                          variant="inline"
+                          className="mb-3"
+                        />
+                      )}
+
+                      {!isImporting && config && (
+                        <div className="text-center text-md-start">
+                          <small className="text-muted d-block">
+                            Última sincronização:
+                          </small>
+                          <small className="text-primary fw-bold">
+                            {formatLastSync(lastSync)}
+                          </small>
+                          {isCompleted && (
+                            <div className="mt-2">
+                              <Badge bg="success" className="me-2">
+                                <i className="bi bi-check-circle me-1"></i>
+                                Importação concluída
+                              </Badge>
+                              <small className="text-muted">
+                                {progress.criados} criados, {progress.atualizados} atualizados
+                              </small>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </Col>
+
+                    <Col xs={12} md={3}>
+                      <div className="d-flex flex-column gap-2">
+                        <Button
+                          variant={config ? "outline-primary" : "primary"}
+                          size="sm"
+                          className="d-inline-flex align-items-center justify-content-center gap-1"
+                          onClick={openModal}
+                        >
+                          <i className={`bi ${config ? 'bi-pencil' : 'bi-plus-circle'}`}></i>
+                          {config ? 'Configurar' : 'Configurar'}
+                        </Button>
+
+                        {config && !isImporting && (
+                          <>
+                            <Button
+                              variant="success"
+                              size="sm"
+                              className="d-inline-flex align-items-center justify-content-center gap-1"
+                              onClick={handleImportCompleto}
+                            >
+                              <i className="bi bi-lightning-charge"></i>
+                              Importar Tudo
+                            </Button>
+
+                            <Button
+                              variant="outline-success"
+                              size="sm"
+                              className="d-inline-flex align-items-center justify-content-center gap-1"
+                              onClick={openImportModal}
+                            >
+                              <i className="bi bi-funnel"></i>
+                              Com Filtros
+                            </Button>
+                          </>
+                        )}
+
+                        {isImporting && (
+                          <Button
+                            variant="outline-danger"
+                            size="sm"
+                            className="d-inline-flex align-items-center justify-content-center gap-1"
+                            onClick={stopImport}
+                          >
+                            <i className="bi bi-stop-circle"></i>
+                            Cancelar
+                          </Button>
+                        )}
+                      </div>
+                    </Col>
+                  </Row>
                 </Card.Body>
               </Card>
             </Col>
@@ -645,17 +752,17 @@ export default function IntegracoesPage() {
                       <div className="d-grid gap-2">
                         <Button
                           variant="success"
-                          onClick={handleImport}
-                          disabled={importLoading || previewLoading || !senhaPadrao}
+                          onClick={handleImportComFiltros}
+                          disabled={importLoading || previewLoading || !senhaPadrao || isImporting}
                           className="d-flex align-items-center justify-content-center gap-2"
                           size="lg"
                         >
-                          {importLoading ? (
+                          {importLoading || isImporting ? (
                             <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                           ) : (
                             <i className="bi bi-download"></i>
                           )}
-                          {importLoading ? 'Importando clientes...' : 'Importar Clientes'}
+                          {importLoading || isImporting ? 'Iniciando importação...' : 'Importar Clientes'}
                         </Button>
 
                         <Button

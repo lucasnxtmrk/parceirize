@@ -73,43 +73,14 @@ export async function POST(req) {
     const {
       titulo,
       descricao,
-      tipo_desconto,
-      valor_desconto,
       condicoes,
       limite_uso
     } = await req.json();
 
     // Validações
-    if (!titulo || !tipo_desconto || !valor_desconto) {
+    if (!titulo) {
       return new Response(JSON.stringify({
-        error: "Título, tipo de desconto e valor são obrigatórios"
-      }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    if (!['percentual', 'valor_fixo'].includes(tipo_desconto)) {
-      return new Response(JSON.stringify({
-        error: "Tipo de desconto deve ser 'percentual' ou 'valor_fixo'"
-      }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    if (valor_desconto <= 0) {
-      return new Response(JSON.stringify({
-        error: "Valor do desconto deve ser maior que zero"
-      }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    if (tipo_desconto === 'percentual' && valor_desconto > 100) {
-      return new Response(JSON.stringify({
-        error: "Desconto percentual não pode ser maior que 100%"
+        error: "Título é obrigatório"
       }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
@@ -140,13 +111,10 @@ export async function POST(req) {
         codigo,
         titulo,
         descricao,
-        tipo_desconto,
-        valor_desconto,
-        desconto,
         condicoes,
         limite_uso,
         utilizado
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, false)
+      ) VALUES ($1, $2, $3, $4, $5, $6, false)
       RETURNING *
     `;
 
@@ -155,9 +123,6 @@ export async function POST(req) {
       codigo,
       titulo,
       descricao,
-      tipo_desconto,
-      valor_desconto,
-      tipo_desconto === 'percentual' ? valor_desconto : 0, // compatibilidade com campo antigo
       condicoes,
       limite_uso || null
     ];
@@ -211,43 +176,14 @@ export async function PUT(req) {
     const {
       titulo,
       descricao,
-      tipo_desconto,
-      valor_desconto,
       condicoes,
       limite_uso
     } = await req.json();
 
-    // Validações (mesmo do POST)
-    if (!titulo || !tipo_desconto || !valor_desconto) {
+    // Validações
+    if (!titulo) {
       return new Response(JSON.stringify({
-        error: "Título, tipo de desconto e valor são obrigatórios"
-      }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    if (!['percentual', 'valor_fixo'].includes(tipo_desconto)) {
-      return new Response(JSON.stringify({
-        error: "Tipo de desconto deve ser 'percentual' ou 'valor_fixo'"
-      }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    if (valor_desconto <= 0) {
-      return new Response(JSON.stringify({
-        error: "Valor do desconto deve ser maior que zero"
-      }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    if (tipo_desconto === 'percentual' && valor_desconto > 100) {
-      return new Response(JSON.stringify({
-        error: "Desconto percentual não pode ser maior que 100%"
+        error: "Título é obrigatório"
       }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
@@ -261,22 +197,16 @@ export async function PUT(req) {
       SET
         titulo = $1,
         descricao = $2,
-        tipo_desconto = $3,
-        valor_desconto = $4,
-        desconto = $5,
-        condicoes = $6,
-        limite_uso = $7,
+        condicoes = $3,
+        limite_uso = $4,
         updated_at = NOW()
-      WHERE parceiro_id = $8
+      WHERE parceiro_id = $5
       RETURNING *
     `;
 
     const updateParams = [
       titulo,
       descricao,
-      tipo_desconto,
-      valor_desconto,
-      tipo_desconto === 'percentual' ? valor_desconto : 0, // compatibilidade
       condicoes,
       limite_uso || null,
       parceiroId

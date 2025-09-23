@@ -16,8 +16,6 @@ export default function MeuVoucherPage() {
   const [alert, setAlert] = useState({ show: false, message: "", variant: "" });
   const [formData, setFormData] = useState({
     titulo: "",
-    tipo_desconto: "percentual",
-    valor_desconto: "",
     condicoes: "",
     limite_uso: ""
   });
@@ -38,8 +36,6 @@ export default function MeuVoucherPage() {
           setVoucher(data.voucher);
           setFormData({
             titulo: data.voucher.titulo || "",
-            tipo_desconto: data.voucher.tipo_desconto || "percentual",
-            valor_desconto: data.voucher.valor_desconto || "",
             condicoes: data.voucher.condicoes || "",
             limite_uso: data.voucher.limite_uso || ""
           });
@@ -72,16 +68,6 @@ export default function MeuVoucherPage() {
   const validateForm = () => {
     if (!formData.titulo.trim()) {
       showAlert("Título é obrigatório", "danger");
-      return false;
-    }
-
-    if (!formData.valor_desconto || formData.valor_desconto <= 0) {
-      showAlert("Valor do desconto deve ser maior que zero", "danger");
-      return false;
-    }
-
-    if (formData.tipo_desconto === 'percentual' && formData.valor_desconto > 100) {
-      showAlert("Desconto percentual não pode ser maior que 100%", "danger");
       return false;
     }
 
@@ -125,8 +111,6 @@ export default function MeuVoucherPage() {
       // Restaurar dados do voucher existente
       setFormData({
         titulo: voucher.titulo || "",
-        tipo_desconto: voucher.tipo_desconto || "percentual",
-        valor_desconto: voucher.valor_desconto || "",
         condicoes: voucher.condicoes || "",
         limite_uso: voucher.limite_uso || ""
       });
@@ -135,8 +119,6 @@ export default function MeuVoucherPage() {
       // Se não tem voucher, limpar formulário
       setFormData({
         titulo: "",
-        tipo_desconto: "percentual",
-        valor_desconto: "",
         condicoes: "",
         limite_uso: ""
       });
@@ -199,9 +181,9 @@ export default function MeuVoucherPage() {
                       <div className="mb-3">
                         <div className="bg-warning text-dark rounded-circle d-inline-flex align-items-center justify-content-center" style={{ width: '80px', height: '80px' }}>
                           <span className="fw-bold fs-4">
-                            {formData.tipo_desconto === 'percentual'
-                              ? `${formData.valor_desconto || 0}%`
-                              : `R$ ${formData.valor_desconto || 0}`
+                            {voucher?.tipo_desconto === 'percentual'
+                              ? `${voucher?.valor_desconto || 0}%`
+                              : `R$ ${voucher?.valor_desconto || 0}`
                             }
                           </span>
                         </div>
@@ -215,9 +197,9 @@ export default function MeuVoucherPage() {
                         {formData.titulo || 'Título do voucher'}
                       </h5>
                       <p className="text-muted mb-2">
-                        Desconto de {formData.tipo_desconto === 'percentual'
-                          ? `${formData.valor_desconto || 0}%`
-                          : `R$ ${formData.valor_desconto || 0}`} para clientes
+                        Desconto de {voucher?.tipo_desconto === 'percentual'
+                          ? `${voucher?.valor_desconto || 0}%`
+                          : `R$ ${voucher?.valor_desconto || 0}`} para clientes
                       </p>
                       {formData.condicoes && (
                         <div>
@@ -276,58 +258,25 @@ export default function MeuVoucherPage() {
 
                 <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label className="fw-bold">
-                      Tipo de Desconto <span className="text-danger">*</span>
-                    </Form.Label>
-                    <div className="d-flex gap-3">
-                      <Form.Check
-                        type="radio"
-                        id="tipo-percentual"
-                        label={
-                          <span className="d-flex align-items-center">
-                            <FaPercent className="me-1" />
-                            Percentual
+                    <Form.Label className="fw-bold">Desconto Configurado</Form.Label>
+                    <div className="bg-light p-3 rounded">
+                      <div className="d-flex align-items-center">
+                        <div className="bg-warning text-dark rounded-circle d-inline-flex align-items-center justify-content-center me-3" style={{ width: '40px', height: '40px' }}>
+                          <span className="fw-bold">
+                            {voucher?.tipo_desconto === 'percentual'
+                              ? `${voucher?.valor_desconto || 0}%`
+                              : `R$ ${voucher?.valor_desconto || 0}`
+                            }
                           </span>
-                        }
-                        checked={formData.tipo_desconto === 'percentual'}
-                        onChange={() => handleInputChange('tipo_desconto', 'percentual')}
-                      />
-                      <Form.Check
-                        type="radio"
-                        id="tipo-valor"
-                        label={
-                          <span className="d-flex align-items-center">
-                            <FaDollarSign className="me-1" />
-                            Valor Fixo
-                          </span>
-                        }
-                        checked={formData.tipo_desconto === 'valor_fixo'}
-                        onChange={() => handleInputChange('tipo_desconto', 'valor_fixo')}
-                      />
+                        </div>
+                        <div>
+                          <div className="fw-bold">
+                            {voucher?.tipo_desconto === 'percentual' ? 'Desconto Percentual' : 'Desconto em Valor Fixo'}
+                          </div>
+                          <small className="text-muted">Apenas o provedor pode alterar o valor do desconto</small>
+                        </div>
+                      </div>
                     </div>
-                  </Form.Group>
-                </Col>
-
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label className="fw-bold">
-                      Valor do Desconto <span className="text-danger">*</span>
-                    </Form.Label>
-                    <Form.Control
-                      type="number"
-                      placeholder={formData.tipo_desconto === 'percentual' ? "Ex: 15" : "Ex: 50.00"}
-                      value={formData.valor_desconto}
-                      onChange={(e) => handleInputChange('valor_desconto', e.target.value)}
-                      min="0"
-                      max={formData.tipo_desconto === 'percentual' ? "100" : undefined}
-                      step={formData.tipo_desconto === 'percentual' ? "1" : "0.01"}
-                    />
-                    <Form.Text className="text-muted">
-                      {formData.tipo_desconto === 'percentual'
-                        ? "Porcentagem de desconto (1-100%)"
-                        : "Valor em reais (R$)"
-                      }
-                    </Form.Text>
                   </Form.Group>
                 </Col>
 

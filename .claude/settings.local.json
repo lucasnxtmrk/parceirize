@@ -48,7 +48,8 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "WebFetch(domain:mood.sgp.net.br)",
-      "Bash(del \"scripts\\update-import-jobs-queue.sql\")"
+      "Bash(del \"scripts\\update-import-jobs-queue.sql\")",
+      "Bash(timeout 10 npm run build)"
     ],
     "deny": [],
     "ask": []

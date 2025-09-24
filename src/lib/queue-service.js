@@ -20,6 +20,24 @@ class QueueService {
     }
   }
 
+  // Adicionar log a um job
+  async addJobLog(jobId, message, level = 'info') {
+    try {
+      const timestamp = new Date().toISOString();
+      const logEntry = JSON.stringify({ timestamp, level, message });
+
+      await this.pool.query(
+        `UPDATE import_jobs
+         SET logs = COALESCE(logs, '{}') || ARRAY[$2::text],
+             updated_at = NOW()
+         WHERE id = $1`,
+        [jobId, logEntry]
+      );
+    } catch (error) {
+      console.error(`Erro ao adicionar log ao job ${jobId}:`, error);
+    }
+  }
+
   // Adicionar job à fila
   async enqueueJob(provedorId, config) {
     try {
@@ -42,29 +60,62 @@ class QueueService {
       );
       const queuePosition = queueResult.rows[0].next_position;
 
+      // Gerar nome descritivo da importação
+      const nomeImportacao = this.generateImportName(config);
+
       // Criar novo job
+      const initialLog = JSON.stringify({
+        timestamp: new Date().toISOString(),
+        level: 'info',
+        message: `Importação criada e adicionada à fila na posição ${queuePosition}`
+      });
+
       const jobResult = await this.pool.query(
         `INSERT INTO import_jobs (
-          provedor_id, status, configuracao, mensagem_atual, queue_position
-        ) VALUES ($1, 'queued', $2, $3, $4) RETURNING id`,
+          provedor_id, status, nome_importacao, configuracao, mensagem_atual, queue_position, logs
+        ) VALUES ($1, 'queued', $2, $3, $4, $5, ARRAY[$6::text]) RETURNING id`,
         [
           provedorId,
+          nomeImportacao,
           JSON.stringify(config),
           `Na fila (posição ${queuePosition})`,
-          queuePosition
+          queuePosition,
+          initialLog
         ]
       );
 
-      console.log(`📋 Job ${jobResult.rows[0].id} adicionado à fila na posição ${queuePosition}`);
+      const jobId = jobResult.rows[0].id;
+      console.log(`📋 Job ${jobId} adicionado à fila na posição ${queuePosition}`);
 
       // Garantir que o processamento esteja rodando
       this.ensureProcessingStarted();
 
-      return jobResult.rows[0].id;
+      return jobId;
     } catch (error) {
       console.error('Erro ao enfileirar job:', error);
       throw error;
     }
+  }
+
+  // Gerar nome descritivo para a importação
+  generateImportName(config) {
+    const { modo = 'completo', filtros = {} } = config;
+    let nome = 'Importação SGP';
+
+    if (modo === 'filtrado' && filtros) {
+      const detalhes = [];
+      if (filtros.apenas_ativos) detalhes.push('apenas ativos');
+      if (filtros.dias_atividade) detalhes.push(`${filtros.dias_atividade} dias`);
+      if (filtros.data_cadastro_inicio || filtros.data_cadastro_fim) {
+        detalhes.push('período específico');
+      }
+
+      if (detalhes.length > 0) {
+        nome += ` (${detalhes.join(', ')})`;
+      }
+    }
+
+    return nome;
   }
 
   // Iniciar processamento da fila
@@ -130,18 +181,41 @@ class QueueService {
 
   // Executar a importação
   async executeImportJob(job) {
+    const startTime = Date.now();
+
     try {
+      // Adicionar log de início
+      await this.addJobLog(job.id, `Worker ${this.workerId} iniciou o processamento`, 'info');
+
       // PostgreSQL JSONB retorna object, não string
       const config = typeof job.configuracao === 'string'
         ? JSON.parse(job.configuracao)
         : job.configuracao || {};
+
       console.log(`🔄 Iniciando importação para job ${job.id}...`);
+      await this.addJobLog(job.id, 'Iniciando processo de importação SGP', 'info');
 
       // Importar a lógica de importação
       const { executarImportacaoSGP } = await import('./sgp-import-worker.js');
 
       // Executar importação com callback de progresso
       const resultado = await executarImportacaoSGP(job, config, async (progress) => {
+        // Adicionar log detalhado se houver mudança significativa
+        if (progress.fase && (progress.fase === 'buscando' || progress.fase === 'preparando')) {
+          await this.addJobLog(job.id, progress.mensagem, 'info');
+        }
+
+        // Log de progresso a cada 10% ou a cada 100 clientes processados
+        if (progress.processados && (
+          progress.processados % 100 === 0 ||
+          (progress.progresso_percent && progress.progresso_percent % 10 < 1)
+        )) {
+          await this.addJobLog(job.id,
+            `Progresso: ${progress.processados}/${progress.total || 0} processados (${(progress.progresso_percent || 0).toFixed(1)}%)`,
+            'info'
+          );
+        }
+
         // Atualizar progresso no banco
         await this.pool.query(
           `UPDATE import_jobs SET
@@ -169,6 +243,14 @@ class QueueService {
         );
       });
 
+      const totalTime = Math.round((Date.now() - startTime) / 1000);
+
+      // Log de conclusão
+      await this.addJobLog(job.id,
+        `Importação concluída com sucesso em ${totalTime}s: ${resultado.criados || 0} criados, ${resultado.atualizados || 0} atualizados, ${resultado.erros || 0} erros`,
+        'success'
+      );
+
       // Marcar como concluído
       await this.pool.query(
         `UPDATE import_jobs
@@ -183,7 +265,14 @@ class QueueService {
       console.log(`✅ Job ${job.id} concluído:`, resultado);
 
     } catch (error) {
+      const totalTime = Math.round((Date.now() - startTime) / 1000);
       console.error(`❌ Erro no job ${job.id}:`, error);
+
+      // Log de erro detalhado
+      await this.addJobLog(job.id,
+        `Erro após ${totalTime}s de processamento: ${error.message}`,
+        'error'
+      );
 
       // Marcar como erro
       await this.pool.query(

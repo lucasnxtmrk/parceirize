@@ -4,11 +4,33 @@ import bcrypt from 'bcryptjs';
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
+// Função para fazer retry com backoff exponencial
+async function retryWithBackoff(fn, maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (attempt === maxRetries) {
+        throw error;
+      }
+
+      // Se é timeout ou erro de rede, tenta novamente
+      if (error.name === 'TimeoutError' || error.code === 'ECONNRESET' || error.code === 'ENOTFOUND') {
+        const delay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
+        console.log(`⚠️ Tentativa ${attempt} falhou (${error.message}), tentando novamente em ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } else {
+        throw error; // Se não é erro que justifica retry, falha imediatamente
+      }
+    }
+  }
+}
+
 // Função para buscar clientes SGP com callback de progresso
 async function buscarClientesSGPComProgresso(url, authBody, onProgress) {
   let todosClientes = [];
   let offset = 0;
-  const limit = 100;
+  const limit = 50; // Reduzido de 100 para 50
   let hasMore = true;
   let requisicoes = 0;
 
@@ -26,18 +48,24 @@ async function buscarClientesSGPComProgresso(url, authBody, onProgress) {
       requisicoes
     });
 
-    const resp = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(bodyComOffset),
-      cache: 'no-store',
-      signal: AbortSignal.timeout(30000)
+    const resp = await retryWithBackoff(async () => {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bodyComOffset),
+        cache: 'no-store',
+        signal: AbortSignal.timeout(120000) // Aumentado de 30s para 120s
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Falha na API SGP (${response.status}): ${errorText}`);
+      }
+
+      return response;
     });
 
-    if (!resp.ok) {
-      const errorText = await resp.text();
-      throw new Error(`Falha ao consultar SGP (offset ${offset}): ${resp.status} ${resp.statusText} - ${errorText}`);
-    }
+    // Validação de resposta já feita no retry
 
     const data = await resp.json();
     const clientesBatch = data?.clientes || [];
@@ -57,6 +85,11 @@ async function buscarClientesSGPComProgresso(url, authBody, onProgress) {
 
       if (clientesBatch.length < limit) {
         hasMore = false;
+      }
+
+      // Delay entre requisições para não sobrecarregar a API
+      if (hasMore) {
+        await new Promise(resolve => setTimeout(resolve, 1000)); // 1 segundo
       }
     }
   }
@@ -281,7 +314,20 @@ export async function executarImportacaoSGP(job, config, onProgress) {
     });
 
     // Buscar clientes
-    const clientesSGP = await buscarClientesSGPComProgresso(url, authBody, onProgress);
+    let clientesSGP;
+    try {
+      clientesSGP = await buscarClientesSGPComProgresso(url, authBody, onProgress);
+    } catch (error) {
+      if (error.name === 'TimeoutError') {
+        throw new Error(`Timeout ao conectar com SGP (${integracao.subdominio}.sgp.net.br). A API pode estar sobrecarregada. Tente novamente em alguns minutos.`);
+      } else if (error.message.includes('404')) {
+        throw new Error(`Endpoint não encontrado. Verifique se o subdomínio '${integracao.subdominio}' está correto.`);
+      } else if (error.message.includes('401') || error.message.includes('403')) {
+        throw new Error(`Erro de autenticação. Verifique se o token '${integracao.token}' e app '${integracao.app_name}' estão corretos.`);
+      } else {
+        throw new Error(`Erro ao buscar clientes do SGP: ${error.message}`);
+      }
+    }
 
     onProgress({
       fase: 'preparando',
@@ -305,6 +351,16 @@ export async function executarImportacaoSGP(job, config, onProgress) {
 
   } catch (error) {
     console.error(`❌ Erro na importação SGP do job ${job.id}:`, error);
+
+    // Log detalhado para debug
+    console.error('Detalhes do erro:', {
+      jobId: job.id,
+      provedorEmail: config.provedor_email,
+      errorName: error.name,
+      errorMessage: error.message,
+      stack: error.stack
+    });
+
     throw error;
   }
 }

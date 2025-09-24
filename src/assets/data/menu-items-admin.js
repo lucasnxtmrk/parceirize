@@ -27,7 +27,18 @@ export const MENU_ITEMS = [
     key: 'integracoes',
     label: 'Integrações',
     icon: 'ri:links-line',
-    url: '/integracoes'
+    children: [
+      {
+        key: 'integracoes-config',
+        label: 'Configurações SGP',
+        url: '/integracoes'
+      },
+      {
+        key: 'importacoes-status',
+        label: 'Status das Importações',
+        url: '/dashboard/importacoes'
+      }
+    ]
   },
   {
     key: 'configuracoes',

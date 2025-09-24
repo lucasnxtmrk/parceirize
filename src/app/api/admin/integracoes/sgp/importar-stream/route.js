@@ -489,28 +489,89 @@ export async function GET(req) {
         sendSSE(controller, {
           tipo: 'job_criado',
           job_id: jobId,
-          mensagem: 'Job adicionado à fila de processamento'
+          mensagem: 'Job adicionado à fila de processamento',
+          redirect_url: `/dashboard/importacoes?highlight=${jobId}`
         });
 
         // Verificar posição na fila
         const queuePosition = await queueService.getQueuePosition(provedor.id);
-        if (queuePosition && queuePosition > 0) {
+
+        sendSSE(controller, {
+          tipo: 'progresso',
+          fase: queuePosition > 0 ? 'na_fila' : 'iniciando',
+          mensagem: queuePosition > 0
+            ? `Na fila de processamento (posição ${queuePosition})`
+            : 'Iniciando processamento...',
+          queue_position: queuePosition,
+          job_id: jobId
+        });
+
+        // Enviar mensagem de redirecionamento após 2 segundos
+        setTimeout(() => {
           sendSSE(controller, {
-            tipo: 'progresso',
-            fase: 'na_fila',
-            mensagem: `Na fila de processamento (posição ${queuePosition})`,
-            queue_position: queuePosition
+            tipo: 'redirect',
+            job_id: jobId,
+            mensagem: 'Redirecionando para página de acompanhamento...',
+            redirect_url: `/dashboard/importacoes?highlight=${jobId}`
           });
+        }, 2000);
 
-          // Aguardar até o job iniciar
-          const jobStarted = await waitForJobToStart(jobId, controller);
-          if (!jobStarted) {
-            return; // Job falhou ou timeout
+        // Monitorar apenas por um tempo limitado (30 segundos) antes de redirecionar
+        const monitorStart = Date.now();
+        const maxMonitorTime = 30000; // 30 segundos
+
+        const quickMonitor = setInterval(async () => {
+          try {
+            if (Date.now() - monitorStart > maxMonitorTime) {
+              clearInterval(quickMonitor);
+              sendSSE(controller, {
+                tipo: 'timeout_redirect',
+                job_id: jobId,
+                mensagem: 'Importação continua em background. Redirecionando...',
+                redirect_url: `/dashboard/importacoes?highlight=${jobId}`
+              });
+              return;
+            }
+
+            // Verificar status atual
+            const statusResult = await pool.query(
+              'SELECT status, progresso_percent, mensagem_atual FROM import_jobs WHERE id = $1',
+              [jobId]
+            );
+
+            if (statusResult.rows.length > 0) {
+              const job = statusResult.rows[0];
+
+              sendSSE(controller, {
+                tipo: 'quick_update',
+                job_id: jobId,
+                status: job.status,
+                progresso_percent: job.progresso_percent || 0,
+                mensagem: job.mensagem_atual
+              });
+
+              // Se o job foi completado ou falhou, parar o monitoramento
+              if (['completed', 'failed'].includes(job.status)) {
+                clearInterval(quickMonitor);
+                sendSSE(controller, {
+                  tipo: job.status === 'completed' ? 'concluido_rapido' : 'erro_rapido',
+                  job_id: jobId,
+                  mensagem: job.status === 'completed'
+                    ? 'Importação concluída rapidamente!'
+                    : 'Importação falhou',
+                  redirect_url: `/dashboard/importacoes?highlight=${jobId}`
+                });
+              }
+            }
+          } catch (error) {
+            console.error('Erro no monitoramento rápido:', error);
           }
-        }
+        }, 3000); // Verificar a cada 3 segundos
 
-        // Monitorar progresso do job via polling
-        await monitorJobProgress(jobId, controller);
+        // Limpar intervalo após 30 segundos
+        setTimeout(() => {
+          clearInterval(quickMonitor);
+        }, maxMonitorTime);
 
       } catch (error) {
         console.error('Erro na importação:', error);

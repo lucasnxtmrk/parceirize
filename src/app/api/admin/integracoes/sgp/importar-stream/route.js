@@ -10,8 +10,14 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 // Função para enviar evento SSE
 function sendSSE(controller, data) {
-  const message = `data: ${JSON.stringify(data)}\n\n`;
-  controller.enqueue(new TextEncoder().encode(message));
+  try {
+    if (controller && typeof controller.enqueue === 'function') {
+      const message = `data: ${JSON.stringify(data)}\n\n`;
+      controller.enqueue(new TextEncoder().encode(message));
+    }
+  } catch (error) {
+    console.error('Erro ao enviar SSE:', error);
+  }
 }
 
 // Função para buscar clientes SGP com callback de progresso
@@ -425,6 +431,9 @@ export async function GET(req) {
   // Configurar SSE
   const stream = new ReadableStream({
     async start(controller) {
+      let quickMonitor = null;
+      let isControllerClosed = false;
+
       try {
         sendSSE(controller, {
           tipo: 'inicio',
@@ -520,16 +529,23 @@ export async function GET(req) {
         const monitorStart = Date.now();
         const maxMonitorTime = 30000; // 30 segundos
 
-        const quickMonitor = setInterval(async () => {
+        quickMonitor = setInterval(async () => {
           try {
+            if (isControllerClosed) {
+              clearInterval(quickMonitor);
+              return;
+            }
+
             if (Date.now() - monitorStart > maxMonitorTime) {
               clearInterval(quickMonitor);
-              sendSSE(controller, {
-                tipo: 'timeout_redirect',
-                job_id: jobId,
-                mensagem: 'Importação continua em background. Redirecionando...',
-                redirect_url: `/dashboard/importacoes?highlight=${jobId}`
-              });
+              if (!isControllerClosed) {
+                sendSSE(controller, {
+                  tipo: 'timeout_redirect',
+                  job_id: jobId,
+                  mensagem: 'Importação continua em background. Redirecionando...',
+                  redirect_url: `/dashboard/importacoes?highlight=${jobId}`
+                });
+              }
               return;
             }
 
@@ -539,7 +555,7 @@ export async function GET(req) {
               [jobId]
             );
 
-            if (statusResult.rows.length > 0) {
+            if (statusResult.rows.length > 0 && !isControllerClosed) {
               const job = statusResult.rows[0];
 
               sendSSE(controller, {
@@ -553,14 +569,16 @@ export async function GET(req) {
               // Se o job foi completado ou falhou, parar o monitoramento
               if (['completed', 'failed'].includes(job.status)) {
                 clearInterval(quickMonitor);
-                sendSSE(controller, {
-                  tipo: job.status === 'completed' ? 'concluido_rapido' : 'erro_rapido',
-                  job_id: jobId,
-                  mensagem: job.status === 'completed'
-                    ? 'Importação concluída rapidamente!'
-                    : 'Importação falhou',
-                  redirect_url: `/dashboard/importacoes?highlight=${jobId}`
-                });
+                if (!isControllerClosed) {
+                  sendSSE(controller, {
+                    tipo: job.status === 'completed' ? 'concluido_rapido' : 'erro_rapido',
+                    job_id: jobId,
+                    mensagem: job.status === 'completed'
+                      ? 'Importação concluída rapidamente!'
+                      : 'Importação falhou',
+                    redirect_url: `/dashboard/importacoes?highlight=${jobId}`
+                  });
+                }
               }
             }
           } catch (error) {
@@ -570,18 +588,27 @@ export async function GET(req) {
 
         // Limpar intervalo após 30 segundos
         setTimeout(() => {
-          clearInterval(quickMonitor);
+          if (quickMonitor) {
+            clearInterval(quickMonitor);
+          }
         }, maxMonitorTime);
 
       } catch (error) {
         console.error('Erro na importação:', error);
 
-        sendSSE(controller, {
-          tipo: 'erro',
-          mensagem: error.message,
-          timestamp: new Date().toISOString()
-        });
+        if (!isControllerClosed) {
+          sendSSE(controller, {
+            tipo: 'erro',
+            mensagem: error.message,
+            timestamp: new Date().toISOString()
+          });
+        }
       } finally {
+        // Limpar intervalo antes de fechar o controller
+        if (quickMonitor) {
+          clearInterval(quickMonitor);
+        }
+        isControllerClosed = true;
         controller.close();
       }
     }

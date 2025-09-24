@@ -75,7 +75,10 @@ function ImportacaoCard({ importacao, onViewDetails, onRefresh }) {
                 />
                 <div className="d-flex justify-content-between mt-1">
                   <small>{importacao.processados || 0} / {importacao.total_estimado || 0}</small>
-                  <small>{importacao.progresso_percent?.toFixed(1) || 0}%</small>
+                  <small>{(() => {
+                    const percent = Number(importacao.progresso_percent);
+                    return isNaN(percent) ? 0 : percent.toFixed(1);
+                  })()}%</small>
                 </div>
                 {importacao.eta_segundos && (
                   <small className="text-info">{formatETA(importacao.eta_segundos)}</small>

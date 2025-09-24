@@ -71,7 +71,7 @@ export async function GET(req) {
         j.started_at,
         j.finalizado_em,
         p.email as provedor_email,
-        p.nome as provedor_nome
+        p.nome_empresa as provedor_nome
       FROM import_jobs j
       JOIN provedores p ON j.provedor_id = p.id
       ${whereClause}

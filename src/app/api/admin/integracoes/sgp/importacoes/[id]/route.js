@@ -56,7 +56,7 @@ export async function GET(req, { params }) {
         j.finalizado_em,
         j.updated_at,
         p.email as provedor_email,
-        p.nome as provedor_nome
+        p.nome_empresa as provedor_nome
       FROM import_jobs j
       JOIN provedores p ON j.provedor_id = p.id
       WHERE j.id = $1

@@ -262,6 +262,8 @@ export default function ProvedoresPage() {
 
     try {
       const updateData = {
+        nome_empresa: editForm.nome_empresa.trim(),
+        email: editForm.email.trim(),
         subdominio: editForm.subdominio.trim() || null,
         ativo: editForm.ativo
       }
@@ -788,11 +790,12 @@ export default function ProvedoresPage() {
                     <Label className="block text-sm font-medium">Nome da Empresa</Label>
                     <Input
                       value={editForm.nome_empresa}
-                      disabled
-                      className="bg-muted/50 h-11 w-full block"
+                      onChange={(e) => setEditForm(prev => ({ ...prev, nome_empresa: e.target.value }))}
+                      placeholder="Nome da empresa"
+                      className="h-11 w-full block"
                     />
                     <p className="text-xs text-muted-foreground block">
-                      Nome da empresa não pode ser alterado
+                      Nome que aparecerá nos dashboards e relatórios
                     </p>
                   </div>
 
@@ -800,11 +803,13 @@ export default function ProvedoresPage() {
                     <Label className="block text-sm font-medium">E-mail</Label>
                     <Input
                       value={editForm.email}
-                      disabled
-                      className="bg-muted/50 h-11 w-full block"
+                      onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="email@empresa.com"
+                      type="email"
+                      className="h-11 w-full block"
                     />
                     <p className="text-xs text-muted-foreground block">
-                      E-mail não pode ser alterado
+                      Email usado para login e notificações
                     </p>
                   </div>
                 </div>

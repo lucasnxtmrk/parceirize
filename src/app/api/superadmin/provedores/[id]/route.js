@@ -120,13 +120,28 @@ export async function PATCH(request, { params }) {
     const data = await request.json();
 
     // Campos permitidos para atualização
-    const allowedFields = ['ativo', 'plano_id', 'data_vencimento', 'subdominio'];
+    const allowedFields = ['ativo', 'plano_id', 'data_vencimento', 'subdominio', 'nome_empresa', 'email'];
     const updates = [];
     const values = [];
     let paramCount = 1;
 
     for (const [key, value] of Object.entries(data)) {
       if (allowedFields.includes(key)) {
+        // Validação especial para email (verificar se não existe outro provedor com este email)
+        if (key === 'email' && value) {
+          const emailCheck = await pool.query(
+            'SELECT id FROM provedores WHERE email = $1 AND id != $2',
+            [value, id]
+          );
+
+          if (emailCheck.rows.length > 0) {
+            return NextResponse.json(
+              { error: 'Este email já está sendo usado por outro provedor' },
+              { status: 400 }
+            );
+          }
+        }
+
         updates.push(`${key} = $${paramCount}`);
         values.push(value);
         paramCount++;
